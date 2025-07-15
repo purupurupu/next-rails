@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a full-stack Todo application using:
 - **Frontend**: Next.js 15.4.1 with TypeScript, React 19, and Tailwind CSS v4
+- **Package Manager**: pnpm (NOT npm)
 - **Backend**: Rails 7.1.3+ API-only application  
 - **Database**: PostgreSQL 15
 - **Infrastructure**: Docker Compose orchestrating three services
@@ -75,3 +76,9 @@ Frontend should make API calls to `http://localhost:3001/api/todos`.
 ## Current State
 
 The project is transitioning from Nuxt.js to Next.js. The backend API is fully functional, while the frontend is a fresh Next.js installation ready for implementation.
+
+## Development Guidelines
+
+1. **Package Manager**: Always use pnpm, NOT npm
+2. **API Calls**: All API calls must go through the API client (not direct fetch calls)
+3. **Commits**: Make frequent, small commits with clear messages. Commit after each logical change or feature addition
