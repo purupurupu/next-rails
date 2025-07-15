@@ -24,14 +24,14 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 
-import type { CreateTodoData, UpdateTodoData, Todo } from '@/features/todo/types/todo'
+import type { CreateTodoData, Todo } from '@/features/todo/types/todo'
 
 interface TodoFormProps {
   mode: 'create' | 'edit'
   todo?: Todo
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: CreateTodoData | UpdateTodoData) => Promise<void>
+  onSubmit: (data: CreateTodoData) => Promise<void>
 }
 
 export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormProps) {

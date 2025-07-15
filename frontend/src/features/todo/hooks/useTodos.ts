@@ -48,8 +48,11 @@ export function useTodos(): UseTodosReturn {
     setState(prev => ({ ...prev, error }))
   }, [])
 
-  const setAllTodos = useCallback((todos: Todo[]) => {
-    setState(prev => ({ ...prev, allTodos: todos }))
+  const setAllTodos = useCallback((todos: Todo[] | ((prev: Todo[]) => Todo[])) => {
+    setState(prev => ({ 
+      ...prev, 
+      allTodos: typeof todos === 'function' ? todos(prev.allTodos) : todos 
+    }))
   }, [])
 
   const setFilter = useCallback((filter: TodoFilter) => {
@@ -94,16 +97,16 @@ export function useTodos(): UseTodosReturn {
     
     try {
       const createdTodo = await todoApiClient.createTodo(data)
-      setAllTodos(prev => 
-        prev.map(todo => 
+      setAllTodos((prev: Todo[]) => 
+        prev.map((todo: Todo) => 
           todo.id === optimisticTodo.id ? createdTodo : todo
         )
       )
       toast.success('タスクを作成しました')
     } catch (error) {
       // Revert optimistic update
-      setAllTodos(prev => 
-        prev.filter(todo => todo.id !== optimisticTodo.id)
+      setAllTodos((prev: Todo[]) => 
+        prev.filter((todo: Todo) => todo.id !== optimisticTodo.id)
       )
       
       const errorMessage = error instanceof ApiError 
@@ -128,8 +131,8 @@ export function useTodos(): UseTodosReturn {
     
     try {
       const updatedTodo = await todoApiClient.updateTodo(id, data)
-      setAllTodos(prev => 
-        prev.map(todo => 
+      setAllTodos((prev: Todo[]) => 
+        prev.map((todo: Todo) => 
           todo.id === id ? updatedTodo : todo
         )
       )
