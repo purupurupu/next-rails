@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a full-stack Todo application using:
 - **Frontend**: Next.js 15.4.1 with TypeScript, React 19, and Tailwind CSS v4
+- **Package Manager**: pnpm (NOT npm)
 - **Backend**: Rails 7.1.3+ API-only application  
 - **Database**: PostgreSQL 15
 - **Infrastructure**: Docker Compose orchestrating three services
@@ -38,9 +39,10 @@ docker compose logs -f frontend
 ### Frontend Development
 ```bash
 # All commands run inside the frontend container
-docker compose exec frontend pnpm run dev      # Development server
-docker compose exec frontend pnpm run build    # Production build
-docker compose exec frontend pnpm run lint     # ESLint
+docker compose exec frontend pnpm run dev        # Development server
+docker compose exec frontend pnpm run build      # Production build
+docker compose exec frontend pnpm run lint       # ESLint
+docker compose exec frontend pnpm run typecheck  # TypeScript type checking
 ```
 
 ### Backend Development
@@ -75,3 +77,67 @@ Frontend should make API calls to `http://localhost:3001/api/todos`.
 ## Current State
 
 The project is transitioning from Nuxt.js to Next.js. The backend API is fully functional, while the frontend is a fresh Next.js installation ready for implementation.
+
+## Development Guidelines
+
+1. **Package Manager**: Always use pnpm, NOT npm
+2. **API Calls**: All API calls must go through the API client (not direct fetch calls)
+3. **Commits**: Make frequent, small commits with clear messages. Commit after each logical change or feature addition
+
+## Frontend Architecture
+
+### Directory Structure
+```
+frontend/src/
+├── app/               # Next.js App Router pages (routing files)
+├── components/        # 横断的（ドメインに依存しない）なUIコンポーネント
+│   └── ui/           # shadcn/ui components
+├── features/          # 特定のドメイン・機能に関係するコンポーネント
+│   └── todo/         # Todo feature
+│       ├── components/   # Todo-specific components
+│       ├── hooks/        # Todo-specific hooks
+│       ├── types/        # Todo-specific types
+│       └── utils/        # Todo-specific utilities
+├── hooks/             # ドメインに依存しない、横断的なhooks
+├── providers/         # アプリケーションプロバイダー
+├── utils/             # 横断的な汎用関数
+├── constants/         # 横断的な定数
+├── types/             # 横断的な型定義
+├── styles/            # スタイリング（css）に関するファイル
+├── lib/               # ライブラリの処理や標準処理を共通化したコード
+└── tests/             # 自動テスト関連
+```
+
+### Naming Conventions
+
+1. **Files and Directories**:
+   - Components: PascalCase (e.g., `TodoItem.tsx`, `TodoForm.tsx`)
+   - Hooks: camelCase with `use` prefix (e.g., `useTodos.ts`)
+   - Utilities: kebab-case (e.g., `api-client.ts`, `constants.ts`)
+   - Types: kebab-case (e.g., `todo.ts`)
+
+2. **Code Naming**:
+   - React components: PascalCase
+   - Functions/variables: camelCase
+   - Constants: UPPER_SNAKE_CASE
+   - Interfaces: PascalCase with descriptive suffix (e.g., `TodoItemProps`, `CreateTodoData`)
+
+### Key Files
+
+- `lib/api-client.ts` - Base HttpClient with common HTTP methods
+- `features/todo/lib/api-client.ts` - Todo-specific API client extending HttpClient
+- `features/todo/types/todo.ts` - Todo-related TypeScript interfaces
+- `lib/constants.ts` - API-related constants and configurations
+- `lib/utils.ts` - Utility functions (date formatting, validation, etc.)
+- `features/todo/hooks/useTodos.ts` - Todo state management with optimistic updates
+
+### Architecture Principles
+
+1. **Feature-based organization**: Domain-specific code lives in `features/[domain]/`
+2. **Cross-cutting concerns**: Shared utilities, types, and components live in root-level directories
+3. **Separation of concerns**: Each feature has its own components, hooks, types, and utilities
+4. **Reusability**: Common UI components and hooks are shared across features
+5. **API Client Pattern**: 
+   - Base `HttpClient` provides common HTTP methods (GET, POST, PUT, PATCH, DELETE)
+   - Feature-specific API clients extend `HttpClient` and implement domain-specific methods
+   - Hooks use feature API clients for data fetching and state management
