@@ -5,7 +5,7 @@ import type {
   UpdateTodoData, 
   UpdateOrderData, 
   TodoError 
-} from '@/types/todo'
+} from '@/features/todo/types/todo'
 
 class ApiError extends Error {
   constructor(

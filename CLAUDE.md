@@ -88,16 +88,23 @@ The project is transitioning from Nuxt.js to Next.js. The backend API is fully f
 ### Directory Structure
 ```
 frontend/src/
-├── app/               # Next.js App Router pages
-├── components/
-│   ├── ui/           # shadcn/ui components
-│   ├── features/     # Feature-specific components
-│   │   └── todo/     # Todo feature components
-│   └── layouts/      # Layout components
-├── hooks/            # Custom React hooks
-├── lib/              # Utilities and configurations
-├── types/            # TypeScript type definitions
-└── styles/           # Additional styles
+├── app/               # Next.js App Router pages (routing files)
+├── components/        # 横断的（ドメインに依存しない）なUIコンポーネント
+│   └── ui/           # shadcn/ui components
+├── features/          # 特定のドメイン・機能に関係するコンポーネント
+│   └── todo/         # Todo feature
+│       ├── components/   # Todo-specific components
+│       ├── hooks/        # Todo-specific hooks
+│       ├── types/        # Todo-specific types
+│       └── utils/        # Todo-specific utilities
+├── hooks/             # ドメインに依存しない、横断的なhooks
+├── providers/         # アプリケーションプロバイダー
+├── utils/             # 横断的な汎用関数
+├── constants/         # 横断的な定数
+├── types/             # 横断的な型定義
+├── styles/            # スタイリング（css）に関するファイル
+├── lib/               # ライブラリの処理や標準処理を共通化したコード
+└── tests/             # 自動テスト関連
 ```
 
 ### Naming Conventions
@@ -116,8 +123,15 @@ frontend/src/
 
 ### Key Files
 
-- `types/todo.ts` - Todo-related TypeScript interfaces
+- `features/todo/types/todo.ts` - Todo-related TypeScript interfaces
 - `lib/api-client.ts` - API communication layer with error handling
-- `lib/constants.ts` - App-wide constants and configurations
-- `lib/utils.ts` - Utility functions (date formatting, validation, etc.)
-- `hooks/useTodos.ts` - Todo state management with optimistic updates
+- `constants/api.ts` - API-related constants and configurations
+- `utils/date.ts`, `utils/validation.ts` - Utility functions
+- `features/todo/hooks/useTodos.ts` - Todo state management with optimistic updates
+
+### Architecture Principles
+
+1. **Feature-based organization**: Domain-specific code lives in `features/[domain]/`
+2. **Cross-cutting concerns**: Shared utilities, types, and components live in root-level directories
+3. **Separation of concerns**: Each feature has its own components, hooks, types, and utilities
+4. **Reusability**: Common UI components and hooks are shared across features
