@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 
@@ -14,6 +16,7 @@ import type { Todo, CreateTodoData, UpdateTodoData } from '@/features/todo/types
 export function TodoList() {
   const {
     todos,
+    allTodos,
     loading,
     error,
     filter,
@@ -27,13 +30,11 @@ export function TodoList() {
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
 
-  // Get all todos for counting (not filtered)
-  const allTodos = todos // useTodos already returns filtered todos, we need to get all todos differently
-  // For now, we'll calculate based on filtered todos
+  // Calculate counts based on all todos (not filtered)
   const counts = {
-    all: todos.length, // This needs to be fixed to show actual counts
-    active: todos.filter(todo => !todo.completed).length,
-    completed: todos.filter(todo => todo.completed).length,
+    all: allTodos.length,
+    active: allTodos.filter(todo => !todo.completed).length,
+    completed: allTodos.filter(todo => todo.completed).length,
   }
 
   const handleCreateTodo = async (data: CreateTodoData) => {

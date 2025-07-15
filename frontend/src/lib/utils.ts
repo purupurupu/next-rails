@@ -52,7 +52,7 @@ export function isDueSoon(dueDateString: string, days: number = 3): boolean {
   return diffDays <= days && diffDays > 0
 }
 
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   delay: number
 ): (...args: Parameters<T>) => void {

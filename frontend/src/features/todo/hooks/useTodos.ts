@@ -12,7 +12,7 @@ import type {
 import { TODO_FILTERS } from '@/lib/constants'
 
 interface UseTodosState {
-  todos: Todo[]
+  allTodos: Todo[]
   loading: boolean
   error: string | null
   filter: TodoFilter
@@ -28,9 +28,13 @@ interface UseTodosActions {
   refreshTodos: () => Promise<void>
 }
 
-export function useTodos(): UseTodosState & UseTodosActions {
+interface UseTodosReturn extends UseTodosState, UseTodosActions {
+  todos: Todo[]
+}
+
+export function useTodos(): UseTodosReturn {
   const [state, setState] = useState<UseTodosState>({
-    todos: [],
+    allTodos: [],
     loading: false,
     error: null,
     filter: TODO_FILTERS.ALL,
@@ -44,8 +48,8 @@ export function useTodos(): UseTodosState & UseTodosActions {
     setState(prev => ({ ...prev, error }))
   }, [])
 
-  const setTodos = useCallback((todos: Todo[]) => {
-    setState(prev => ({ ...prev, todos }))
+  const setAllTodos = useCallback((todos: Todo[]) => {
+    setState(prev => ({ ...prev, allTodos: todos }))
   }, [])
 
   const setFilter = useCallback((filter: TodoFilter) => {
@@ -58,7 +62,7 @@ export function useTodos(): UseTodosState & UseTodosActions {
     
     try {
       const todos = await todoApiClient.getTodos()
-      setTodos(todos)
+      setAllTodos(todos)
     } catch (error) {
       const errorMessage = error instanceof ApiError 
         ? error.message 
@@ -70,7 +74,7 @@ export function useTodos(): UseTodosState & UseTodosActions {
     } finally {
       setLoading(false)
     }
-  }, [setLoading, setError, setTodos])
+  }, [setLoading, setError, setAllTodos])
 
   const createTodo = useCallback(async (data: CreateTodoData) => {
     setError(null)
@@ -80,17 +84,17 @@ export function useTodos(): UseTodosState & UseTodosActions {
       id: generateOptimisticId(),
       title: data.title,
       completed: false,
-      position: state.todos.length + 1,
+      position: state.allTodos.length + 1,
       due_date: data.due_date || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
     
-    setTodos([...state.todos, optimisticTodo])
+    setAllTodos([...state.allTodos, optimisticTodo])
     
     try {
       const createdTodo = await todoApiClient.createTodo(data)
-      setTodos(prev => 
+      setAllTodos(prev => 
         prev.map(todo => 
           todo.id === optimisticTodo.id ? createdTodo : todo
         )
@@ -98,7 +102,7 @@ export function useTodos(): UseTodosState & UseTodosActions {
       toast.success('タスクを作成しました')
     } catch (error) {
       // Revert optimistic update
-      setTodos(prev => 
+      setAllTodos(prev => 
         prev.filter(todo => todo.id !== optimisticTodo.id)
       )
       
@@ -110,21 +114,21 @@ export function useTodos(): UseTodosState & UseTodosActions {
         description: errorMessage
       })
     }
-  }, [state.todos, setTodos, setError])
+  }, [state.allTodos, setAllTodos, setError])
 
   const updateTodo = useCallback(async (id: number, data: UpdateTodoData) => {
     setError(null)
     
     // Optimistic update
-    const originalTodos = state.todos
-    const updatedTodos = state.todos.map(todo =>
+    const originalTodos = state.allTodos
+    const updatedTodos = state.allTodos.map(todo =>
       todo.id === id ? { ...todo, ...data } : todo
     )
-    setTodos(updatedTodos)
+    setAllTodos(updatedTodos)
     
     try {
       const updatedTodo = await todoApiClient.updateTodo(id, data)
-      setTodos(prev => 
+      setAllTodos(prev => 
         prev.map(todo => 
           todo.id === id ? updatedTodo : todo
         )
@@ -132,7 +136,7 @@ export function useTodos(): UseTodosState & UseTodosActions {
       toast.success('タスクを更新しました')
     } catch (error) {
       // Revert optimistic update
-      setTodos(originalTodos)
+      setAllTodos(originalTodos)
       
       const errorMessage = error instanceof ApiError 
         ? error.message 
@@ -142,22 +146,22 @@ export function useTodos(): UseTodosState & UseTodosActions {
         description: errorMessage
       })
     }
-  }, [state.todos, setTodos, setError])
+  }, [state.allTodos, setAllTodos, setError])
 
   const deleteTodo = useCallback(async (id: number) => {
     setError(null)
     
     // Optimistic update
-    const originalTodos = state.todos
-    const filteredTodos = state.todos.filter(todo => todo.id !== id)
-    setTodos(filteredTodos)
+    const originalTodos = state.allTodos
+    const filteredTodos = state.allTodos.filter(todo => todo.id !== id)
+    setAllTodos(filteredTodos)
     
     try {
       await todoApiClient.deleteTodo(id)
       toast.success('タスクを削除しました')
     } catch (error) {
       // Revert optimistic update
-      setTodos(originalTodos)
+      setAllTodos(originalTodos)
       
       const errorMessage = error instanceof ApiError 
         ? error.message 
@@ -167,26 +171,26 @@ export function useTodos(): UseTodosState & UseTodosActions {
         description: errorMessage
       })
     }
-  }, [state.todos, setTodos, setError])
+  }, [state.allTodos, setAllTodos, setError])
 
   const updateTodoOrder = useCallback(async (reorderedTodos: UpdateOrderData[]) => {
     setError(null)
     
     // Optimistic update
-    const originalTodos = state.todos
-    const updatedTodos = [...state.todos].sort((a, b) => {
+    const originalTodos = state.allTodos
+    const updatedTodos = [...state.allTodos].sort((a, b) => {
       const aData = reorderedTodos.find(item => item.id === a.id)
       const bData = reorderedTodos.find(item => item.id === b.id)
       return (aData?.position || 0) - (bData?.position || 0)
     })
-    setTodos(updatedTodos)
+    setAllTodos(updatedTodos)
     
     try {
       await todoApiClient.updateTodoOrder(reorderedTodos)
       toast.success('タスクの順序を更新しました')
     } catch (error) {
       // Revert optimistic update
-      setTodos(originalTodos)
+      setAllTodos(originalTodos)
       
       const errorMessage = error instanceof ApiError 
         ? error.message 
@@ -196,14 +200,14 @@ export function useTodos(): UseTodosState & UseTodosActions {
         description: errorMessage
       })
     }
-  }, [state.todos, setTodos, setError])
+  }, [state.allTodos, setAllTodos, setError])
 
   const toggleTodoComplete = useCallback(async (id: number) => {
-    const todo = state.todos.find(t => t.id === id)
+    const todo = state.allTodos.find(t => t.id === id)
     if (!todo) return
     
     await updateTodo(id, { completed: !todo.completed })
-  }, [state.todos, updateTodo])
+  }, [state.allTodos, updateTodo])
 
   // Initial load
   useEffect(() => {
@@ -211,7 +215,7 @@ export function useTodos(): UseTodosState & UseTodosActions {
   }, [refreshTodos])
 
   // Filter todos based on current filter
-  const filteredTodos = state.todos.filter(todo => {
+  const filteredTodos = state.allTodos.filter(todo => {
     switch (state.filter) {
       case TODO_FILTERS.ACTIVE:
         return !todo.completed
@@ -224,6 +228,7 @@ export function useTodos(): UseTodosState & UseTodosActions {
 
   return {
     todos: filteredTodos,
+    allTodos: state.allTodos,
     loading: state.loading,
     error: state.error,
     filter: state.filter,
