@@ -82,3 +82,42 @@ The project is transitioning from Nuxt.js to Next.js. The backend API is fully f
 1. **Package Manager**: Always use pnpm, NOT npm
 2. **API Calls**: All API calls must go through the API client (not direct fetch calls)
 3. **Commits**: Make frequent, small commits with clear messages. Commit after each logical change or feature addition
+
+## Frontend Architecture
+
+### Directory Structure
+```
+frontend/src/
+├── app/               # Next.js App Router pages
+├── components/
+│   ├── ui/           # shadcn/ui components
+│   ├── features/     # Feature-specific components
+│   │   └── todo/     # Todo feature components
+│   └── layouts/      # Layout components
+├── hooks/            # Custom React hooks
+├── lib/              # Utilities and configurations
+├── types/            # TypeScript type definitions
+└── styles/           # Additional styles
+```
+
+### Naming Conventions
+
+1. **Files and Directories**:
+   - Components: PascalCase (e.g., `TodoItem.tsx`, `TodoForm.tsx`)
+   - Hooks: camelCase with `use` prefix (e.g., `useTodos.ts`)
+   - Utilities: kebab-case (e.g., `api-client.ts`, `constants.ts`)
+   - Types: kebab-case (e.g., `todo.ts`)
+
+2. **Code Naming**:
+   - React components: PascalCase
+   - Functions/variables: camelCase
+   - Constants: UPPER_SNAKE_CASE
+   - Interfaces: PascalCase with descriptive suffix (e.g., `TodoItemProps`, `CreateTodoData`)
+
+### Key Files
+
+- `types/todo.ts` - Todo-related TypeScript interfaces
+- `lib/api-client.ts` - API communication layer with error handling
+- `lib/constants.ts` - App-wide constants and configurations
+- `lib/utils.ts` - Utility functions (date formatting, validation, etc.)
+- `hooks/useTodos.ts` - Todo state management with optimistic updates
