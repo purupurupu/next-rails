@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "typecheck:full": "tsc --noEmit --skipLibCheck false"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

@@ -39,9 +39,10 @@ docker compose logs -f frontend
 ### Frontend Development
 ```bash
 # All commands run inside the frontend container
-docker compose exec frontend pnpm run dev      # Development server
-docker compose exec frontend pnpm run build    # Production build
-docker compose exec frontend pnpm run lint     # ESLint
+docker compose exec frontend pnpm run dev        # Development server
+docker compose exec frontend pnpm run build      # Production build
+docker compose exec frontend pnpm run lint       # ESLint
+docker compose exec frontend pnpm run typecheck  # TypeScript type checking
 ```
 
 ### Backend Development
@@ -123,10 +124,11 @@ frontend/src/
 
 ### Key Files
 
+- `lib/api-client.ts` - Base HttpClient with common HTTP methods
+- `features/todo/lib/api-client.ts` - Todo-specific API client extending HttpClient
 - `features/todo/types/todo.ts` - Todo-related TypeScript interfaces
-- `lib/api-client.ts` - API communication layer with error handling
-- `constants/api.ts` - API-related constants and configurations
-- `utils/date.ts`, `utils/validation.ts` - Utility functions
+- `lib/constants.ts` - API-related constants and configurations
+- `lib/utils.ts` - Utility functions (date formatting, validation, etc.)
 - `features/todo/hooks/useTodos.ts` - Todo state management with optimistic updates
 
 ### Architecture Principles
@@ -135,3 +137,7 @@ frontend/src/
 2. **Cross-cutting concerns**: Shared utilities, types, and components live in root-level directories
 3. **Separation of concerns**: Each feature has its own components, hooks, types, and utilities
 4. **Reusability**: Common UI components and hooks are shared across features
+5. **API Client Pattern**: 
+   - Base `HttpClient` provides common HTTP methods (GET, POST, PUT, PATCH, DELETE)
+   - Feature-specific API clients extend `HttpClient` and implement domain-specific methods
+   - Hooks use feature API clients for data fetching and state management
