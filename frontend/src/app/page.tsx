@@ -1,4 +1,4 @@
-import { TodoList } from '@/features/todo/components/TodoList'
+import { TodoList } from "@/features/todo/components/TodoList";
 
 export default function Home() {
   return (
@@ -7,5 +7,5 @@ export default function Home() {
         <TodoList />
       </div>
     </div>
-  )
+  );
 }

@@ -1,17 +1,17 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { useState } from "react";
+import { Plus } from "lucide-react";
 
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
-import { useTodos } from '@/features/todo/hooks/useTodos'
-import { TodoItem } from './TodoItem'
-import { TodoForm } from './TodoForm'
-import { TodoFilters } from './TodoFilters'
+import { useTodos } from "@/features/todo/hooks/useTodos";
+import { TodoItem } from "./TodoItem";
+import { TodoForm } from "./TodoForm";
+import { TodoFilters } from "./TodoFilters";
 
-import type { Todo, CreateTodoData, UpdateTodoData } from '@/features/todo/types/todo'
+import type { Todo, CreateTodoData, UpdateTodoData } from "@/features/todo/types/todo";
 
 export function TodoList() {
   const {
@@ -25,35 +25,35 @@ export function TodoList() {
     deleteTodo,
     toggleTodoComplete,
     setFilter,
-  } = useTodos()
+  } = useTodos();
 
-  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
-  const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 
   // Calculate counts based on all todos (not filtered)
   const counts = {
     all: allTodos.length,
-    active: allTodos.filter(todo => !todo.completed).length,
-    completed: allTodos.filter(todo => todo.completed).length,
-  }
+    active: allTodos.filter((todo) => !todo.completed).length,
+    completed: allTodos.filter((todo) => todo.completed).length,
+  };
 
   const handleCreateTodo = async (data: CreateTodoData) => {
-    await createTodo(data)
-  }
+    await createTodo(data);
+  };
 
   const handleUpdateTodo = async (data: UpdateTodoData) => {
-    if (!editingTodo) return
-    await updateTodo(editingTodo.id, data)
-    setEditingTodo(null)
-  }
+    if (!editingTodo) return;
+    await updateTodo(editingTodo.id, data);
+    setEditingTodo(null);
+  };
 
   const handleEditTodo = (todo: Todo) => {
-    setEditingTodo(todo)
-  }
+    setEditingTodo(todo);
+  };
 
   const handleDeleteTodo = async (id: number) => {
-    await deleteTodo(id)
-  }
+    await deleteTodo(id);
+  };
 
   if (loading) {
     return (
@@ -74,7 +74,7 @@ export function TodoList() {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -102,30 +102,36 @@ export function TodoList() {
       <Separator />
 
       <div className="space-y-3">
-        {todos.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            {filter === 'all' ? (
-              <div className="space-y-2">
-                <p>まだタスクがありません</p>
-                <p className="text-sm">「タスクを追加」ボタンから新しいタスクを作成しましょう</p>
+        {todos.length === 0
+          ? (
+              <div className="text-center py-12 text-muted-foreground">
+                {filter === "all"
+                  ? (
+                      <div className="space-y-2">
+                        <p>まだタスクがありません</p>
+                        <p className="text-sm">「タスクを追加」ボタンから新しいタスクを作成しましょう</p>
+                      </div>
+                    )
+                  : filter === "active"
+                    ? (
+                        <p>未完了のタスクはありません</p>
+                      )
+                    : (
+                        <p>完了したタスクはありません</p>
+                      )}
               </div>
-            ) : filter === 'active' ? (
-              <p>未完了のタスクはありません</p>
-            ) : (
-              <p>完了したタスクはありません</p>
+            )
+          : (
+              todos.map((todo) => (
+                <TodoItem
+                  key={todo.id}
+                  todo={todo}
+                  onToggleComplete={toggleTodoComplete}
+                  onEdit={handleEditTodo}
+                  onDelete={handleDeleteTodo}
+                />
+              ))
             )}
-          </div>
-        ) : (
-          todos.map((todo) => (
-            <TodoItem
-              key={todo.id}
-              todo={todo}
-              onToggleComplete={toggleTodoComplete}
-              onEdit={handleEditTodo}
-              onDelete={handleDeleteTodo}
-            />
-          ))
-        )}
       </div>
 
       <TodoForm
@@ -145,5 +151,5 @@ export function TodoList() {
         />
       )}
     </div>
-  )
+  );
 }
