@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { apiClient, ApiError } from '@/lib/api-client'
+import { todoApiClient, ApiError } from '@/features/todo/lib/api-client'
 import { generateOptimisticId } from '@/lib/utils'
 import type { 
   Todo, 
@@ -56,7 +56,7 @@ export function useTodos(): UseTodosState & UseTodosActions {
     setError(null)
     
     try {
-      const todos = await apiClient.getTodos()
+      const todos = await todoApiClient.getTodos()
       setTodos(todos)
     } catch (error) {
       if (error instanceof ApiError) {
@@ -86,7 +86,7 @@ export function useTodos(): UseTodosState & UseTodosActions {
     setTodos([...state.todos, optimisticTodo])
     
     try {
-      const createdTodo = await apiClient.createTodo(data)
+      const createdTodo = await todoApiClient.createTodo(data)
       setTodos(prev => 
         prev.map(todo => 
           todo.id === optimisticTodo.id ? createdTodo : todo
@@ -117,7 +117,7 @@ export function useTodos(): UseTodosState & UseTodosActions {
     setTodos(updatedTodos)
     
     try {
-      const updatedTodo = await apiClient.updateTodo(id, data)
+      const updatedTodo = await todoApiClient.updateTodo(id, data)
       setTodos(prev => 
         prev.map(todo => 
           todo.id === id ? updatedTodo : todo
@@ -144,7 +144,7 @@ export function useTodos(): UseTodosState & UseTodosActions {
     setTodos(filteredTodos)
     
     try {
-      await apiClient.deleteTodo(id)
+      await todoApiClient.deleteTodo(id)
     } catch (error) {
       // Revert optimistic update
       setTodos(originalTodos)
@@ -170,7 +170,7 @@ export function useTodos(): UseTodosState & UseTodosActions {
     setTodos(updatedTodos)
     
     try {
-      await apiClient.updateTodoOrder(reorderedTodos)
+      await todoApiClient.updateTodoOrder(reorderedTodos)
     } catch (error) {
       // Revert optimistic update
       setTodos(originalTodos)

@@ -1,24 +1,17 @@
-import { API_BASE_URL, API_ENDPOINTS } from './constants'
-import type { 
-  Todo, 
-  CreateTodoData, 
-  UpdateTodoData, 
-  UpdateOrderData, 
-  TodoError 
-} from '@/features/todo/types/todo'
+import { API_BASE_URL } from './constants'
 
 class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
-    public errors?: TodoError
+    public errors?: Record<string, string[]>
   ) {
     super(message)
     this.name = 'ApiError'
   }
 }
 
-class ApiClient {
+class HttpClient {
   private baseUrl: string
 
   constructor(baseUrl: string = API_BASE_URL) {
@@ -65,42 +58,38 @@ class ApiClient {
     }
   }
 
-  async getTodos(): Promise<Todo[]> {
-    return this.request<Todo[]>(API_ENDPOINTS.TODOS)
+  async get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint)
   }
 
-  async getTodoById(id: number): Promise<Todo> {
-    return this.request<Todo>(API_ENDPOINTS.TODO_BY_ID(id))
-  }
-
-  async createTodo(data: CreateTodoData): Promise<Todo> {
-    return this.request<Todo>(API_ENDPOINTS.TODOS, {
+  async post<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
       method: 'POST',
-      body: JSON.stringify({ todo: data }),
+      body: data ? JSON.stringify(data) : undefined,
     })
   }
 
-  async updateTodo(id: number, data: UpdateTodoData): Promise<Todo> {
-    return this.request<Todo>(API_ENDPOINTS.TODO_BY_ID(id), {
+  async put<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
       method: 'PUT',
-      body: JSON.stringify({ todo: data }),
+      body: data ? JSON.stringify(data) : undefined,
     })
   }
 
-  async deleteTodo(id: number): Promise<void> {
-    return this.request<void>(API_ENDPOINTS.TODO_BY_ID(id), {
-      method: 'DELETE',
-    })
-  }
-
-  async updateTodoOrder(todos: UpdateOrderData[]): Promise<void> {
-    return this.request<void>(API_ENDPOINTS.UPDATE_ORDER, {
+  async patch<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
       method: 'PATCH',
-      body: JSON.stringify({ todos }),
+      body: data ? JSON.stringify(data) : undefined,
+    })
+  }
+
+  async delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'DELETE',
     })
   }
 }
 
-export const apiClient = new ApiClient()
+export const httpClient = new HttpClient()
 export { ApiError }
-export type { ApiClient }
+export type { HttpClient }
