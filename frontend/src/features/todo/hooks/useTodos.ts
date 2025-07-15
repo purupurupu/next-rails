@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { toast } from 'sonner'
 import { todoApiClient, ApiError } from '@/features/todo/lib/api-client'
 import { generateOptimisticId } from '@/lib/utils'
 import type { 
@@ -59,11 +60,13 @@ export function useTodos(): UseTodosState & UseTodosActions {
       const todos = await todoApiClient.getTodos()
       setTodos(todos)
     } catch (error) {
-      if (error instanceof ApiError) {
-        setError(error.message)
-      } else {
-        setError('An unexpected error occurred')
-      }
+      const errorMessage = error instanceof ApiError 
+        ? error.message 
+        : 'An unexpected error occurred'
+      setError(errorMessage)
+      toast.error('タスクの読み込みに失敗しました', {
+        description: errorMessage
+      })
     } finally {
       setLoading(false)
     }
@@ -92,17 +95,20 @@ export function useTodos(): UseTodosState & UseTodosActions {
           todo.id === optimisticTodo.id ? createdTodo : todo
         )
       )
+      toast.success('タスクを作成しました')
     } catch (error) {
       // Revert optimistic update
       setTodos(prev => 
         prev.filter(todo => todo.id !== optimisticTodo.id)
       )
       
-      if (error instanceof ApiError) {
-        setError(error.message)
-      } else {
-        setError('Failed to create todo')
-      }
+      const errorMessage = error instanceof ApiError 
+        ? error.message 
+        : 'Failed to create todo'
+      setError(errorMessage)
+      toast.error('タスクの作成に失敗しました', {
+        description: errorMessage
+      })
     }
   }, [state.todos, setTodos, setError])
 
@@ -123,15 +129,18 @@ export function useTodos(): UseTodosState & UseTodosActions {
           todo.id === id ? updatedTodo : todo
         )
       )
+      toast.success('タスクを更新しました')
     } catch (error) {
       // Revert optimistic update
       setTodos(originalTodos)
       
-      if (error instanceof ApiError) {
-        setError(error.message)
-      } else {
-        setError('Failed to update todo')
-      }
+      const errorMessage = error instanceof ApiError 
+        ? error.message 
+        : 'Failed to update todo'
+      setError(errorMessage)
+      toast.error('タスクの更新に失敗しました', {
+        description: errorMessage
+      })
     }
   }, [state.todos, setTodos, setError])
 
@@ -145,15 +154,18 @@ export function useTodos(): UseTodosState & UseTodosActions {
     
     try {
       await todoApiClient.deleteTodo(id)
+      toast.success('タスクを削除しました')
     } catch (error) {
       // Revert optimistic update
       setTodos(originalTodos)
       
-      if (error instanceof ApiError) {
-        setError(error.message)
-      } else {
-        setError('Failed to delete todo')
-      }
+      const errorMessage = error instanceof ApiError 
+        ? error.message 
+        : 'Failed to delete todo'
+      setError(errorMessage)
+      toast.error('タスクの削除に失敗しました', {
+        description: errorMessage
+      })
     }
   }, [state.todos, setTodos, setError])
 
@@ -171,15 +183,18 @@ export function useTodos(): UseTodosState & UseTodosActions {
     
     try {
       await todoApiClient.updateTodoOrder(reorderedTodos)
+      toast.success('タスクの順序を更新しました')
     } catch (error) {
       // Revert optimistic update
       setTodos(originalTodos)
       
-      if (error instanceof ApiError) {
-        setError(error.message)
-      } else {
-        setError('Failed to update todo order')
-      }
+      const errorMessage = error instanceof ApiError 
+        ? error.message 
+        : 'Failed to update todo order'
+      setError(errorMessage)
+      toast.error('タスクの順序更新に失敗しました', {
+        description: errorMessage
+      })
     }
   }, [state.todos, setTodos, setError])
 
