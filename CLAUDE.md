@@ -72,11 +72,17 @@ docker compose exec frontend pnpm run typecheck:full  # Full TypeScript check
 
 ### Backend Development
 ```bash
-# Run tests
-docker compose exec backend bundle exec rails test
+# Run tests with RSpec
+docker compose exec backend bundle exec rspec
 
 # Run specific test file
-docker compose exec backend bundle exec rails test test/controllers/todos_controller_test.rb
+docker compose exec backend bundle exec rspec spec/models/todo_spec.rb
+
+# Run tests with coverage
+docker compose exec backend bundle exec rspec --format documentation
+
+# Run tests using dedicated test service
+docker compose --profile test run backend-test
 
 # Generate new resources
 docker compose exec backend rails generate model ModelName
