@@ -6,6 +6,9 @@ export const API_ENDPOINTS = {
   TODOS: "/api/todos",
   TODO_BY_ID: (id: number) => `/api/todos/${id}`,
   UPDATE_ORDER: "/api/todos/update_order",
+  AUTH_LOGIN: "/auth/sign_in",
+  AUTH_REGISTER: "/auth/sign_up",
+  AUTH_LOGOUT: "/auth/sign_out",
 } as const;
 
 export const TODO_FILTERS = {
