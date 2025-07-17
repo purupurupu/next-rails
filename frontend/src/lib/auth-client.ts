@@ -41,6 +41,7 @@ export interface AuthError {
 
 class AuthClient {
   private async authRequest(endpoint: string, data: unknown): Promise<{ user: User; token: string }> {
+    console.log("authRequest called with endpoint:", endpoint, "data:", data); // Debug log
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: "POST",
@@ -50,16 +51,27 @@ class AuthClient {
         body: JSON.stringify(data),
       });
 
+      console.log("Response status:", response.status); // Debug log
+      console.log("Response headers:", Object.fromEntries(response.headers.entries())); // Debug log
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error("Authentication failed:", errorData); // Debug log
         throw new Error(errorData.error || errorData.status?.message || "Authentication failed");
       }
 
       const responseData: AuthResponse = await response.json();
-      const token = response.headers.get("Authorization") || "";
+      const token = (responseData as any).token || "";
+
+      console.log("Login response token (from body):", token); // Debug log
 
       if (token) {
-        this.setAuthToken(token);
+        // Bearerプレフィックスを削除してからトークンを保存
+        const cleanToken = token.replace("Bearer ", "");
+        this.setAuthToken(cleanToken);
+        console.log("Token saved to localStorage:", this.getAuthToken()); // Debug log
+      } else {
+        console.error("No Authorization header found in login response");
       }
 
       return {
@@ -67,6 +79,7 @@ class AuthClient {
         token: token.replace("Bearer ", ""),
       };
     } catch (error) {
+      console.error("authRequest error:", error); // Debug log
       if (error instanceof Error) {
         throw error;
       }

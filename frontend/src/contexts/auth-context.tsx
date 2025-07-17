@@ -22,12 +22,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check if user is already logged in
     const token = authClient.getAuthToken();
     if (token) {
-      // TODO: Validate token with backend or decode JWT to get user info
-      // For now, we'll just set isAuthenticated based on token presence
-      setIsLoading(false);
-    } else {
-      setIsLoading(false);
+      // For now, we'll set a placeholder user based on token presence
+      // In production, you might want to validate the token with the backend
+      setUser({ 
+        id: 0, 
+        email: 'authenticated@user.com', 
+        name: 'Authenticated User', 
+        created_at: new Date().toISOString() 
+      });
     }
+    setIsLoading(false);
   }, []);
 
   const login = async (credentials: LoginRequest) => {
@@ -58,17 +62,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await authClient.logout();
-      setUser(null);
     } catch (error) {
-      // Even if logout fails on the server, clear local state
-      setUser(null);
       console.error("Logout error:", error);
     } finally {
+      // Always clear local state regardless of server response
+      setUser(null);
       setIsLoading(false);
     }
   };
 
-  const isAuthenticated = !!user || authClient.isAuthenticated();
+  const isAuthenticated = !!user;
 
   const value: AuthContextType = {
     user,
