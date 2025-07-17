@@ -62,6 +62,8 @@ class AuthClient {
         // Bearerプレフィックスを削除してからトークンを保存
         const cleanToken = token.replace("Bearer ", "");
         this.setAuthToken(cleanToken);
+        // ユーザー情報も保存
+        this.setUser(responseData.data);
       }
 
       return {
@@ -108,7 +110,27 @@ class AuthClient {
   removeAuthToken(): void {
     if (typeof window !== "undefined") {
       localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
     }
+  }
+
+  setUser(user: User): void {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("user", JSON.stringify(user));
+    }
+  }
+
+  getUser(): User | null {
+    if (typeof window === "undefined") return null;
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        return JSON.parse(userStr);
+      } catch {
+        return null;
+      }
+    }
+    return null;
   }
 
   isAuthenticated(): boolean {

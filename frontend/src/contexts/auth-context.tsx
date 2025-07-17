@@ -22,10 +22,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check if user is already logged in
     const token = authClient.getAuthToken();
+    const savedUser = authClient.getUser();
+
     if (token) {
       setHasToken(true);
-      // TODO: In production, validate token with backend and get actual user info
-      // For now, we'll just indicate that user is authenticated without user data
+      if (savedUser) {
+        setUser(savedUser);
+      }
     }
     setIsLoading(false);
   }, []);
