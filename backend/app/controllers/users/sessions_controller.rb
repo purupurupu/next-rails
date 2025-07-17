@@ -23,6 +23,9 @@ class Users::SessionsController < Devise::SessionsController
   private
 
   def respond_with(resource, _opts = {})
+    # JWTトークンを手動で生成してレスポンスボディに含める
+    token = Warden::JWTAuth::UserEncoder.new.call(resource, :user, nil).first
+    
     render json: {
       status: { code: 200, message: 'Logged in successfully.' },
       data: {
@@ -30,7 +33,14 @@ class Users::SessionsController < Devise::SessionsController
         email: resource.email,
         name: resource.name,
         created_at: resource.created_at
-      }
+      },
+      token: token
+    }
+  end
+
+  def respond_to_on_destroy
+    render json: {
+      status: { code: 200, message: 'Logged out successfully.' }
     }
   end
 end
