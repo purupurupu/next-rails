@@ -61,7 +61,7 @@ class AuthClient {
       }
 
       const responseData: AuthResponse = await response.json();
-      const token = (responseData as any).token || "";
+      const token = (responseData as AuthResponse & { token?: string }).token || "";
 
       console.log("Login response token (from body):", token); // Debug log
 

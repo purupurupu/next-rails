@@ -24,11 +24,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (token) {
       // For now, we'll set a placeholder user based on token presence
       // In production, you might want to validate the token with the backend
-      setUser({ 
-        id: 0, 
-        email: 'authenticated@user.com', 
-        name: 'Authenticated User', 
-        created_at: new Date().toISOString() 
+      setUser({
+        id: 0,
+        email: "authenticated@user.com",
+        name: "Authenticated User",
+        created_at: new Date().toISOString(),
       });
     }
     setIsLoading(false);
