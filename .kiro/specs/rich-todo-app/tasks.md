@@ -13,7 +13,7 @@
   - Write comprehensive tests for User model validations and associations
   - _Requirements: 1.1, 1.2_
 
-- [ ] 2.2 Implement JWT authentication service
+- [x] 2.2 Implement JWT authentication service
   - Create JwtService class for token generation and validation
   - Add JWT authentication middleware to ApplicationController
   - Write unit tests for JWT service functionality
