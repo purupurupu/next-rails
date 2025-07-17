@@ -17,11 +17,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasToken, setHasToken] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in
     const token = authClient.getAuthToken();
     if (token) {
+      setHasToken(true);
       // TODO: In production, validate token with backend and get actual user info
       // For now, we'll just indicate that user is authenticated without user data
     }
@@ -33,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { user: loggedInUser } = await authClient.login(credentials);
       setUser(loggedInUser);
+      setHasToken(true);
     } catch (error) {
       throw error;
     } finally {
@@ -45,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { user: registeredUser } = await authClient.register(userData);
       setUser(registeredUser);
+      setHasToken(true);
     } catch (error) {
       throw error;
     } finally {
@@ -61,11 +65,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       // Always clear local state regardless of server response
       setUser(null);
+      setHasToken(false);
       setIsLoading(false);
     }
   };
 
-  const isAuthenticated = !!user || !!authClient.getAuthToken();
+  const isAuthenticated = !!user || hasToken;
 
   const value: AuthContextType = {
     user,
