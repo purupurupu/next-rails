@@ -22,14 +22,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check if user is already logged in
     const token = authClient.getAuthToken();
     if (token) {
-      // For now, we'll set a placeholder user based on token presence
-      // In production, you might want to validate the token with the backend
-      setUser({
-        id: 0,
-        email: "authenticated@user.com",
-        name: "Authenticated User",
-        created_at: new Date().toISOString(),
-      });
+      // TODO: In production, validate token with backend and get actual user info
+      // For now, we'll just indicate that user is authenticated without user data
     }
     setIsLoading(false);
   }, []);
@@ -71,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const isAuthenticated = !!user;
+  const isAuthenticated = !!user || !!authClient.getAuthToken();
 
   const value: AuthContextType = {
     user,
