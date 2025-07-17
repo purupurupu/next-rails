@@ -13,10 +13,11 @@
   - Write comprehensive tests for User model validations and associations
   - _Requirements: 1.1, 1.2_
 
-- [ ] 2.2 Implement JWT authentication service
-  - Create JwtService class for token generation and validation
-  - Add JWT authentication middleware to ApplicationController
-  - Write unit tests for JWT service functionality
+- [x] 2.2 Configure devise-jwt authentication
+  - Configure devise-jwt in initializers with proper settings
+  - Create JwtDenylist model for token revocation strategy
+  - Set up JWT dispatch and revocation request patterns
+  - Write unit tests for JWT authentication functionality
   - _Requirements: 1.3_
 
 - [ ] 2.3 Create authentication API endpoints

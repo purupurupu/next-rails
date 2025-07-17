@@ -16,7 +16,7 @@ gem 'rack-cors'
 
 # Authentication
 gem 'devise'
-gem 'jwt'
+gem 'devise-jwt'
 
 # API serialization
 gem 'active_model_serializers', '~> 0.10.0'
