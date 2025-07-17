@@ -1,4 +1,7 @@
 class Todo < ApplicationRecord
+    # 関連付け（学習ポイント：belongs_to関連）
+    belongs_to :user
+    
     validates :title, presence: true
     validates :completed, inclusion: { in: [true, false] }
     validate :due_date_cannot_be_in_the_past, if: -> { due_date.present? }
