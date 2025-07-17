@@ -1,6 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe Todo, type: :model do
+  describe 'associations' do
+    it { should belong_to(:user) }
+  end
+  
   describe 'validations' do
     it 'is valid with valid attributes' do
       todo = build(:todo)
@@ -16,6 +20,11 @@ RSpec.describe Todo, type: :model do
       todo = build(:todo, due_date: 1.day.ago)
       expect(todo).not_to be_valid
     end
+    
+    it 'is not valid without a user' do
+      todo = build(:todo, user: nil)
+      expect(todo).not_to be_valid
+    end
   end
 
   describe 'factory' do
@@ -23,6 +32,7 @@ RSpec.describe Todo, type: :model do
       todo = create(:todo)
       expect(todo).to be_persisted
       expect(todo.title).to be_present
+      expect(todo.user).to be_present
     end
   end
 end
