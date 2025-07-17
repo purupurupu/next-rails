@@ -26,11 +26,8 @@ class HttpClient {
   private getAuthHeaders(): Record<string, string> {
     const token = this.getAuthToken();
     if (token) {
-      const headers = { Authorization: `Bearer ${token}` };
-      console.log("Auth headers:", headers); // Debug log
-      return headers;
+      return { Authorization: `Bearer ${token}` };
     }
-    console.log("Auth headers:", {}); // Debug log
     return {};
   }
 
