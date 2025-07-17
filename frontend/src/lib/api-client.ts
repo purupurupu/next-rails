@@ -18,6 +18,19 @@ class HttpClient {
     this.baseUrl = baseUrl;
   }
 
+  private getAuthToken(): string | null {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("authToken");
+  }
+
+  private getAuthHeaders(): Record<string, string> {
+    const token = this.getAuthToken();
+    if (token) {
+      return { Authorization: `Bearer ${token}` };
+    }
+    return {};
+  }
+
   private async request<T>(
     endpoint: string,
     options?: RequestInit,
@@ -27,6 +40,7 @@ class HttpClient {
     const config: RequestInit = {
       headers: {
         "Content-Type": "application/json",
+        ...this.getAuthHeaders(),
         ...options?.headers,
       },
       ...options,
