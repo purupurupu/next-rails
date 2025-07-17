@@ -20,7 +20,7 @@
   - Write unit tests for JWT authentication functionality
   - _Requirements: 1.3_
 
-- [ ] 2.3 Create authentication API endpoints
+- [x] 2.3 Create authentication API endpoints
   - Implement registration, login, and logout endpoints
   - Add proper error handling for authentication failures
   - Write integration tests for authentication flow

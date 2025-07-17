@@ -31,5 +31,9 @@ module App
     
     # Configure Active Job to use Sidekiq for background processing
     config.active_job.queue_adapter = :sidekiq
+    
+    # Enable sessions for JWT authentication with Devise
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use ActionDispatch::Session::CookieStore
   end
 end
