@@ -1,17 +1,18 @@
 module Api
   class TodosController < ApplicationController
+    before_action :set_todo, only: [:show, :update, :destroy]
+
     def index
-      @todos = Todo.all
+      @todos = current_user.todos.order(:position)
       render json: @todos
     end
 
     def show
-      @todo = Todo.find(params[:id])
       render json: @todo
     end
 
     def create
-      @todo = Todo.new(todo_params)
+      @todo = current_user.todos.build(todo_params)
       if @todo.save
         render json: @todo, status: :created
       else
@@ -20,7 +21,6 @@ module Api
     end
 
     def update
-      @todo = Todo.find(params[:id])
       if @todo.update(todo_params)
         render json: @todo
       else
@@ -29,14 +29,13 @@ module Api
     end
 
     def destroy
-      @todo = Todo.find(params[:id])
       @todo.destroy
       head :no_content
     end
 
     def update_order
       params[:todos].each do |todo_data|
-        todo = Todo.find(todo_data[:id])
+        todo = current_user.todos.find(todo_data[:id])
         todo.update(position: todo_data[:position])
       end
       head :ok
@@ -44,8 +43,12 @@ module Api
 
     private
 
+    def set_todo
+      @todo = current_user.todos.find(params[:id])
+    end
+
     def todo_params
-      params.require(:todo).permit(:title, :completed, :position, :due_date)
+      params.require(:todo).permit(:title, :completed, :position, :due_date, :priority, :status)
     end
   end
 end
