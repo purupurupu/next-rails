@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-This is a full-stack Todo application using:
+This is a full-stack Todo application with user authentication using:
 - **Frontend**: Next.js 15.4.1 with TypeScript, React 19, and Tailwind CSS v4
 - **Package Manager**: pnpm (NOT npm)
-- **Backend**: Rails 7.1.3+ API-only application  
+- **Backend**: Rails 7.1.3+ API-only application with Devise + JWT authentication
 - **Database**: PostgreSQL 15
 - **Infrastructure**: Docker Compose orchestrating three services
 
@@ -15,6 +15,14 @@ Services run on:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:3001
 - PostgreSQL: localhost:5432
+
+## 📚 Documentation
+
+For detailed technical documentation, see the [docs directory](./docs/):
+- [Architecture Details](./docs/architecture/) - System design and technical decisions
+- [API Documentation](./docs/api/) - Complete API reference
+- [Development Guides](./docs/guides/) - Setup, coding standards, and workflows
+- [Feature Specifications](./docs/features/) - Detailed feature documentation
 
 ## Common Development Commands
 
@@ -50,25 +58,9 @@ docker compose exec frontend pnpm run typecheck:full  # Full TypeScript check
 
 ### Frontend Technical Details
 
-**Next.js Version**: 15.4.1
-**React Version**: 19.1.0
-**TypeScript**: v5
-**Tailwind CSS**: v4
+**Stack**: Next.js 15.4.1, React 19.1.0, TypeScript 5, Tailwind CSS v4
 
-**Key Dependencies**:
-- `@radix-ui/*` - Headless UI components
-- `class-variance-authority` - Conditional styling
-- `clsx` - Utility for conditional class names
-- `date-fns` - Date manipulation
-- `lucide-react` - Icon library
-- `next-themes` - Dark mode support
-- `react-day-picker` - Date picker component
-- `sonner` - Toast notifications
-- `tailwind-merge` - Tailwind class merging
-
-**Environment Variables**:
-- Development API: `http://localhost:3001`
-- Production API: Update `API_BASE_URL` in `lib/constants.ts`
+**Key Dependencies**: Radix UI, date-fns, lucide-react, sonner
 
 ### Backend Development
 ```bash
@@ -84,6 +76,9 @@ docker compose exec backend bundle exec rspec --format documentation
 # Run tests using dedicated test service
 docker compose --profile test run backend-test
 
+# Run authentication tests
+docker compose exec backend bundle exec rspec spec/requests/authentication_spec.rb
+
 # Generate new resources
 docker compose exec backend rails generate model ModelName
 docker compose exec backend rails generate controller ControllerName
@@ -98,67 +93,76 @@ docker compose exec backend bundle exec rails db:reset  # drop + create + migrat
 
 ### Backend Technical Details
 
-**Ruby Version**: 3.2.5
-**Rails Version**: 7.1.3+
-**Database**: PostgreSQL 15
+**Stack**: Ruby 3.2.5, Rails 7.1.3+, PostgreSQL 15
 
-**Key Gems**:
-- `pg` - PostgreSQL adapter
-- `puma` - Web server
-- `rack-cors` - CORS handling
-- `bootsnap` - Boot time optimization
+**Key Gems**: Devise + JWT, Sidekiq, RSpec
 
-**Database Schema**:
-```sql
-create_table "todos" do |t|
-  t.string "title", null: false
-  t.integer "position"
-  t.boolean "completed", default: false
-  t.date "due_date"
-  t.datetime "created_at", null: false
-  t.datetime "updated_at", null: false
-  t.index ["position"], name: "index_todos_on_position"
-end
-```
+**Core Models**:
+- **User**: Authentication with email/password
+- **Todo**: User's tasks with title, completion status, position, and optional due date
+- **JwtDenylist**: Revoked tokens for secure logout
 
-**Todo Model Validations**:
-- `title` - Required, must be present
-- `completed` - Boolean, defaults to false
-- `due_date` - Optional, cannot be in the past
-- `position` - Auto-assigned on creation for ordering
+See [Database Architecture](./docs/architecture/database.md) for detailed schema.
 
 **API Endpoints**:
-- `GET /api/todos` - List all todos
-- `POST /api/todos` - Create new todo
-- `GET /api/todos/:id` - Get specific todo
-- `PUT /api/todos/:id` - Update todo
-- `DELETE /api/todos/:id` - Delete todo
-- `PATCH /api/todos/update_order` - Bulk update todo positions
+- Authentication: `/auth/*` (login, register, logout)
+- Todos: `/api/todos/*` (CRUD + bulk reorder)
+
+See [API Documentation](./docs/api/) for details.
 
 ## API Structure
 
-The Rails backend provides a Todo API at `/api/todos` with:
+The Rails backend provides:
+- **Authentication API** at `/auth/*` with user registration, login, and logout
+- **Todo API** at `/api/todos` with user-scoped CRUD operations
+- **JWT Authentication** for API access with token-based authentication
 - Standard CRUD endpoints (GET, POST, PUT, DELETE)
 - Bulk update endpoint: `PATCH /api/todos/update_order` for drag-and-drop reordering
-- Todo model attributes: `title`, `completed`, `position`, `due_date`
+- Todo model attributes: `title`, `completed`, `position`, `due_date`, `user_id`
+- User model attributes: `email`, `name`, `created_at`
 
-Frontend should make API calls to `http://localhost:3001/api/todos`.
+Frontend should make API calls to `http://localhost:3001/api/todos` and `http://localhost:3001/auth/*`.
 
 ## Key Implementation Details
 
-1. **CORS Configuration**: Backend is configured to accept requests from `localhost:3000` (frontend)
-2. **Database Migrations**: Always run migrations after pulling new changes
-3. **Hot Reloading**: Both frontend and backend support hot reloading in development
-4. **TypeScript Path Aliases**: Use `@/*` for imports from the `src` directory in frontend
-5. **Docker Compose**: Three services (frontend, backend, db) with proper dependency management
-6. **Environment Variables**: Database credentials managed via environment variables
-7. **API Error Handling**: Consistent error responses with proper HTTP status codes
-8. **State Management**: React hooks with optimistic updates for better UX
+1. **Authentication System**: 
+   - Devise + Devise-JWT for user authentication
+   - JWT tokens stored in localStorage on frontend
+   - Token-based API authentication with Bearer tokens
+   - JWT denylist for secure logout
+   - User-scoped todos (each user sees only their own todos)
+
+2. **CORS Configuration**: Backend is configured to accept requests from `localhost:3000` (frontend)
+
+3. **Database Migrations**: Always run migrations after pulling new changes
+
+4. **Hot Reloading**: Both frontend and backend support hot reloading in development
+
+5. **TypeScript Path Aliases**: Use `@/*` for imports from the `src` directory in frontend
+
+6. **Docker Compose**: Three services (frontend, backend, db) with proper dependency management
+
+7. **Environment Variables**: Database credentials and Rails secrets managed via environment variables
+
+8. **API Error Handling**: Consistent error responses with proper HTTP status codes
+
+9. **State Management**: React hooks with optimistic updates for better UX
+
+10. **Testing**: RSpec for backend testing with dedicated test service in Docker Compose
 
 ## Current State
 
-The project has successfully transitioned from Nuxt.js to Next.js. The backend API is fully functional with complete CRUD operations, validation, and drag-and-drop reordering support. The frontend is a Next.js application with a complete todo feature implementation including:
+The project has successfully transitioned from Nuxt.js to Next.js and now includes full user authentication. The backend API is fully functional with complete CRUD operations, validation, and drag-and-drop reordering support. The frontend is a Next.js application with a complete todo feature implementation including:
 
+**Authentication Features**:
+- User registration and login
+- JWT token-based authentication
+- Protected routes with authentication guards
+- Persistent authentication state
+- Secure logout with token invalidation
+
+**Todo Features**:
+- User-scoped todos (each user sees only their own)
 - Todo creation with due dates
 - Todo editing and deletion
 - Status completion toggle
@@ -172,8 +176,18 @@ The project has successfully transitioned from Nuxt.js to Next.js. The backend A
 ## Development Guidelines
 
 1. **Package Manager**: Always use pnpm, NOT npm
-2. **API Calls**: All API calls must go through the API client (not direct fetch calls)
-3. **Commits**: Make frequent, small commits with clear messages. Commit after each logical change or feature addition
+2. **API Calls**: Use the provided API clients, not direct fetch
+3. **Authentication**: Check auth state before protected features
+4. **Commits**: Small, frequent commits with clear messages
+5. **Code Style**: Follow existing patterns in the codebase
+
+**Before Creating Pull Requests**:
+- Run frontend checks: `pnpm run lint`, `pnpm run typecheck`
+- Run backend tests: `docker compose exec backend bundle exec rspec`
+- Update documentation if APIs or architecture changed
+- Ensure all checks pass before pushing
+
+See [Development Guide](./docs/guides/development.md) for detailed guidelines.
 
 ## Frontend Architecture
 
@@ -181,22 +195,31 @@ The project has successfully transitioned from Nuxt.js to Next.js. The backend A
 ```
 frontend/src/
 ├── app/               # Next.js App Router pages (routing files)
+│   ├── auth/         # Authentication pages
+│   ├── layout.tsx    # Root layout with auth provider
+│   └── page.tsx      # Main todo page
 ├── components/        # 横断的（ドメインに依存しない）なUIコンポーネント
-│   └── ui/           # shadcn/ui components
+│   ├── auth/         # Authentication components
+│   ├── layouts/      # Layout components
+│   ├── ui/           # shadcn/ui components
+│   ├── navigation.tsx        # Navigation component
+│   └── protected-route.tsx   # Authentication guard
+├── contexts/          # React contexts
+│   └── auth-context.tsx     # Authentication context
 ├── features/          # 特定のドメイン・機能に関係するコンポーネント
 │   └── todo/         # Todo feature
 │       ├── components/   # Todo-specific components
 │       ├── hooks/        # Todo-specific hooks
-│       ├── types/        # Todo-specific types
-│       └── utils/        # Todo-specific utilities
+│       ├── lib/          # Todo-specific API client
+│       └── types/        # Todo-specific types
 ├── hooks/             # ドメインに依存しない、横断的なhooks
-├── providers/         # アプリケーションプロバイダー
-├── utils/             # 横断的な汎用関数
-├── constants/         # 横断的な定数
-├── types/             # 横断的な型定義
-├── styles/            # スタイリング（css）に関するファイル
 ├── lib/               # ライブラリの処理や標準処理を共通化したコード
-└── tests/             # 自動テスト関連
+│   ├── api-client.ts     # Base HTTP client
+│   ├── auth-client.ts    # Authentication API client
+│   ├── constants.ts      # API endpoints and constants
+│   └── utils.ts          # Utility functions
+├── styles/            # スタイリング（css）に関するファイル
+└── types/             # 横断的な型定義
 ```
 
 ### Naming Conventions
@@ -215,43 +238,84 @@ frontend/src/
 
 ### Key Files
 
+**Authentication**:
+- `lib/auth-client.ts` - Authentication API client with login/register/logout
+- `contexts/auth-context.tsx` - Authentication context provider
+- `components/auth/login-form.tsx` - Login form component
+- `components/auth/register-form.tsx` - Registration form component
+- `components/protected-route.tsx` - Route protection component
+- `app/auth/page.tsx` - Authentication page
+
+**API & Core**:
 - `lib/api-client.ts` - Base HttpClient with common HTTP methods (GET, POST, PUT, PATCH, DELETE)
-- `features/todo/lib/api-client.ts` - Todo-specific API client extending HttpClient
-- `features/todo/types/todo.ts` - Todo-related TypeScript interfaces and types
 - `lib/constants.ts` - API endpoints and configuration constants
 - `lib/utils.ts` - Utility functions (date formatting, validation, etc.)
+
+**Todo Feature**:
+- `features/todo/lib/api-client.ts` - Todo-specific API client extending HttpClient
+- `features/todo/types/todo.ts` - Todo-related TypeScript interfaces and types
 - `features/todo/hooks/useTodos.ts` - Todo state management with optimistic updates
 - `features/todo/components/TodoList.tsx` - Main todo list component with drag-and-drop
 - `features/todo/components/TodoItem.tsx` - Individual todo item component
 - `features/todo/components/TodoForm.tsx` - Todo creation and editing form
 - `features/todo/components/TodoFilters.tsx` - Filter controls (all, active, completed)
+
+**UI Components**:
 - `components/ui/` - Shared UI components (shadcn/ui based)
+- `components/navigation.tsx` - Navigation with authentication state
 
 ### Architecture Principles
 
 1. **Feature-based organization**: Domain-specific code lives in `features/[domain]/`
+
 2. **Cross-cutting concerns**: Shared utilities, types, and components live in root-level directories
+
 3. **Separation of concerns**: Each feature has its own components, hooks, types, and utilities
+
 4. **Reusability**: Common UI components and hooks are shared across features
-5. **API Client Pattern**: 
+
+5. **Authentication Architecture**:
+   - JWT token-based authentication
+   - Auth context for global authentication state
+   - Protected routes with authentication guards
+   - Persistent authentication with localStorage
+   - Separate auth client for authentication API calls
+
+6. **API Client Pattern**: 
    - Base `HttpClient` provides common HTTP methods (GET, POST, PUT, PATCH, DELETE)
+   - Separate `AuthClient` for authentication operations
    - Feature-specific API clients extend `HttpClient` and implement domain-specific methods
    - Hooks use feature API clients for data fetching and state management
-6. **Error Handling**: Consistent error handling with `ApiError` class and proper user feedback
-7. **Optimistic Updates**: UI updates immediately with rollback on API failure
-8. **Type Safety**: Full TypeScript coverage with proper interfaces and type definitions
-9. **Component Composition**: Small, focused components that compose well together
-10. **State Management**: Local state with React hooks, avoiding external state management libraries
+   - Automatic JWT token injection for authenticated requests
+
+7. **Error Handling**: Consistent error handling with `ApiError` class and proper user feedback
+
+8. **Optimistic Updates**: UI updates immediately with rollback on API failure
+
+9. **Type Safety**: Full TypeScript coverage with proper interfaces and type definitions
+
+10. **Component Composition**: Small, focused components that compose well together
+
+11. **State Management**: Local state with React hooks, avoiding external state management libraries
 
 ## Docker Environment Variables
 
 The application uses environment variables for configuration:
 
+**Backend Services**:
+- `DATABASE_URL` - Full database connection string
+- `RAILS_ENV` - Rails environment (development/production/test)
+- `RAILS_MASTER_KEY` - Rails master key for encrypted credentials
+- `SECRET_KEY_BASE` - Secret key for Rails session encryption
+
 **Database (compose.yml)**:
 - `POSTGRES_DB` - Database name
 - `POSTGRES_USER` - Database user
 - `POSTGRES_PASSWORD` - Database password
-- `DATABASE_URL` - Full database connection string
-- `RAILS_MASTER_KEY` - Rails master key for encrypted credentials
+
+**Testing**:
+- Dedicated `backend-test` service for running tests in Docker
+- Test database: `todo_app_test`
+- Run tests: `docker compose --profile test run backend-test`
 
 **Note**: Create a `.env` file in the root directory with these variables for Docker Compose.
