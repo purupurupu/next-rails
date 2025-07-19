@@ -25,6 +25,65 @@ RSpec.describe Todo, type: :model do
       todo = build(:todo, user: nil)
       expect(todo).not_to be_valid
     end
+
+  end
+
+  describe 'enums' do
+    describe 'priority' do
+      it 'defines priority values correctly' do
+        expect(Todo.priorities).to eq({ 'low' => 0, 'medium' => 1, 'high' => 2 })
+      end
+
+      it 'sets default priority to medium' do
+        todo = Todo.new(title: 'Test', user: create(:user))
+        todo.save!
+        expect(todo.priority).to eq('medium')
+      end
+
+      it 'allows valid priority values' do
+        %w[low medium high].each do |priority|
+          todo = build(:todo, priority: priority)
+          expect(todo).to be_valid
+        end
+      end
+    end
+
+    describe 'status' do
+      it 'defines status values correctly' do
+        expect(Todo.statuses).to eq({ 'pending' => 0, 'in_progress' => 1, 'completed' => 2 })
+      end
+
+      it 'sets default status to pending' do
+        todo = Todo.new(title: 'Test', user: create(:user))
+        todo.save!
+        expect(todo.status).to eq('pending')
+      end
+
+      it 'allows valid status values' do
+        %w[pending in_progress completed].each do |status|
+          todo = build(:todo, status: status)
+          expect(todo).to be_valid
+        end
+      end
+    end
+  end
+
+  describe 'description' do
+    it 'allows nil description' do
+      todo = build(:todo, description: nil)
+      expect(todo).to be_valid
+    end
+
+    it 'allows empty string description' do
+      todo = build(:todo, description: '')
+      expect(todo).to be_valid
+    end
+
+    it 'allows text description' do
+      todo = build(:todo, description: 'This is a detailed description of the todo item.')
+      expect(todo).to be_valid
+      expect(todo.description).to eq('This is a detailed description of the todo item.')
+    end
   end
 
   describe 'factory' do
@@ -33,6 +92,8 @@ RSpec.describe Todo, type: :model do
       expect(todo).to be_persisted
       expect(todo.title).to be_present
       expect(todo.user).to be_present
+      expect(todo.priority).to be_present
+      expect(todo.status).to be_present
     end
   end
 end

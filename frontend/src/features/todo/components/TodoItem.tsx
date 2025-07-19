@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Calendar, Clock, Edit, Trash2 } from "lucide-react";
+import { Calendar, Clock, Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,13 +23,66 @@ interface TodoItemProps {
 
 export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     setIsDeleting(true);
     try {
-      await onDelete(todo.id);
+      onDelete(todo.id);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "destructive";
+      case "medium":
+        return "default";
+      case "low":
+        return "secondary";
+      default:
+        return "outline";
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "default";
+      case "in_progress":
+        return "secondary";
+      case "pending":
+        return "outline";
+      default:
+        return "outline";
+    }
+  };
+
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "高";
+      case "medium":
+        return "中";
+      case "low":
+        return "低";
+      default:
+        return priority;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "完了";
+      case "in_progress":
+        return "進行中";
+      case "pending":
+        return "未着手";
+      default:
+        return status;
     }
   };
 
@@ -102,12 +155,50 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
               </div>
             </div>
 
-            {dueDateStatus && (
-              <div className="mt-2">
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant={getPriorityColor(todo.priority) as "destructive" | "default" | "secondary" | "outline"} className="text-xs">
+                優先度:
+                {" "}
+                {getPriorityLabel(todo.priority)}
+              </Badge>
+              <Badge variant={getStatusColor(todo.status) as "destructive" | "default" | "secondary" | "outline"} className="text-xs">
+                {getStatusLabel(todo.status)}
+              </Badge>
+              {dueDateStatus && (
                 <Badge variant={dueDateStatus.variant} className="text-xs">
                   <dueDateStatus.icon className="h-3 w-3 mr-1" />
                   {dueDateStatus.label}
                 </Badge>
+              )}
+            </div>
+
+            {todo.description && (
+              <div className="mt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDescription(!showDescription)}
+                  className="h-auto p-0 font-normal text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {showDescription
+                    ? (
+                        <>
+                          <ChevronUp className="h-3 w-3 mr-1" />
+                          説明を隠す
+                        </>
+                      )
+                    : (
+                        <>
+                          <ChevronDown className="h-3 w-3 mr-1" />
+                          説明を表示
+                        </>
+                      )}
+                </Button>
+                {showDescription && (
+                  <div className="mt-1 p-2 bg-muted/50 rounded text-xs text-muted-foreground whitespace-pre-wrap">
+                    {todo.description}
+                  </div>
+                )}
               </div>
             )}
           </div>

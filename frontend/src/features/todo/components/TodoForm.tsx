@@ -7,6 +7,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
@@ -24,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
-import type { CreateTodoData, Todo } from "@/features/todo/types/todo";
+import type { CreateTodoData, Todo, TodoPriority, TodoStatus } from "@/features/todo/types/todo";
 
 interface TodoFormProps {
   mode: "create" | "edit";
@@ -39,6 +40,9 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
   const [dueDate, setDueDate] = useState<Date | undefined>(
     todo?.due_date ? new Date(todo.due_date) : undefined,
   );
+  const [priority, setPriority] = useState<TodoPriority>(todo?.priority || "medium");
+  const [status, setStatus] = useState<TodoStatus>(todo?.status || "pending");
+  const [description, setDescription] = useState(todo?.description || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -51,6 +55,9 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
       const data = {
         title: title.trim(),
         due_date: dueDate ? format(dueDate, "yyyy-MM-dd") : null,
+        priority,
+        status,
+        description: description.trim() || null,
       };
 
       await onSubmit(data);
@@ -59,6 +66,9 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
       if (mode === "create") {
         setTitle("");
         setDueDate(undefined);
+        setPriority("medium");
+        setStatus("pending");
+        setDescription("");
       }
 
       onOpenChange(false);
@@ -71,6 +81,9 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
     if (!newOpen && mode === "create") {
       setTitle("");
       setDueDate(undefined);
+      setPriority("medium");
+      setStatus("pending");
+      setDescription("");
     }
     onOpenChange(newOpen);
   };
@@ -100,6 +113,47 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
               onChange={(e) => setTitle(e.target.value)}
               placeholder="タスクを入力してください"
               required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">優先度</label>
+            <Select value={priority} onValueChange={(value: TodoPriority) => setPriority(value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="優先度を選択" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">低</SelectItem>
+                <SelectItem value="medium">中</SelectItem>
+                <SelectItem value="high">高</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">ステータス</label>
+            <Select value={status} onValueChange={(value: TodoStatus) => setStatus(value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="ステータスを選択" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">未着手</SelectItem>
+                <SelectItem value="in_progress">進行中</SelectItem>
+                <SelectItem value="completed">完了</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="description" className="text-sm font-medium">
+              説明（任意）
+            </label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="タスクの詳細説明を入力してください"
+              rows={3}
             />
           </div>
 

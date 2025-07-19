@@ -99,7 +99,7 @@ docker compose exec backend bundle exec rails db:reset  # drop + create + migrat
 
 **Core Models**:
 - **User**: Authentication with email/password
-- **Todo**: User's tasks with title, completion status, position, and optional due date
+- **Todo**: User's tasks with title, completion status, position, priority (low/medium/high), status (pending/in_progress/completed), optional description and due date
 - **JwtDenylist**: Revoked tokens for secure logout
 
 See [Database Architecture](./docs/architecture/database.md) for detailed schema.
@@ -118,7 +118,7 @@ The Rails backend provides:
 - **JWT Authentication** for API access with token-based authentication
 - Standard CRUD endpoints (GET, POST, PUT, DELETE)
 - Bulk update endpoint: `PATCH /api/todos/update_order` for drag-and-drop reordering
-- Todo model attributes: `title`, `completed`, `position`, `due_date`, `user_id`
+- Todo model attributes: `title`, `completed`, `position`, `priority`, `status`, `description`, `due_date`, `user_id`
 - User model attributes: `email`, `name`, `created_at`
 
 Frontend should make API calls to `http://localhost:3001/api/todos` and `http://localhost:3001/auth/*`.

@@ -89,6 +89,9 @@ export function useTodos(): UseTodosReturn {
       completed: false,
       position: state.allTodos.length + 1,
       due_date: data.due_date || null,
+      priority: data.priority || "medium",
+      status: data.status || "pending",
+      description: data.description || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
