@@ -25,10 +25,10 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     setIsDeleting(true);
     try {
-      await onDelete(todo.id);
+      onDelete(todo.id);
     } finally {
       setIsDeleting(false);
     }
@@ -156,10 +156,12 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
             </div>
 
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant={getPriorityColor(todo.priority) as any} className="text-xs">
-                優先度: {getPriorityLabel(todo.priority)}
+              <Badge variant={getPriorityColor(todo.priority) as "destructive" | "default" | "secondary" | "outline"} className="text-xs">
+                優先度:
+                {" "}
+                {getPriorityLabel(todo.priority)}
               </Badge>
-              <Badge variant={getStatusColor(todo.status) as any} className="text-xs">
+              <Badge variant={getStatusColor(todo.status) as "destructive" | "default" | "secondary" | "outline"} className="text-xs">
                 {getStatusLabel(todo.status)}
               </Badge>
               {dueDateStatus && (
@@ -178,17 +180,19 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
                   onClick={() => setShowDescription(!showDescription)}
                   className="h-auto p-0 font-normal text-xs text-muted-foreground hover:text-foreground"
                 >
-                  {showDescription ? (
-                    <>
-                      <ChevronUp className="h-3 w-3 mr-1" />
-                      説明を隠す
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="h-3 w-3 mr-1" />
-                      説明を表示
-                    </>
-                  )}
+                  {showDescription
+                    ? (
+                        <>
+                          <ChevronUp className="h-3 w-3 mr-1" />
+                          説明を隠す
+                        </>
+                      )
+                    : (
+                        <>
+                          <ChevronDown className="h-3 w-3 mr-1" />
+                          説明を表示
+                        </>
+                      )}
                 </Button>
                 {showDescription && (
                   <div className="mt-1 p-2 bg-muted/50 rounded text-xs text-muted-foreground whitespace-pre-wrap">
