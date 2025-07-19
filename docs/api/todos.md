@@ -29,6 +29,9 @@ Get all todos for the authenticated user.
     "title": "Complete project documentation",
     "completed": false,
     "position": 0,
+    "priority": "high",
+    "status": "in_progress",
+    "description": "Write comprehensive API documentation with examples",
     "due_date": "2024-12-31",
     "created_at": "2024-01-01T00:00:00.000Z",
     "updated_at": "2024-01-01T00:00:00.000Z"
@@ -38,6 +41,9 @@ Get all todos for the authenticated user.
     "title": "Review pull requests",
     "completed": true,
     "position": 1,
+    "priority": "medium",
+    "status": "completed",
+    "description": null,
     "due_date": null,
     "created_at": "2024-01-01T00:00:00.000Z",
     "updated_at": "2024-01-02T00:00:00.000Z"
@@ -65,6 +71,9 @@ Get a specific todo by ID.
   "title": "Complete project documentation",
   "completed": false,
   "position": 0,
+  "priority": "high",
+  "status": "in_progress",
+  "description": "Write comprehensive API documentation with examples",
   "due_date": "2024-12-31",
   "created_at": "2024-01-01T00:00:00.000Z",
   "updated_at": "2024-01-01T00:00:00.000Z"
@@ -89,6 +98,9 @@ Create a new todo item.
 {
   "todo": {
     "title": "New task",
+    "priority": "high",
+    "status": "pending",
+    "description": "Detailed task description",
     "due_date": "2024-12-31"
   }
 }
@@ -96,6 +108,9 @@ Create a new todo item.
 
 **Parameters:**
 - `title` (required): Todo description
+- `priority` (optional): Priority level - `"low"`, `"medium"`, `"high"`. Defaults to `"medium"`
+- `status` (optional): Task status - `"pending"`, `"in_progress"`, `"completed"`. Defaults to `"pending"`
+- `description` (optional): Detailed description of the task
 - `due_date` (optional): Due date in YYYY-MM-DD format
 - `completed` (optional): Defaults to `false`
 
@@ -106,6 +121,9 @@ Create a new todo item.
   "title": "New task",
   "completed": false,
   "position": 2,
+  "priority": "high",
+  "status": "pending",
+  "description": "Detailed task description",
   "due_date": "2024-12-31",
   "created_at": "2024-01-03T00:00:00.000Z",
   "updated_at": "2024-01-03T00:00:00.000Z"
@@ -117,6 +135,8 @@ Create a new todo item.
 {
   "errors": {
     "title": ["can't be blank"],
+    "priority": ["is not included in the list"],
+    "status": ["is not included in the list"],
     "due_date": ["must be in the future"]
   }
 }
@@ -137,6 +157,9 @@ Update an existing todo.
   "todo": {
     "title": "Updated task",
     "completed": true,
+    "priority": "low",
+    "status": "completed",
+    "description": "Updated description",
     "due_date": "2024-12-31"
   }
 }
@@ -145,6 +168,9 @@ Update an existing todo.
 **Parameters:**
 - `title` (optional): New title
 - `completed` (optional): Completion status
+- `priority` (optional): Priority level - `"low"`, `"medium"`, `"high"`
+- `status` (optional): Task status - `"pending"`, `"in_progress"`, `"completed"`
+- `description` (optional): Updated description
 - `due_date` (optional): New due date
 
 **Success Response (200 OK):**
@@ -154,6 +180,9 @@ Update an existing todo.
   "title": "Updated task",
   "completed": true,
   "position": 0,
+  "priority": "low",
+  "status": "completed",
+  "description": "Updated description",
   "due_date": "2024-12-31",
   "created_at": "2024-01-01T00:00:00.000Z",
   "updated_at": "2024-01-03T00:00:00.000Z"
@@ -222,6 +251,24 @@ Bulk update todo positions for drag-and-drop reordering.
 - Cannot be empty
 - Maximum length: 255 characters
 
+### Priority
+- Optional field
+- Allowed values: `"low"`, `"medium"`, `"high"`
+- Defaults to `"medium"` on creation
+- Used for task prioritization and visual indicators
+
+### Status
+- Optional field
+- Allowed values: `"pending"`, `"in_progress"`, `"completed"`
+- Defaults to `"pending"` on creation
+- Tracks task progress workflow
+
+### Description
+- Optional field
+- Text field for detailed task information
+- No length limit (database TEXT type)
+- Can be `null` or empty string
+
 ### Due Date
 - Optional field
 - Format: YYYY-MM-DD
@@ -236,9 +283,11 @@ Bulk update todo positions for drag-and-drop reordering.
 ## Filtering and Sorting
 
 Currently, todos are always returned ordered by position. Client-side filtering is recommended for:
-- Active todos (completed: false)
-- Completed todos (completed: true)
-- Overdue todos (due_date < today)
+- **Status filtering**: Filter by `"pending"`, `"in_progress"`, `"completed"`
+- **Priority filtering**: Filter by `"low"`, `"medium"`, `"high"`
+- **Completion status**: Active todos (`completed: false`) vs completed todos (`completed: true`)
+- **Due dates**: Overdue todos (`due_date < today`), due today, upcoming
+- **Search**: Filter by title or description content
 
 ## Frontend Integration Example
 
@@ -259,6 +308,7 @@ class TodoApiClient {
   }
 
   async create(todoData) {
+    // todoData can include: title, priority, status, description, due_date
     const response = await fetch(this.baseURL, {
       method: 'POST',
       headers: {

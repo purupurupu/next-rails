@@ -42,6 +42,9 @@ export interface TodosResponse {
 
 export interface TodoError {
   title?: string[];
+  priority?: string[];
+  status?: string[];
+  description?: string[];
   due_date?: string[];
   base?: string[];
 }

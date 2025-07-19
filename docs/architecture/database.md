@@ -30,6 +30,9 @@
 │ title           │
 │ completed       │
 │ position        │
+│ priority        │
+│ status          │
+│ description     │
 │ due_date        │
 │ user_id (FK)    │
 │ created_at      │
@@ -70,6 +73,9 @@ CREATE TABLE todos (
   title varchar NOT NULL,
   position integer,
   completed boolean DEFAULT false,
+  priority integer DEFAULT 1 NOT NULL,
+  status integer DEFAULT 0 NOT NULL,
+  description text,
   due_date date,
   user_id bigint NOT NULL,
   created_at timestamp(6) NOT NULL,
@@ -78,6 +84,8 @@ CREATE TABLE todos (
 );
 
 CREATE INDEX index_todos_on_position ON todos(position);
+CREATE INDEX index_todos_on_priority ON todos(priority);
+CREATE INDEX index_todos_on_status ON todos(status);
 CREATE INDEX index_todos_on_user_id ON todos(user_id);
 ```
 
@@ -86,6 +94,9 @@ CREATE INDEX index_todos_on_user_id ON todos(user_id);
 - `title`: Todo description (required)
 - `position`: Order in the list (for drag-and-drop)
 - `completed`: Task completion status
+- `priority`: Priority level (0=low, 1=medium, 2=high) with default medium
+- `status`: Task status (0=pending, 1=in_progress, 2=completed) with default pending
+- `description`: Optional detailed description (TEXT type)
 - `due_date`: Optional deadline
 - `user_id`: Owner of the todo (foreign key)
 
@@ -112,8 +123,10 @@ CREATE INDEX index_jwt_denylists_on_jti ON jwt_denylists(jti);
 ### Performance Indexes
 1. **users.email** - Unique index for login lookup
 2. **todos.position** - For ordering todos efficiently
-3. **todos.user_id** - For filtering todos by user
-4. **jwt_denylists.jti** - For checking token revocation
+3. **todos.priority** - For filtering/sorting by priority
+4. **todos.status** - For filtering by task status
+5. **todos.user_id** - For filtering todos by user
+6. **jwt_denylists.jti** - For checking token revocation
 
 ### Referential Integrity
 - Foreign key constraint on `todos.user_id` → `users.id`
@@ -153,6 +166,15 @@ create_table :jwt_denylists do |t|
   t.datetime :exp, null: false
   t.timestamps
 end
+
+# 20250719124812_add_priority_and_status_to_todos.rb
+add_column :todos, :priority, :integer, default: 1, null: false
+add_column :todos, :status, :integer, default: 0, null: false
+add_index :todos, :priority
+add_index :todos, :status
+
+# 20250719124941_add_description_to_todos.rb
+add_column :todos, :description, :text
 ```
 
 ## Data Integrity Rules
@@ -171,13 +193,17 @@ end
 
 3. **DEFAULT values**:
    - todos.completed = false
+   - todos.priority = 1 (medium)
+   - todos.status = 0 (pending)
    - users.email = ''
 
 ### Business Rules (Enforced in Models)
 1. **Todo positions**: Automatically assigned on creation
 2. **Due dates**: Cannot be in the past (on creation)
-3. **Email format**: Must be valid email
-4. **Password**: Minimum 6 characters
+3. **Priority enum**: Must be one of [low=0, medium=1, high=2]
+4. **Status enum**: Must be one of [pending=0, in_progress=1, completed=2]
+5. **Email format**: Must be valid email
+6. **Password**: Minimum 6 characters
 
 ## Query Patterns
 
@@ -191,6 +217,16 @@ ORDER BY position;
 -- Active todos for a user
 SELECT * FROM todos 
 WHERE user_id = ? AND completed = false 
+ORDER BY position;
+
+-- High priority todos
+SELECT * FROM todos 
+WHERE user_id = ? AND priority = 2 
+ORDER BY position;
+
+-- Todos by status
+SELECT * FROM todos 
+WHERE user_id = ? AND status = 1 
 ORDER BY position;
 
 -- Check if JWT is revoked
@@ -224,6 +260,9 @@ user = User.create!(
     title: "Todo #{i + 1}",
     position: i,
     completed: [true, false].sample,
+    priority: [:low, :medium, :high].sample,
+    status: [:pending, :in_progress, :completed].sample,
+    description: "Description for todo #{i + 1}",
     due_date: rand(1..30).days.from_now
   )
 end
