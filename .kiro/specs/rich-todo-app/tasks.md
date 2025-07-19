@@ -7,7 +7,7 @@
   - Set up RSpec testing framework with Factory Bot
   - _Requirements: 8.1, 9.1, 9.2_
 
-- [-] 2. Implement user authentication system
+- [x] 2. Implement user authentication system
 - [x] 2.1 Create User model with Devise
 
   - Generate User model with Devise configuration
@@ -39,15 +39,15 @@
   - Add basic error handling for authentication failures
   - _Requirements: 1.1, 1.2, 1.3_
 
-- [ ] 3. Extend Todo model with enhanced features
-- [ ] 3.1 Add user association to existing Todo model
+- [x] 3. Extend Todo model with enhanced features
+- [x] 3.1 Add user association to existing Todo model
 
   - Create migration to add user_id to todos table
   - Update Todo model to belong_to user
   - Modify existing todo operations to be user-scoped
   - _Requirements: 1.4, 1.5_
 
-- [ ] 3.2 Add priority and status enums to Todo model
+- [x] 3.2 Add priority and status enums to Todo model
 
   - Create migration to add priority and status columns
   - Implement enum definitions in Todo model
@@ -55,7 +55,7 @@
   - Write tests for enum functionality
   - _Requirements: 3.1, 3.2, 3.4_
 
-- [ ] 3.3 Add description field to Todo model
+- [x] 3.3 Add description field to Todo model
 
   - Create migration to add description column to todos
   - Update Todo model validations and permitted parameters
