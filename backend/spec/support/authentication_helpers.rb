@@ -18,6 +18,11 @@ module AuthenticationHelpers
     }
   end
 
+  # Alias for consistency with new tests
+  def auth_headers_for(user)
+    auth_headers(user)
+  end
+
   # Helper method to sign in a user and return the token
   def sign_in_user(user)
     post '/auth/sign_in', params: { user: { email: user.email, password: user.password } }, as: :json, headers: { 'Host' => 'localhost:3001' }

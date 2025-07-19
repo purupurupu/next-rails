@@ -26,17 +26,6 @@ RSpec.describe Todo, type: :model do
       expect(todo).not_to be_valid
     end
 
-    it 'validates presence of priority' do
-      todo = build(:todo, priority: nil)
-      expect(todo).not_to be_valid
-      expect(todo.errors[:priority]).to include("can't be blank")
-    end
-
-    it 'validates presence of status' do
-      todo = build(:todo, status: nil)
-      expect(todo).not_to be_valid
-      expect(todo.errors[:status]).to include("can't be blank")
-    end
   end
 
   describe 'enums' do

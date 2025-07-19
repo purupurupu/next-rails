@@ -3,7 +3,7 @@ module Api
     before_action :set_todo, only: [:show, :update, :destroy]
 
     def index
-      @todos = current_user.todos.order(:position)
+      @todos = current_user.todos.ordered
       render json: @todos
     end
 
