@@ -48,7 +48,7 @@ module Api
     end
 
     def todo_params
-      params.require(:todo).permit(:title, :completed, :position, :due_date, :priority, :status)
+      params.require(:todo).permit(:title, :completed, :position, :due_date, :priority, :status, :description)
     end
   end
 end
