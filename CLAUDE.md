@@ -127,12 +127,12 @@ Frontend should make API calls to `http://localhost:3001/api/todos` and `http://
 
 1. **Authentication System**: 
    - Devise + Devise-JWT for user authentication
-   - JWT tokens stored in localStorage on frontend
+   - JWT tokens returned in Authorization header and stored in localStorage on frontend
    - Token-based API authentication with Bearer tokens
    - JWT denylist for secure logout
    - User-scoped todos (each user sees only their own todos)
 
-2. **CORS Configuration**: Backend is configured to accept requests from `localhost:3000` (frontend)
+2. **CORS Configuration**: Backend is configured to accept requests from `localhost:3000` (frontend) with credentials support and Authorization header exposure
 
 3. **Database Migrations**: Always run migrations after pulling new changes
 

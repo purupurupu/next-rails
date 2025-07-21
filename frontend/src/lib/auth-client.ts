@@ -47,6 +47,7 @@ class AuthClient {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(data),
       });
 
@@ -56,19 +57,25 @@ class AuthClient {
       }
 
       const responseData: AuthResponse = await response.json();
-      const token = (responseData as AuthResponse & { token?: string }).token || "";
+
+      // Authorizationヘッダーからトークンを取得
+      const authHeader = response.headers.get("Authorization");
+      if (!authHeader) {
+        throw new Error("No authorization token received");
+      }
+
+      // Bearerプレフィックスを削除
+      const token = authHeader.replace("Bearer ", "");
 
       if (token) {
-        // Bearerプレフィックスを削除してからトークンを保存
-        const cleanToken = token.replace("Bearer ", "");
-        this.setAuthToken(cleanToken);
+        this.setAuthToken(token);
         // ユーザー情報も保存
         this.setUser(responseData.data);
       }
 
       return {
         user: responseData.data,
-        token: token.replace("Bearer ", ""),
+        token: token,
       };
     } catch (error) {
       if (error instanceof Error) {

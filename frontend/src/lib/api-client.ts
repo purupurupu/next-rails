@@ -43,6 +43,7 @@ class HttpClient {
         ...this.getAuthHeaders(),
         ...options?.headers,
       },
+      credentials: "include",
       ...options,
     };
 

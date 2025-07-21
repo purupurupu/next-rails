@@ -5,9 +5,6 @@ class Users::RegistrationsController < Devise::RegistrationsController
 
   def respond_with(resource, _opts = {})
     if resource.persisted?
-      # JWTトークンを手動で生成してレスポンスボディに含める
-      token = Warden::JWTAuth::UserEncoder.new.call(resource, :user, nil).first
-      
       render json: {
         status: { code: 200, message: 'Signed up successfully.' },
         data: {
@@ -15,8 +12,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
           email: resource.email,
           name: resource.name,
           created_at: resource.created_at
-        },
-        token: token
+        }
       }
     else
       render json: {
