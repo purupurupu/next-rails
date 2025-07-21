@@ -2,7 +2,7 @@
 
 ## Overview
 
-Authentication is handled using Devise with JWT tokens. Tokens are returned in the response body and should be included in subsequent requests.
+Authentication is handled using Devise with JWT tokens. Tokens are returned in the Authorization header and should be included in subsequent requests.
 
 ## Endpoints
 
@@ -25,6 +25,13 @@ Create a new user account.
 ```
 
 **Success Response (201 Created):**
+
+**Headers:**
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
+```
+
+**Body:**
 ```json
 {
   "status": {
@@ -36,8 +43,7 @@ Create a new user account.
     "email": "user@example.com",
     "name": "John Doe",
     "created_at": "2024-01-01T00:00:00.000Z"
-  },
-  "token": "eyJhbGciOiJIUzI1NiJ9..."
+  }
 }
 ```
 
@@ -73,6 +79,13 @@ Authenticate an existing user.
 ```
 
 **Success Response (200 OK):**
+
+**Headers:**
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
+```
+
+**Body:**
 ```json
 {
   "status": {
@@ -84,8 +97,7 @@ Authenticate an existing user.
     "email": "user@example.com",
     "name": "John Doe",
     "created_at": "2024-01-01T00:00:00.000Z"
-  },
-  "token": "eyJhbGciOiJIUzI1NiJ9..."
+  }
 }
 ```
 
@@ -201,6 +213,7 @@ class AuthClient {
     const response = await fetch('/auth/sign_in', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         user: { email, password }
       })
@@ -208,7 +221,12 @@ class AuthClient {
     
     const data = await response.json();
     if (response.ok) {
-      localStorage.setItem('token', data.token);
+      // Extract token from Authorization header
+      const authHeader = response.headers.get('Authorization');
+      const token = authHeader?.replace('Bearer ', '');
+      if (token) {
+        localStorage.setItem('token', token);
+      }
       return data;
     }
     throw new Error(data.error);
