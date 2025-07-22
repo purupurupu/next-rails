@@ -4,8 +4,8 @@
 
 puts "🌱 Starting seed process..."
 
-# Clear existing data in development environment only
-if Rails.env.development?
+# Clear existing data only if explicitly requested with RESET_DB=true
+if Rails.env.development? && ENV['RESET_DB'] == 'true'
   puts "🧹 Cleaning up existing data..."
   Todo.destroy_all
   Category.destroy_all
