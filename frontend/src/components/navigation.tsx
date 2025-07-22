@@ -22,6 +22,16 @@ export function Navigation() {
           <Link href="/" className="text-xl font-bold text-gray-900">
             TODO App
           </Link>
+          {isAuthenticated && (
+            <>
+              <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
+                タスク
+              </Link>
+              <Link href="/categories" className="text-sm text-gray-600 hover:text-gray-900">
+                カテゴリー
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="flex items-center space-x-4">
