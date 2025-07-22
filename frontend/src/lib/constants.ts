@@ -9,6 +9,8 @@ export const API_ENDPOINTS = {
   AUTH_LOGIN: "/auth/sign_in",
   AUTH_REGISTER: "/auth/sign_up",
   AUTH_LOGOUT: "/auth/sign_out",
+  CATEGORIES: "/api/categories",
+  CATEGORY_BY_ID: (id: number) => `/api/categories/${id}`,
 } as const;
 
 export const TODO_FILTERS = {
