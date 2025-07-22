@@ -1,225 +1,325 @@
 # Categories API
 
-カテゴリー管理のためのRESTful APIエンドポイント。すべてのエンドポイントはJWT認証が必要で、ユーザーは自分のカテゴリーのみにアクセス可能です。
+## Overview
 
-## Base URL
+Categories provide a way for users to organize their todos. Each category has a name and color for visual organization, and todos can optionally be assigned to categories.
 
-```
-http://localhost:3001/api/categories
-```
+## Endpoints
 
-## 認証
+### Get Categories
 
-すべてのリクエストにはAuthorizationヘッダーが必要です：
+Retrieve all categories for the authenticated user.
 
+**Endpoint:** `GET /api/categories`
+
+**Headers:**
 ```
 Authorization: Bearer <jwt_token>
 ```
 
-## エンドポイント
-
-### GET /api/categories
-
-ユーザーのカテゴリー一覧を取得します。
-
-**Request:**
-```http
-GET /api/categories
-Authorization: Bearer <jwt_token>
-```
-
-**Response:**
+**Success Response (200 OK):**
 ```json
-{
-  "categories": [
-    {
-      "id": 1,
-      "name": "仕事",
-      "color": "#3B82F6",
-      "created_at": "2024-01-15T10:30:00Z",
-      "updated_at": "2024-01-15T10:30:00Z"
-    },
-    {
-      "id": 2,
-      "name": "個人",
-      "color": "#10B981",
-      "created_at": "2024-01-15T10:31:00Z",
-      "updated_at": "2024-01-15T10:31:00Z"
-    }
-  ]
-}
-```
-
-### GET /api/categories/:id
-
-特定のカテゴリーを取得します。
-
-**Request:**
-```http
-GET /api/categories/1
-Authorization: Bearer <jwt_token>
-```
-
-**Response:**
-```json
-{
-  "category": {
+[
+  {
     "id": 1,
-    "name": "仕事",
-    "color": "#3B82F6",
-    "created_at": "2024-01-15T10:30:00Z",
-    "updated_at": "2024-01-15T10:30:00Z"
+    "name": "Work",
+    "color": "#ff4757",
+    "todos_count": 5,
+    "user_id": 1,
+    "created_at": "2024-01-01T00:00:00.000Z",
+    "updated_at": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "Personal",
+    "color": "#3742fa",
+    "todos_count": 3,
+    "user_id": 1,
+    "created_at": "2024-01-01T00:00:00.000Z",
+    "updated_at": "2024-01-01T00:00:00.000Z"
   }
+]
+```
+
+### Get Category
+
+Retrieve a specific category.
+
+**Endpoint:** `GET /api/categories/:id`
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "id": 1,
+  "name": "Work",
+  "color": "#ff4757",
+  "todos_count": 5,
+  "user_id": 1,
+  "created_at": "2024-01-01T00:00:00.000Z",
+  "updated_at": "2024-01-01T00:00:00.000Z"
 }
 ```
 
-### POST /api/categories
+**Error Response (404 Not Found):**
+```json
+{
+  "error": "Record not found"
+}
+```
 
-新しいカテゴリーを作成します。
+### Create Category
 
-**Request:**
-```http
-POST /api/categories
+Create a new category for the authenticated user.
+
+**Endpoint:** `POST /api/categories`
+
+**Headers:**
+```
 Authorization: Bearer <jwt_token>
 Content-Type: application/json
-
-{
-  "category": {
-    "name": "学習",
-    "color": "#F59E0B"
-  }
-}
 ```
 
-**Response:**
+**Request Body:**
 ```json
 {
   "category": {
-    "id": 3,
-    "name": "学習",
-    "color": "#F59E0B",
-    "created_at": "2024-01-15T11:00:00Z",
-    "updated_at": "2024-01-15T11:00:00Z"
+    "name": "Work",
+    "color": "#ff4757"
   }
 }
 ```
 
-### PUT /api/categories/:id
+**Success Response (201 Created):**
+```json
+{
+  "message": "Category created successfully",
+  "data": {
+    "id": 1,
+    "name": "Work",
+    "color": "#ff4757",
+    "todos_count": 0,
+    "user_id": 1,
+    "created_at": "2024-01-01T00:00:00.000Z",
+    "updated_at": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
 
-既存のカテゴリーを更新します。
+**Error Response (422 Unprocessable Entity):**
+```json
+{
+  "errors": {
+    "name": ["can't be blank", "has already been taken"],
+    "color": ["can't be blank", "must be a valid hex color"]
+  }
+}
+```
 
-**Request:**
-```http
-PUT /api/categories/1
+### Update Category
+
+Update an existing category.
+
+**Endpoint:** `PUT /api/categories/:id` or `PATCH /api/categories/:id`
+
+**Headers:**
+```
 Authorization: Bearer <jwt_token>
 Content-Type: application/json
-
-{
-  "category": {
-    "name": "プロジェクト管理",
-    "color": "#1E40AF"
-  }
-}
 ```
 
-**Response:**
+**Request Body:**
 ```json
 {
   "category": {
-    "id": 1,
-    "name": "プロジェクト管理",
-    "color": "#1E40AF",
-    "created_at": "2024-01-15T10:30:00Z",
-    "updated_at": "2024-01-15T11:05:00Z"
+    "name": "Personal Projects",
+    "color": "#2ed573"
   }
 }
 ```
 
-### DELETE /api/categories/:id
+**Success Response (200 OK):**
+```json
+{
+  "message": "Category updated successfully",
+  "data": {
+    "id": 1,
+    "name": "Personal Projects",
+    "color": "#2ed573",
+    "todos_count": 5,
+    "user_id": 1,
+    "created_at": "2024-01-01T00:00:00.000Z",
+    "updated_at": "2024-01-01T12:00:00.000Z"
+  }
+}
+```
 
-カテゴリーを削除します。関連するTodoのcategory_idはnullに設定されます。
+**Error Response (404 Not Found):**
+```json
+{
+  "error": "Record not found"
+}
+```
 
-**Request:**
-```http
-DELETE /api/categories/1
+**Error Response (422 Unprocessable Entity):**
+```json
+{
+  "errors": {
+    "name": ["has already been taken"],
+    "color": ["must be a valid hex color"]
+  }
+}
+```
+
+### Delete Category
+
+Delete a category. All todos assigned to this category will have their category_id set to null.
+
+**Endpoint:** `DELETE /api/categories/:id`
+
+**Headers:**
+```
 Authorization: Bearer <jwt_token>
 ```
 
-**Response:**
+**Success Response (200 OK):**
 ```json
 {
   "message": "Category deleted successfully"
 }
 ```
 
-## エラーレスポンス
-
-### 400 Bad Request
+**Error Response (404 Not Found):**
 ```json
 {
-  "error": "Validation failed",
-  "details": {
-    "name": ["can't be blank"]
+  "error": "Record not found"
+}
+```
+
+## Category Properties
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | Integer | Read-only | Unique identifier |
+| `name` | String | Yes | Category name (unique per user) |
+| `color` | String | Yes | Hex color code (e.g., "#ff4757") |
+| `todos_count` | Integer | Read-only | Number of todos in this category (counter cache) |
+| `user_id` | Integer | Read-only | Owner of the category |
+| `created_at` | String (ISO 8601) | Read-only | Creation timestamp |
+| `updated_at` | String (ISO 8601) | Read-only | Last update timestamp |
+
+## Validation Rules
+
+### Name
+- **Required**: Cannot be blank
+- **Uniqueness**: Must be unique per user
+- **Length**: Maximum 50 characters
+
+### Color
+- **Required**: Cannot be blank
+- **Format**: Must be a valid hex color code (e.g., "#ff4757")
+- **Pattern**: Must match `/^#[0-9a-fA-F]{6}$/`
+
+## Business Rules
+
+1. **User Scoped**: Users can only see and manage their own categories
+2. **Unique Names**: Category names must be unique within a user's categories
+3. **Counter Cache**: `todos_count` is automatically maintained and updated when todos are assigned/unassigned
+4. **Cascade Behavior**: When a category is deleted, all todos assigned to it have their `category_id` set to `null`
+5. **Default Category**: There is no default "uncategorized" category - todos can exist without a category
+
+## Usage Examples
+
+### Frontend Integration
+
+```javascript
+// Category API Client
+class CategoryApiClient {
+  async getCategories() {
+    const response = await fetch('/api/categories', {
+      headers: { 'Authorization': `Bearer ${this.getToken()}` }
+    });
+    return response.json();
+  }
+  
+  async createCategory(categoryData) {
+    const response = await fetch('/api/categories', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.getToken()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ category: categoryData })
+    });
+    const data = await response.json();
+    if (response.ok) return data;
+    throw new Error(data.error || 'Failed to create category');
+  }
+  
+  async updateCategory(id, categoryData) {
+    const response = await fetch(`/api/categories/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${this.getToken()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ category: categoryData })
+    });
+    const data = await response.json();
+    if (response.ok) return data;
+    throw new Error(data.error || 'Failed to update category');
+  }
+  
+  async deleteCategory(id) {
+    const response = await fetch(`/api/categories/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${this.getToken()}` }
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to delete category');
+    }
   }
 }
 ```
 
-### 401 Unauthorized
-```json
-{
-  "error": "Unauthorized"
-}
+### Color Validation
+
+Categories use hex color codes for visual organization. Common color options:
+
+```javascript
+const CATEGORY_COLORS = [
+  '#ff4757', // Red
+  '#ff6b6b', // Light Red
+  '#ff9f43', // Orange
+  '#feca57', // Yellow
+  '#48dbfb', // Light Blue
+  '#3742fa', // Blue
+  '#2f3542', // Dark
+  '#57606f', // Gray
+  '#2ed573', // Green
+  '#5f27cd', // Purple
+  '#00d2d3', // Cyan
+  '#ff3838'  // Bright Red
+];
 ```
 
-### 404 Not Found
-```json
-{
-  "error": "Category not found"
-}
-```
+## Error Handling
 
-### 422 Unprocessable Entity
-```json
-{
-  "error": "Validation failed",
-  "details": {
-    "name": ["has already been taken"]
-  }
-}
-```
+All endpoints return consistent error responses as documented in the [API Overview](./README.md). Common error scenarios:
 
-## バリデーション
+- **401 Unauthorized**: Missing or invalid JWT token
+- **404 Not Found**: Category doesn't exist or doesn't belong to the user
+- **422 Unprocessable Entity**: Validation errors (duplicate name, invalid color format)
 
-### Category Model
+## Performance Considerations
 
-- **name**: 必須、1-50文字、ユーザー内でユニーク
-- **color**: 必須、有効なHEXカラーコード形式（#RRGGBB）
-- **user_id**: 自動設定（現在のユーザー）
+1. **Counter Cache**: The `todos_count` field is automatically maintained using Rails counter cache, eliminating N+1 queries when loading categories with todo counts.
 
-## 使用例
+2. **User Scoping**: All queries are scoped to the authenticated user, ensuring data isolation and optimal query performance.
 
-### カテゴリー付きTodo作成の流れ
-
-1. カテゴリー一覧を取得
-```bash
-curl -H "Authorization: Bearer <token>" \
-     http://localhost:3001/api/categories
-```
-
-2. 新しいカテゴリーを作成（必要に応じて）
-```bash
-curl -X POST \
-     -H "Authorization: Bearer <token>" \
-     -H "Content-Type: application/json" \
-     -d '{"category":{"name":"買い物","color":"#EF4444"}}' \
-     http://localhost:3001/api/categories
-```
-
-3. カテゴリー付きTodoを作成
-```bash
-curl -X POST \
-     -H "Authorization: Bearer <token>" \
-     -H "Content-Type: application/json" \
-     -d '{"todo":{"title":"食材を買う","category_id":3}}' \
-     http://localhost:3001/api/todos
-```
+3. **Indexing**: Database indexes on `user_id` and unique constraint on `(user_id, name)` ensure fast lookups and prevent duplicates.

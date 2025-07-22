@@ -35,7 +35,7 @@ Get all todos for the authenticated user.
     "due_date": "2024-12-31",
     "category": {
       "id": 1,
-      "name": "仕事",
+      "name": "Work",
       "color": "#3B82F6"
     },
     "created_at": "2024-01-01T00:00:00.000Z",

@@ -30,14 +30,29 @@ frontend/src/
 ├── contexts/             # React contexts
 │   └── auth-context.tsx  # Global auth state
 ├── features/             # Feature-based modules
+│   ├── category/        # Category feature (NEW)
+│   │   ├── components/   # Category management components
+│   │   │   ├── CategoryManager.tsx
+│   │   │   ├── CategoryForm.tsx
+│   │   │   └── CategoryList.tsx
+│   │   ├── hooks/       # Category hooks
+│   │   │   └── useCategories.ts
+│   │   ├── lib/         # Category API client
+│   │   │   └── api-client.ts
+│   │   └── types/       # Category types
+│   │       └── category.ts
 │   └── todo/            # Todo feature
 │       ├── components/   # Todo-specific components
 │       │   ├── TodoList.tsx
 │       │   ├── TodoItem.tsx
 │       │   ├── TodoForm.tsx
 │       │   └── TodoFilters.tsx
-│       ├── hooks/       # Todo-specific hooks
-│       │   └── useTodos.ts
+│       ├── hooks/       # Todo hooks (REFACTORED)
+│       │   ├── useTodos.ts              # Main hook
+│       │   ├── useTodosState.ts         # State management
+│       │   ├── useTodoMutations.ts      # CRUD operations
+│       │   ├── useTodosFilter.ts        # Filtering logic
+│       │   └── todo-optimistic-utils.ts # Optimistic update utilities
 │       ├── lib/         # Todo API client
 │       │   └── api-client.ts
 │       └── types/       # Todo types
@@ -49,7 +64,9 @@ frontend/src/
 │   ├── constants.ts     # Configuration
 │   └── utils.ts         # Utilities
 ├── styles/              # Global styles
-└── types/               # Shared types
+└── types/               # Shared types (NEW ARCHITECTURE)
+    ├── common.ts        # Base entities and utilities
+    └── auth.ts          # Authentication types
 ```
 
 ## Key Architecture Patterns
@@ -62,21 +79,32 @@ Domain-specific code is organized under `features/[domain]/` with its own:
 - API clients
 - Utilities
 
-### 2. API Client Pattern
+### 2. API Client Pattern (UNIFIED)
 ```typescript
 // Base HTTP Client (lib/api-client.ts)
 class HttpClient {
-  async get<T>(url: string): Promise<T>
-  async post<T>(url: string, data: unknown): Promise<T>
-  async put<T>(url: string, data: unknown): Promise<T>
-  async patch<T>(url: string, data: unknown): Promise<T>
-  async delete<T>(url: string): Promise<T>
+  private baseUrl: string;
+  private getAuthToken(): string | null;
+  private getAuthHeaders(): Record<string, string>;
+  
+  async get<T>(endpoint: string): Promise<T>
+  async post<T>(endpoint: string, data?: unknown): Promise<T>
+  async put<T>(endpoint: string, data?: unknown): Promise<T>
+  async patch<T>(endpoint: string, data?: unknown): Promise<T>
+  async delete<T>(endpoint: string): Promise<T>
 }
 
-// Feature-specific client extends base
+// Feature-specific clients extend base (CONSISTENT)
 class TodoApiClient extends HttpClient {
   async getTodos(): Promise<Todo[]>
   async createTodo(data: CreateTodoData): Promise<Todo>
+  async updateTodoOrder(todos: UpdateOrderData[]): Promise<void>
+  // ...
+}
+
+class CategoryApiClient extends HttpClient {
+  async getCategories(): Promise<Category[]>
+  async createCategory(data: CreateCategoryData): Promise<Category>
   // ...
 }
 ```
@@ -98,18 +126,66 @@ Routes requiring authentication are wrapped with `ProtectedRoute` component that
 - Redirects to login if needed
 - Shows loading state during auth check
 
-### 5. Optimistic Updates
-Todo operations update UI immediately, with rollback on API failure:
+### 5. Type System Architecture (NEW)
 ```typescript
-// 1. Update local state optimistically
-setTodos(prev => [...prev, newTodo])
-// 2. Make API call
-try {
-  await api.createTodo(newTodo)
-} catch (error) {
-  // 3. Rollback on failure
-  setTodos(prev => prev.filter(t => t.id !== newTodo.id))
+// Base entity patterns (types/common.ts)
+interface BaseEntity {
+  id: number;
+  created_at: string;
+  updated_at: string;
 }
+
+// Generic utilities
+type CreateData<T> = Omit<T, keyof BaseEntity>;
+type UpdateData<T> = Partial<Omit<T, keyof EntityWithId>>;
+
+// Domain types extend base
+interface Todo extends BaseEntity {
+  title: string;
+  completed: boolean;
+  category: TodoCategoryRef | null;
+  // ...
+}
+
+interface Category extends BaseEntity {
+  name: string;
+  color: string;
+  todo_count: number;
+}
+```
+
+### 6. Hooks Architecture (REFACTORED)
+**Modular Hook Design**: Large hooks split into focused modules
+
+```typescript
+// Responsibility separation
+useTodos.ts (89 lines)
+├── useTodosState.ts (59 lines)      # State management
+├── useTodoMutations.ts (168 lines)  # CRUD + optimistic updates
+├── useTodosFilter.ts (49 lines)     # Filtering & counts
+└── todo-optimistic-utils.ts         # Pure utility functions
+
+// Main hook composition
+export function useTodos() {
+  const state = useTodosState();
+  const mutations = useTodoMutations(state);
+  const { todos, counts } = useTodosFilter(state);
+  
+  return { ...state, ...mutations, todos, counts };
+}
+```
+
+### 7. Optimistic Updates (ENHANCED)
+Optimistic updates extracted to pure utility functions:
+```typescript
+// Pure functions for testability
+export function createOptimisticTodo(data: CreateTodoData): Todo;
+export function applyOptimisticUpdate(todos: Todo[], id: number, updates: Partial<Todo>): Todo[];
+export function removeOptimisticTodo(todos: Todo[], id: number): Todo[];
+
+// Usage in hooks
+const optimisticTodo = createOptimisticTodo(data, allTodos.length);
+setAllTodos(prev => addOptimisticTodo(prev, optimisticTodo));
 ```
 
 ## Component Architecture

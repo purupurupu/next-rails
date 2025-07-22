@@ -29,11 +29,11 @@
 │ id (PK)         │    ┌────┤ name            │
 │ title           │    │    │ color           │
 │ completed       │    │    │ user_id (FK)    │
-│ position        │    │    │ created_at      │
-│ priority        │    │    │ updated_at      │
-│ status          │    │    └─────────────────┘
-│ description     │    │              │ 1
-│ due_date        │    │              │
+│ position        │    │    │ todos_count     │ ← COUNTER CACHE
+│ priority        │    │    │ created_at      │
+│ status          │    │    │ updated_at      │
+│ description     │    │    └─────────────────┘
+│ due_date        │    │              │ 1
 │ user_id (FK)    │────┘              │
 │ category_id(FK) │───────────────────┘ *
 │ created_at      │
@@ -112,6 +112,7 @@ CREATE TABLE categories (
   name varchar NOT NULL,
   color varchar NOT NULL,
   user_id bigint NOT NULL,
+  todos_count integer DEFAULT 0 NOT NULL,  -- COUNTER CACHE
   created_at timestamp(6) NOT NULL,
   updated_at timestamp(6) NOT NULL,
   FOREIGN KEY (user_id) REFERENCES users(id)
@@ -126,6 +127,7 @@ CREATE UNIQUE INDEX index_categories_on_user_id_and_name ON categories(user_id, 
 - `name`: Category name (required, unique per user)
 - `color`: HEX color code for visual organization
 - `user_id`: Owner of the category (foreign key)
+- `todos_count`: **Counter cache** for efficient todo counting (eliminates N+1 queries)
 
 ### jwt_denylists table
 ```sql
@@ -202,6 +204,10 @@ add_index :todos, :status
 
 # 20250719124941_add_description_to_todos.rb
 add_column :todos, :description, :text
+
+# 20250722132849_add_todos_count_to_categories.rb
+add_column :categories, :todos_count, :integer, default: 0, null: false
+Category.find_each { |category| Category.reset_counters(category.id, :todos) }
 ```
 
 ## Data Integrity Rules
@@ -261,10 +267,32 @@ SELECT 1 FROM jwt_denylists
 WHERE jti = ? LIMIT 1;
 ```
 
-### Performance Considerations
-1. **N+1 Query Prevention**: Use includes/eager loading in Rails
-2. **Pagination**: Implement for large todo lists
-3. **Soft Deletes**: Not implemented, using hard deletes
+### Performance Considerations (ENHANCED)
+1. **N+1 Query Prevention**: 
+   - **Counter cache** on categories eliminates N+1 queries for todo counts
+   - Use `includes/eager` loading in Rails for associations
+2. **Bulk Operations**: 
+   - `TodosController#update_order` uses transaction for efficient bulk position updates
+3. **Pagination**: Implement for large todo lists
+4. **Soft Deletes**: Not implemented, using hard deletes
+
+### Counter Cache Implementation
+```ruby
+# Category model
+class Category < ApplicationRecord
+  has_many :todos, counter_cache: true, dependent: :destroy
+end
+
+# Todo model
+class Todo < ApplicationRecord
+  belongs_to :category, counter_cache: true, optional: true
+end
+
+# Migration automatically updates counter
+Category.find_each do |category|
+  Category.reset_counters(category.id, :todos)
+end
+```
 
 ## Backup and Recovery
 
