@@ -157,15 +157,15 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
 
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               {todo.category && (
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className="text-xs"
-                  style={{ 
+                  style={{
                     borderColor: todo.category.color,
-                    backgroundColor: `${todo.category.color}20`
+                    backgroundColor: `${todo.category.color}20`,
                   }}
                 >
-                  <div 
+                  <div
                     className="h-2 w-2 rounded-full mr-1"
                     style={{ backgroundColor: todo.category.color }}
                   />
