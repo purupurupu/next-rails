@@ -40,7 +40,7 @@ export function useCategories() {
     try {
       const updatedCategory = await categoryApiClient.updateCategory(id, data);
       setCategories((prev) =>
-        prev.map((cat) => (cat.id === id ? updatedCategory : cat))
+        prev.map((cat) => (cat.id === id ? updatedCategory : cat)),
       );
       toast.success("カテゴリーを更新しました");
       return updatedCategory;

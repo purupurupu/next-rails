@@ -152,23 +152,25 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
 
           <div className="space-y-2">
             <label className="text-sm font-medium">カテゴリー（任意）</label>
-            <Select 
-              value={categoryId?.toString() || "none"} 
+            <Select
+              value={categoryId?.toString() || "none"}
               onValueChange={(value) => setCategoryId(value === "none" ? undefined : parseInt(value))}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="カテゴリーを選択">
-                  {categoryId ? (
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="h-3 w-3 rounded"
-                        style={{ backgroundColor: categories.find(c => c.id === categoryId)?.color }}
-                      />
-                      {categories.find(c => c.id === categoryId)?.name}
-                    </div>
-                  ) : (
-                    "カテゴリーなし"
-                  )}
+                  {categoryId
+                    ? (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="h-3 w-3 rounded"
+                            style={{ backgroundColor: categories.find((c) => c.id === categoryId)?.color }}
+                          />
+                          {categories.find((c) => c.id === categoryId)?.name}
+                        </div>
+                      )
+                    : (
+                        "カテゴリーなし"
+                      )}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -176,7 +178,7 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     <div className="flex items-center gap-2">
-                      <div 
+                      <div
                         className="h-3 w-3 rounded"
                         style={{ backgroundColor: category.color }}
                       />

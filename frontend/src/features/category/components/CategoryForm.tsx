@@ -39,7 +39,7 @@ export function CategoryForm({ category, onSubmit, onCancel }: CategoryFormProps
         setName("");
         setColor("#3B82F6");
       }
-    } catch (error) {
+    } catch {
       // エラーは親コンポーネントで処理
     } finally {
       setIsSubmitting(false);
