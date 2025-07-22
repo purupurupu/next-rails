@@ -1,6 +1,7 @@
 class Todo < ApplicationRecord
     # 関連付け（学習ポイント：belongs_to関連）
     belongs_to :user
+    belongs_to :category, optional: true
     
     # Enums
     enum priority: { low: 0, medium: 1, high: 2 }, _default: :medium

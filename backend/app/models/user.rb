@@ -7,6 +7,7 @@ class User < ApplicationRecord
   
   # 関連付け（学習ポイント：has_many関連）
   has_many :todos, dependent: :destroy
+  has_many :categories, dependent: :destroy
   
   # バリデーション（学習ポイント：カスタムバリデーション）
   validates :name, presence: true, length: { minimum: 2, maximum: 50 }
