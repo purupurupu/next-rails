@@ -33,6 +33,11 @@ Get all todos for the authenticated user.
     "status": "in_progress",
     "description": "Write comprehensive API documentation with examples",
     "due_date": "2024-12-31",
+    "category": {
+      "id": 1,
+      "name": "仕事",
+      "color": "#3B82F6"
+    },
     "created_at": "2024-01-01T00:00:00.000Z",
     "updated_at": "2024-01-01T00:00:00.000Z"
   },
@@ -101,7 +106,8 @@ Create a new todo item.
     "priority": "high",
     "status": "pending",
     "description": "Detailed task description",
-    "due_date": "2024-12-31"
+    "due_date": "2024-12-31",
+    "category_id": 2
   }
 }
 ```
@@ -112,6 +118,7 @@ Create a new todo item.
 - `status` (optional): Task status - `"pending"`, `"in_progress"`, `"completed"`. Defaults to `"pending"`
 - `description` (optional): Detailed description of the task
 - `due_date` (optional): Due date in YYYY-MM-DD format
+- `category_id` (optional): ID of the category to assign this todo to
 - `completed` (optional): Defaults to `false`
 
 **Success Response (201 Created):**
