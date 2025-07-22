@@ -2,11 +2,12 @@ class ApplicationController < ActionController::API
   before_action :authenticate_user!, unless: :devise_registration_or_session_controller?
   before_action :configure_permitted_parameters, if: :devise_controller?
   
-  # Unified error handling
+  # Unified error handling (order matters - more specific exceptions first)
+  rescue_from ActionController::ParameterMissing, with: :handle_parameter_missing
   rescue_from ActiveRecord::RecordNotFound, with: :handle_not_found
   rescue_from ActiveRecord::RecordInvalid, with: :handle_unprocessable_entity
-  rescue_from ActionController::ParameterMissing, with: :handle_parameter_missing
-  rescue_from StandardError, with: :handle_internal_server_error
+  rescue_from ArgumentError, with: :handle_bad_request
+  rescue_from RuntimeError, with: :handle_internal_server_error
   
   private
   
@@ -45,6 +46,14 @@ class ApplicationController < ActionController::API
     render json: { 
       error: 'Parameter missing',
       message: "Parameter missing: #{exception.param}" 
+    }, status: :bad_request
+  end
+
+  def handle_bad_request(exception)
+    log_error(exception, :warn)
+    render json: { 
+      error: 'Bad request',
+      message: exception.message
     }, status: :bad_request
   end
 
