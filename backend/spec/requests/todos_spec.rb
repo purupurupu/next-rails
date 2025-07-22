@@ -55,6 +55,8 @@ RSpec.describe 'Todos API', type: :request do
     context 'when unauthenticated' do
       it 'returns unauthorized' do
         get '/api/todos'
+        
+        # Unauthenticated requests return forbidden status
         expect(response).to have_http_status(:forbidden)
       end
     end
@@ -75,10 +77,7 @@ RSpec.describe 'Todos API', type: :request do
       it 'creates a new todo' do
         simple_params = { todo: { title: 'Simple Todo' } }
         
-        post '/api/todos', params: simple_params.to_json, headers: headers.merge('Content-Type' => 'application/json')
-        
-        puts "Response status: #{response.status}"
-        puts "Response body: #{response.body}"
+        post '/api/todos', params: simple_params, headers: headers, as: :json
         
         expect(response).to have_http_status(:created)
         todo = JSON.parse(response.body)
@@ -87,11 +86,7 @@ RSpec.describe 'Todos API', type: :request do
 
       it 'assigns todo to current user' do
         simple_attributes = { title: 'User Todo Test' }
-        puts "Headers: #{headers}"
-        post '/api/todos', params: { todo: simple_attributes }, headers: headers
-        
-        puts "Response status: #{response.status}"
-        puts "Response body: #{response.body}"
+        post '/api/todos', params: { todo: simple_attributes }, headers: headers, as: :json
         
         expect(response).to have_http_status(:created)
         todo = Todo.last
@@ -101,7 +96,7 @@ RSpec.describe 'Todos API', type: :request do
 
       it 'uses default values when not provided' do
         minimal_attributes = { title: 'Minimal Todo' }
-        post '/api/todos', params: { todo: minimal_attributes }, headers: headers
+        post '/api/todos', params: { todo: minimal_attributes }, headers: headers, as: :json
 
         expect(response).to have_http_status(:created)
         todo = JSON.parse(response.body)
@@ -111,11 +106,11 @@ RSpec.describe 'Todos API', type: :request do
       end
 
       it 'returns error for invalid attributes' do
-        post '/api/todos', params: { todo: { title: '' } }, headers: headers
+        post '/api/todos', params: { todo: { title: '' } }, headers: headers, as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)
         errors = JSON.parse(response.body)
-        expect(errors['title']).to include("can't be blank")
+        expect(errors['errors']['title']).to include("can't be blank")
       end
     end
   end
@@ -133,7 +128,7 @@ RSpec.describe 'Todos API', type: :request do
 
     context 'when authenticated' do
       it 'updates the todo' do
-        put "/api/todos/#{todo.id}", params: { todo: update_attributes }, headers: headers
+        put "/api/todos/#{todo.id}", params: { todo: update_attributes }, headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
         todo.reload
@@ -146,7 +141,7 @@ RSpec.describe 'Todos API', type: :request do
       it 'prevents updating other users todos' do
         other_todo = create(:todo, user: other_user)
         
-        put "/api/todos/#{other_todo.id}", params: { todo: update_attributes }, headers: headers
+        put "/api/todos/#{other_todo.id}", params: { todo: update_attributes }, headers: headers, as: :json
 
         expect(response).to have_http_status(:not_found)
       end
@@ -194,7 +189,7 @@ RSpec.describe 'Todos API', type: :request do
           ]
         }
 
-        patch '/api/todos/update_order', params: reorder_params, headers: headers
+        patch '/api/todos/update_order', params: reorder_params, headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
         
@@ -214,9 +209,9 @@ RSpec.describe 'Todos API', type: :request do
           todos: [{ id: other_todo.id, position: 5 }]
         }
 
-        expect {
-          patch '/api/todos/update_order', params: reorder_params, headers: headers
-        }.to raise_error(ActiveRecord::RecordNotFound)
+        patch '/api/todos/update_order', params: reorder_params, headers: headers, as: :json
+        
+        expect(response).to have_http_status(:not_found)
       end
     end
   end

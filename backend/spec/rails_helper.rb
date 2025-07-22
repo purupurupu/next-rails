@@ -76,11 +76,19 @@ RSpec.configure do |config|
   # Factory Bot configuration
   config.include FactoryBot::Syntax::Methods
   
-  # Authentication helpers for request specs
-  config.include AuthenticationHelpers, type: :request
+  # Devise test helpers for controller specs
+  config.include Devise::Test::ControllerHelpers, type: :controller
   
-  # Clear authentication cache before each request spec
+  # Authentication helpers for both request and controller specs
+  config.include AuthenticationHelpers, type: :request
+  config.include AuthenticationHelpers, type: :controller
+  
+  # Clear authentication cache before each spec
   config.before(:each, type: :request) do
+    clear_auth_cache if respond_to?(:clear_auth_cache)
+  end
+  
+  config.before(:each, type: :controller) do
     clear_auth_cache if respond_to?(:clear_auth_cache)
   end
   

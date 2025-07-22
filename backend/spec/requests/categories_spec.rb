@@ -77,10 +77,7 @@ RSpec.describe '/api/categories', type: :request do
     end
 
     it 'creates a new category' do
-      post '/api/categories', params: valid_params, headers: headers
-      
-      puts "Response status: #{response.status}"
-      puts "Response body: #{response.body}"
+      post '/api/categories', params: valid_params, headers: headers, as: :json
       
       expect(response).to have_http_status(:created)
       json_response = JSON.parse(response.body)
@@ -100,7 +97,7 @@ RSpec.describe '/api/categories', type: :request do
       end
 
       it 'returns validation errors' do
-        post '/api/categories', params: invalid_params, headers: headers
+        post '/api/categories', params: invalid_params, headers: headers, as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
@@ -125,7 +122,7 @@ RSpec.describe '/api/categories', type: :request do
     end
 
     it 'updates the category' do
-      patch "/api/categories/#{category.id}", params: update_params, headers: headers
+      patch "/api/categories/#{category.id}", params: update_params, headers: headers, as: :json
 
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
@@ -160,10 +157,10 @@ RSpec.describe '/api/categories', type: :request do
       get '/api/categories'
       expect(response.status).to be_in([401, 403])
 
-      post '/api/categories', params: { category: { name: 'Test', color: '#000000' } }
+      post '/api/categories', params: { category: { name: 'Test', color: '#000000' } }, as: :json
       expect(response.status).to be_in([401, 403])
 
-      patch '/api/categories/1', params: { category: { name: 'Test' } }
+      patch '/api/categories/1', params: { category: { name: 'Test' } }, as: :json
       expect(response.status).to be_in([401, 403])
 
       delete '/api/categories/1'
