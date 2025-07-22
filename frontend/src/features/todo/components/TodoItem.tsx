@@ -155,7 +155,23 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
               </div>
             </div>
 
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {todo.category && (
+                <Badge 
+                  variant="outline" 
+                  className="text-xs"
+                  style={{ 
+                    borderColor: todo.category.color,
+                    backgroundColor: `${todo.category.color}20`
+                  }}
+                >
+                  <div 
+                    className="h-2 w-2 rounded-full mr-1"
+                    style={{ backgroundColor: todo.category.color }}
+                  />
+                  {todo.category.name}
+                </Badge>
+              )}
               <Badge variant={getPriorityColor(todo.priority) as "destructive" | "default" | "secondary" | "outline"} className="text-xs">
                 優先度:
                 {" "}

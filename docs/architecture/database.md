@@ -22,19 +22,20 @@
 └─────────┬───────┘
           │ 1
           │
-          │ *
-┌─────────┴───────┐
-│     todos       │
-├─────────────────┤
-│ id (PK)         │
-│ title           │
-│ completed       │
-│ position        │
-│ priority        │
-│ status          │
-│ description     │
-│ due_date        │
-│ user_id (FK)    │
+          │ *                ┌─────────────────┐
+┌─────────┴───────┐         │   categories    │
+│     todos       │         ├─────────────────┤
+├─────────────────┤         │ id (PK)         │
+│ id (PK)         │    ┌────┤ name            │
+│ title           │    │    │ color           │
+│ completed       │    │    │ user_id (FK)    │
+│ position        │    │    │ created_at      │
+│ priority        │    │    │ updated_at      │
+│ status          │    │    └─────────────────┘
+│ description     │    │              │ 1
+│ due_date        │    │              │
+│ user_id (FK)    │────┘              │
+│ category_id(FK) │───────────────────┘ *
 │ created_at      │
 │ updated_at      │
 └─────────────────┘
@@ -78,15 +79,18 @@ CREATE TABLE todos (
   description text,
   due_date date,
   user_id bigint NOT NULL,
+  category_id bigint,
   created_at timestamp(6) NOT NULL,
   updated_at timestamp(6) NOT NULL,
-  FOREIGN KEY (user_id) REFERENCES users(id)
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
 CREATE INDEX index_todos_on_position ON todos(position);
 CREATE INDEX index_todos_on_priority ON todos(priority);
 CREATE INDEX index_todos_on_status ON todos(status);
 CREATE INDEX index_todos_on_user_id ON todos(user_id);
+CREATE INDEX index_todos_on_category_id ON todos(category_id);
 ```
 
 **Purpose**: Stores todo items for each user
@@ -99,6 +103,29 @@ CREATE INDEX index_todos_on_user_id ON todos(user_id);
 - `description`: Optional detailed description (TEXT type)
 - `due_date`: Optional deadline
 - `user_id`: Owner of the todo (foreign key)
+- `category_id`: Optional category assignment (foreign key)
+
+### categories table
+```sql
+CREATE TABLE categories (
+  id bigserial PRIMARY KEY,
+  name varchar NOT NULL,
+  color varchar NOT NULL,
+  user_id bigint NOT NULL,
+  created_at timestamp(6) NOT NULL,
+  updated_at timestamp(6) NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE INDEX index_categories_on_user_id ON categories(user_id);
+CREATE UNIQUE INDEX index_categories_on_user_id_and_name ON categories(user_id, name);
+```
+
+**Purpose**: Stores user-defined categories for organizing todos
+**Key Fields**:
+- `name`: Category name (required, unique per user)
+- `color`: HEX color code for visual organization
+- `user_id`: Owner of the category (foreign key)
 
 ### jwt_denylists table
 ```sql

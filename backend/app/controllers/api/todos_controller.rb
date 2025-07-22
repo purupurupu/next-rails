@@ -3,28 +3,28 @@ module Api
     before_action :set_todo, only: [:show, :update, :destroy]
 
     def index
-      @todos = current_user.todos.ordered
-      render json: @todos
+      @todos = current_user.todos.includes(:category).ordered
+      render json: @todos, each_serializer: TodoSerializer
     end
 
     def show
-      render json: @todo
+      render json: @todo, serializer: TodoSerializer
     end
 
     def create
       @todo = current_user.todos.build(todo_params)
       if @todo.save
-        render json: @todo, status: :created
+        render json: @todo, serializer: TodoSerializer, status: :created
       else
-        render json: @todo.errors, status: :unprocessable_entity
+        render json: { errors: @todo.errors }, status: :unprocessable_entity
       end
     end
 
     def update
       if @todo.update(todo_params)
-        render json: @todo
+        render json: @todo, serializer: TodoSerializer
       else
-        render json: @todo.errors, status: :unprocessable_entity
+        render json: { errors: @todo.errors }, status: :unprocessable_entity
       end
     end
 
@@ -48,7 +48,7 @@ module Api
     end
 
     def todo_params
-      params.require(:todo).permit(:title, :completed, :position, :due_date, :priority, :status, :description)
+      params.require(:todo).permit(:title, :completed, :position, :due_date, :priority, :status, :description, :category_id)
     end
   end
 end

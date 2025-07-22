@@ -62,8 +62,8 @@
   - Modify serializers to include description field
   - _Requirements: 3.3_
 
-- [ ] 4. Implement Category system
-- [ ] 4.1 Create Category model and associations
+- [x] 4. Implement Category system
+- [x] 4.1 Create Category model and associations
 
   - Generate Category model with user association
   - Create migration for categories table with proper indexes
@@ -71,7 +71,7 @@
   - Write comprehensive model tests
   - _Requirements: 2.1, 2.5_
 
-- [ ] 4.2 Create Category API endpoints
+- [x] 4.2 Create Category API endpoints
 
   - Implement CRUD operations for categories
   - Add proper authorization (user can only manage own categories)
@@ -79,7 +79,7 @@
   - Write integration tests for category endpoints
   - _Requirements: 2.5_
 
-- [ ] 4.3 Update Todo model to support categories
+- [x] 4.3 Update Todo model to support categories
 
   - Add category_id to todos table migration
   - Update Todo model with category association

@@ -36,6 +36,10 @@ docker compose exec backend bundle exec rails db:create
 docker compose exec backend bundle exec rails db:migrate
 docker compose exec backend bundle exec rails db:seed
 
+# Database seed options
+docker compose exec backend bundle exec rails db:seed                    # Normal seed (preserves existing data)
+docker compose exec backend bash -c "RESET_DB=true bundle exec rails db:seed"  # Reset and seed (clears all data first)
+
 # Access Rails console
 docker compose exec backend rails console
 
@@ -99,7 +103,8 @@ docker compose exec backend bundle exec rails db:reset  # drop + create + migrat
 
 **Core Models**:
 - **User**: Authentication with email/password
-- **Todo**: User's tasks with title, completion status, position, priority (low/medium/high), status (pending/in_progress/completed), optional description and due date
+- **Todo**: User's tasks with title, completion status, position, priority (low/medium/high), status (pending/in_progress/completed), optional description, due date, and category association
+- **Category**: User-scoped organization categories with name and color for grouping todos
 - **JwtDenylist**: Revoked tokens for secure logout
 
 See [Database Architecture](./docs/architecture/database.md) for detailed schema.
@@ -107,6 +112,7 @@ See [Database Architecture](./docs/architecture/database.md) for detailed schema
 **API Endpoints**:
 - Authentication: `/auth/*` (login, register, logout)
 - Todos: `/api/todos/*` (CRUD + bulk reorder)
+- Categories: `/api/categories/*` (CRUD operations)
 
 See [API Documentation](./docs/api/) for details.
 
@@ -115,13 +121,15 @@ See [API Documentation](./docs/api/) for details.
 The Rails backend provides:
 - **Authentication API** at `/auth/*` with user registration, login, and logout
 - **Todo API** at `/api/todos` with user-scoped CRUD operations
+- **Category API** at `/api/categories` with user-scoped CRUD operations
 - **JWT Authentication** for API access with token-based authentication
 - Standard CRUD endpoints (GET, POST, PUT, DELETE)
 - Bulk update endpoint: `PATCH /api/todos/update_order` for drag-and-drop reordering
-- Todo model attributes: `title`, `completed`, `position`, `priority`, `status`, `description`, `due_date`, `user_id`
+- Todo model attributes: `title`, `completed`, `position`, `priority`, `status`, `description`, `due_date`, `category_id`, `user_id`
+- Category model attributes: `name`, `color`, `user_id`, `created_at`, `updated_at`
 - User model attributes: `email`, `name`, `created_at`
 
-Frontend should make API calls to `http://localhost:3001/api/todos` and `http://localhost:3001/auth/*`.
+Frontend should make API calls to `http://localhost:3001/api/todos`, `http://localhost:3001/api/categories`, and `http://localhost:3001/auth/*`.
 
 ## Key Implementation Details
 
@@ -180,6 +188,41 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 3. **Authentication**: Check auth state before protected features
 4. **Commits**: Small, frequent commits with clear messages
 5. **Code Style**: Follow existing patterns in the codebase
+
+### Git Commit Best Practices
+
+**Commit Size and Scope**:
+- Keep commits small and focused on a single logical change
+- Each commit should represent a complete, working state
+- Avoid mixing unrelated changes in a single commit
+
+**Recommended Commit Granularity**:
+1. **Model/Migration Changes**: Create model with migration and validations
+2. **API Endpoints**: Controller actions with routing changes
+3. **Frontend Components**: Component with its types and styles
+4. **Integration Changes**: Updates that connect different parts
+5. **Test Additions**: Tests for specific features
+6. **Documentation Updates**: Separate from code changes
+
+**Example Commit Sequence for a Feature**:
+```
+1. feat(backend): Add Category model with validations
+2. feat(backend): Add category association to Todo model
+3. feat(backend): Add Category API controller
+4. feat(backend): Add serializers for Category and Todo
+5. feat(frontend): Add Category types and interfaces
+6. feat(frontend): Add Category API client
+7. feat(frontend): Add Category management components
+8. feat(frontend): Update Todo components to support categories
+9. test(backend): Add Category model and controller tests
+10. docs: Update API documentation for categories
+```
+
+**Commit Message Format**:
+- Use conventional commits: `type(scope): description`
+- Types: feat, fix, docs, style, refactor, test, chore
+- Keep the first line under 50 characters
+- Add detailed description if needed
 
 **Before Creating Pull Requests**:
 - Run frontend checks: `pnpm run lint`, `pnpm run typecheck`
@@ -259,6 +302,14 @@ frontend/src/
 - `features/todo/components/TodoItem.tsx` - Individual todo item component
 - `features/todo/components/TodoForm.tsx` - Todo creation and editing form
 - `features/todo/components/TodoFilters.tsx` - Filter controls (all, active, completed)
+
+**Category Feature**:
+- `features/category/lib/api-client.ts` - Category-specific API client extending HttpClient
+- `features/category/types/category.ts` - Category-related TypeScript interfaces and types
+- `features/category/hooks/useCategories.ts` - Category state management
+- `features/category/components/CategoryManager.tsx` - Main category management component
+- `features/category/components/CategoryForm.tsx` - Category creation and editing form
+- `features/category/components/CategorySelector.tsx` - Category selection dropdown
 
 **UI Components**:
 - `components/ui/` - Shared UI components (shadcn/ui based)

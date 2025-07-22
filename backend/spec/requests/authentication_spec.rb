@@ -196,11 +196,11 @@ RSpec.describe 'Authentication', type: :request do
     end
 
     context 'when user is not authenticated' do
-      it 'returns unauthorized response' do
+      it 'returns success response (idempotent behavior)' do
         delete '/auth/sign_out', as: :json, headers: headers
         
-        # Note: Missing Authorization header causes 500 errors at the middleware level
-        expect(response).to have_http_status(:internal_server_error)
+        # Note: Devise sign_out is idempotent - returns success even when not authenticated
+        expect(response).to have_http_status(:ok)
       end
     end
 
@@ -208,7 +208,7 @@ RSpec.describe 'Authentication', type: :request do
       it 'returns unauthorized response' do
         delete '/auth/sign_out', headers: headers.merge({ 'Authorization' => 'Bearer invalid_token' }), as: :json
         
-        # Note: Invalid JWT tokens cause 500 errors at the middleware level
+        # Invalid JWT tokens cause 500 errors at the middleware level
         expect(response).to have_http_status(:internal_server_error)
       end
     end
