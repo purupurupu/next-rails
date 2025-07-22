@@ -44,17 +44,23 @@ backend/
 ├── app/
 │   ├── controllers/
 │   │   ├── api/
-│   │   │   └── todos_controller.rb    # Todo CRUD endpoints
+│   │   │   ├── todos_controller.rb     # Todo CRUD endpoints
+│   │   │   └── categories_controller.rb # Category CRUD endpoints
 │   │   ├── users/
 │   │   │   ├── sessions_controller.rb  # Login/logout
 │   │   │   └── registrations_controller.rb # Signup
-│   │   └── application_controller.rb   # Base controller
+│   │   ├── concerns/
+│   │   │   └── api_response_formatter.rb # Unified API response formatting
+│   │   └── application_controller.rb   # Base controller with unified error handling
 │   ├── models/
 │   │   ├── user.rb                     # User model with Devise
-│   │   ├── todo.rb                     # Todo model
+│   │   ├── todo.rb                     # Todo model with Category association
+│   │   ├── category.rb                 # Category model with counter_cache
 │   │   └── jwt_denylist.rb             # JWT revocation
 │   ├── serializers/
-│   │   └── user_serializer.rb          # User JSON serialization
+│   │   ├── user_serializer.rb          # User JSON serialization
+│   │   ├── todo_serializer.rb          # Todo JSON serialization
+│   │   └── category_serializer.rb      # Category JSON serialization
 │   └── services/                       # Business logic services
 ├── config/
 │   ├── routes.rb                       # API routes
@@ -167,13 +173,71 @@ class Todo < ApplicationRecord
 end
 ```
 
-## Error Handling
+## Error Handling (UNIFIED)
+
+### Unified Error Handling in ApplicationController
+```ruby
+class ApplicationController < ActionController::API
+  rescue_from ActionController::ParameterMissing, with: :handle_parameter_missing
+  rescue_from ActiveRecord::RecordNotFound, with: :handle_not_found
+  rescue_from ActiveRecord::RecordInvalid, with: :handle_unprocessable_entity
+  rescue_from ActiveRecord::RecordNotUnique, with: :handle_unprocessable_entity
+  
+  private
+  
+  def handle_parameter_missing(exception)
+    error_response(message: "Parameter missing: #{exception.param}", status: :bad_request)
+  end
+  
+  def handle_not_found(exception)
+    error_response(message: 'Record not found', status: :not_found)
+  end
+  
+  def handle_unprocessable_entity(exception)
+    if exception.respond_to?(:record) && exception.record&.errors&.any?
+      render json: { errors: exception.record.errors }, status: :unprocessable_entity
+    else
+      error_response(message: exception.message, status: :unprocessable_entity)
+    end
+  end
+end
+```
+
+### ApiResponseFormatter Concern
+```ruby
+module ApiResponseFormatter
+  extend ActiveSupport::Concern
+  
+  private
+  
+  def success_response(message:, data: nil, status: :ok)
+    response_body = { message: message }
+    response_body[:data] = data if data
+    render json: response_body, status: status
+  end
+  
+  def error_response(message:, status: :unprocessable_entity)
+    render json: { error: message }, status: status
+  end
+end
+```
 
 ### Standard Error Response
 ```json
 {
-  "error": "Record not found",
-  "status": 404
+  "error": "Record not found"
+}
+```
+
+### Success Response with Data
+```json
+{
+  "message": "Todo created successfully",
+  "data": {
+    "id": 1,
+    "title": "New Todo",
+    "completed": false
+  }
 }
 ```
 
@@ -202,22 +266,47 @@ end
 4. **Parameter Filtering**: Strong parameters in controllers
 5. **SQL Injection**: ActiveRecord parameterized queries
 
-## Performance Optimizations
+## Performance Optimizations (ENHANCED)
 
 1. **Database Indexes**
    - User email (unique)
-   - Todo position
-   - Todo user_id (foreign key)
+   - Todo position, user_id, category_id (foreign keys)
+   - Category user_id (foreign key)
    - JWT jti (denylist lookup)
 
 2. **Query Optimization**
-   - Eager loading associations
+   - **Counter Cache**: `todos_count` on categories eliminates N+1 queries
+   - **Bulk Updates**: `Todo.update_order` for efficient position updates
+   - Eager loading associations with `includes`
    - Scoped queries for filtering
    - Ordered by position for consistency
 
-3. **Caching Strategy**
+3. **N+1 Query Prevention**
+   - Counter cache implementation:
+   ```ruby
+   # Category model
+   has_many :todos, counter_cache: true
+   
+   # Migration adds todos_count column
+   add_column :categories, :todos_count, :integer, default: 0, null: false
+   ```
+
+4. **Bulk Operations**
+   ```ruby
+   # TodosController#update_order
+   def update_order
+     Todo.transaction do
+       params[:todos].each_with_index do |todo_data, index|
+         current_user.todos.find(todo_data[:id]).update!(position: index)
+       end
+     end
+   end
+   ```
+
+5. **Caching Strategy**
    - Redis for future caching needs
    - HTTP caching headers
+   - Counter cache for aggregate queries
 
 ## Testing Strategy
 

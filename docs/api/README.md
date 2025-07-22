@@ -32,26 +32,48 @@ Content-Type: application/json
 X-Request-Id: <unique_request_id>
 ```
 
-## Response Format
+## Response Format (UNIFIED)
 
-### Success Response
+### Success Response with Data
 ```json
 {
-  "id": 1,
-  "title": "Complete project",
-  "completed": false,
-  "position": 0,
-  "due_date": "2024-12-31",
-  "created_at": "2024-01-01T00:00:00.000Z",
-  "updated_at": "2024-01-01T00:00:00.000Z"
+  "message": "Todo created successfully",
+  "data": {
+    "id": 1,
+    "title": "Complete project",
+    "completed": false,
+    "position": 0,
+    "due_date": "2024-12-31",
+    "created_at": "2024-01-01T00:00:00.000Z",
+    "updated_at": "2024-01-01T00:00:00.000Z"
+  }
 }
+```
+
+### Success Response (Message Only)
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+### Resource List Response
+```json
+[
+  {
+    "id": 1,
+    "title": "Complete project",
+    "completed": false,
+    "position": 0,
+    "due_date": "2024-12-31"
+  }
+]
 ```
 
 ### Error Response
 ```json
 {
-  "error": "Record not found",
-  "status": 404
+  "error": "Record not found"
 }
 ```
 
@@ -85,6 +107,7 @@ X-Request-Id: <unique_request_id>
 
 ### Resources
 - [Todos API](./todos.md) - Todo CRUD operations and batch updates
+- [Categories API](./categories.md) - Category CRUD operations
 
 ## Pagination
 

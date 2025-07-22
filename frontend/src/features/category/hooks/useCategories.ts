@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { categoryApiClient } from "../lib/api-client";
+import { categoryApiClient, ApiError } from "../lib/api-client";
 import type { Category, CreateCategoryData, UpdateCategoryData } from "../types/category";
 import { toast } from "sonner";
 
@@ -15,7 +15,7 @@ export function useCategories() {
       const data = await categoryApiClient.getCategories();
       setCategories(data);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error("Failed to fetch categories");
+      const error = err instanceof ApiError ? err : new Error("Failed to fetch categories");
       setError(error);
       toast.error(error.message);
     } finally {
@@ -30,7 +30,7 @@ export function useCategories() {
       toast.success("カテゴリーを作成しました");
       return newCategory;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error("Failed to create category");
+      const error = err instanceof ApiError ? err : new Error("Failed to create category");
       toast.error(error.message);
       throw error;
     }
@@ -45,7 +45,7 @@ export function useCategories() {
       toast.success("カテゴリーを更新しました");
       return updatedCategory;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error("Failed to update category");
+      const error = err instanceof ApiError ? err : new Error("Failed to update category");
       toast.error(error.message);
       throw error;
     }
@@ -57,7 +57,7 @@ export function useCategories() {
       setCategories((prev) => prev.filter((cat) => cat.id !== id));
       toast.success("カテゴリーを削除しました");
     } catch (err) {
-      const error = err instanceof Error ? err : new Error("Failed to delete category");
+      const error = err instanceof ApiError ? err : new Error("Failed to delete category");
       toast.error(error.message);
       throw error;
     }

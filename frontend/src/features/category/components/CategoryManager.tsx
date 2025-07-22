@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import { useCategories } from "../hooks/useCategories";
 import { CategoryForm } from "./CategoryForm";
 import { CategoryList } from "./CategoryList";
+import type { CreateCategoryData } from "../types/category";
 
 export function CategoryManager() {
   const { categories, isLoading, createCategory, updateCategory, deleteCategory } = useCategories();
@@ -36,7 +37,7 @@ export function CategoryManager() {
         <div className="mb-6">
           <CategoryForm
             onSubmit={async (data) => {
-              await createCategory(data);
+              await createCategory(data as CreateCategoryData);
               setIsCreating(false);
             }}
             onCancel={() => setIsCreating(false)}
@@ -46,7 +47,9 @@ export function CategoryManager() {
 
       <CategoryList
         categories={categories}
-        onUpdate={updateCategory}
+        onUpdate={async (id, data) => {
+          await updateCategory(id, data);
+        }}
         onDelete={deleteCategory}
       />
     </Card>

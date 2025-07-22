@@ -24,20 +24,17 @@ Create a new user account.
 }
 ```
 
-**Success Response (201 Created):**
+**Success Response (200 OK):**
 
 **Headers:**
 ```
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 ```
 
-**Body:**
+**Body (UNIFIED FORMAT):**
 ```json
 {
-  "status": {
-    "code": 200,
-    "message": "Signed up successfully."
-  },
+  "message": "Signed up successfully.",
   "data": {
     "id": 1,
     "email": "user@example.com",
@@ -50,14 +47,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 **Error Response (422 Unprocessable Entity):**
 ```json
 {
-  "status": {
-    "code": 422,
-    "message": "User couldn't be created successfully.",
-    "errors": {
-      "email": ["has already been taken"],
-      "password": ["is too short (minimum is 6 characters)"],
-      "password_confirmation": ["doesn't match Password"]
-    }
+  "errors": {
+    "email": ["has already been taken"],
+    "password": ["is too short (minimum is 6 characters)"],
+    "password_confirmation": ["doesn't match Password"]
   }
 }
 ```
@@ -85,13 +78,10 @@ Authenticate an existing user.
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 ```
 
-**Body:**
+**Body (UNIFIED FORMAT):**
 ```json
 {
-  "status": {
-    "code": 200,
-    "message": "Logged in successfully."
-  },
+  "message": "Logged in successfully.",
   "data": {
     "id": 1,
     "email": "user@example.com",
@@ -122,20 +112,14 @@ Authorization: Bearer <jwt_token>
 **Success Response (200 OK):**
 ```json
 {
-  "status": {
-    "code": 200,
-    "message": "Logged out successfully."
-  }
+  "message": "Logged out successfully."
 }
 ```
 
 **Error Response (401 Unauthorized):**
 ```json
 {
-  "status": {
-    "code": 401,
-    "message": "Couldn't find an active session."
-  }
+  "error": "Couldn't find an active session."
 }
 ```
 

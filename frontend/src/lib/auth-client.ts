@@ -1,46 +1,18 @@
 import { httpClient } from "./api-client";
 import { API_BASE_URL, API_ENDPOINTS } from "./constants";
+import type {
+  User,
+  LoginRequest,
+  RegisterRequest,
+  AuthResponse,
+  AuthResult,
+} from "@/types/auth";
 
-export interface User {
-  id: number;
-  email: string;
-  name: string;
-  created_at: string;
-}
-
-export interface LoginRequest {
-  user: {
-    email: string;
-    password: string;
-  };
-}
-
-export interface RegisterRequest {
-  user: {
-    email: string;
-    password: string;
-    password_confirmation: string;
-    name: string;
-  };
-}
-
-export interface AuthResponse {
-  status: {
-    code: number;
-    message: string;
-  };
-  data: User;
-}
-
-export interface AuthError {
-  status: {
-    code: number;
-    message: string;
-  };
-}
+// Re-export for backward compatibility
+export type { User, LoginRequest, RegisterRequest, AuthResponse, AuthResult };
 
 class AuthClient {
-  private async authRequest(endpoint: string, data: unknown): Promise<{ user: User; token: string }> {
+  private async authRequest(endpoint: string, data: unknown): Promise<AuthResult> {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: "POST",
@@ -85,11 +57,11 @@ class AuthClient {
     }
   }
 
-  async login(credentials: LoginRequest): Promise<{ user: User; token: string }> {
+  async login(credentials: LoginRequest): Promise<AuthResult> {
     return this.authRequest(API_ENDPOINTS.AUTH_LOGIN, credentials);
   }
 
-  async register(userData: RegisterRequest): Promise<{ user: User; token: string }> {
+  async register(userData: RegisterRequest): Promise<AuthResult> {
     return this.authRequest(API_ENDPOINTS.AUTH_REGISTER, userData);
   }
 
