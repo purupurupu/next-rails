@@ -181,6 +181,41 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 4. **Commits**: Small, frequent commits with clear messages
 5. **Code Style**: Follow existing patterns in the codebase
 
+### Git Commit Best Practices
+
+**Commit Size and Scope**:
+- Keep commits small and focused on a single logical change
+- Each commit should represent a complete, working state
+- Avoid mixing unrelated changes in a single commit
+
+**Recommended Commit Granularity**:
+1. **Model/Migration Changes**: Create model with migration and validations
+2. **API Endpoints**: Controller actions with routing changes
+3. **Frontend Components**: Component with its types and styles
+4. **Integration Changes**: Updates that connect different parts
+5. **Test Additions**: Tests for specific features
+6. **Documentation Updates**: Separate from code changes
+
+**Example Commit Sequence for a Feature**:
+```
+1. feat(backend): Add Category model with validations
+2. feat(backend): Add category association to Todo model
+3. feat(backend): Add Category API controller
+4. feat(backend): Add serializers for Category and Todo
+5. feat(frontend): Add Category types and interfaces
+6. feat(frontend): Add Category API client
+7. feat(frontend): Add Category management components
+8. feat(frontend): Update Todo components to support categories
+9. test(backend): Add Category model and controller tests
+10. docs: Update API documentation for categories
+```
+
+**Commit Message Format**:
+- Use conventional commits: `type(scope): description`
+- Types: feat, fix, docs, style, refactor, test, chore
+- Keep the first line under 50 characters
+- Add detailed description if needed
+
 **Before Creating Pull Requests**:
 - Run frontend checks: `pnpm run lint`, `pnpm run typecheck`
 - Run backend tests: `docker compose exec backend bundle exec rspec`
