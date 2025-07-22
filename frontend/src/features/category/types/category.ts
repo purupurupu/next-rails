@@ -1,26 +1,23 @@
-export interface Category {
-  id: number;
+import type { BaseEntity, CreateData, UpdateData, ValidationErrors } from "@/types/common";
+
+/**
+ * Category domain types
+ */
+
+export interface Category extends BaseEntity {
   name: string;
   color: string;
   todo_count: number;
-  created_at: string;
-  updated_at: string;
 }
 
-export interface CreateCategoryData {
-  name: string;
-  color: string;
-}
+// Category operations
+export type CreateCategoryData = CreateData<Pick<Category, "name" | "color">>;
+export type UpdateCategoryData = UpdateData<Pick<Category, "name" | "color">>;
 
-export interface UpdateCategoryData {
-  name?: string;
-  color?: string;
-}
+// Error types
+export type CategoryValidationErrors = ValidationErrors;
 
-export interface CategoriesResponse {
-  categories: Category[];
-}
-
+// For backward compatibility (can be removed after migration)
 export interface CategoryError {
   name?: string[];
   color?: string[];
