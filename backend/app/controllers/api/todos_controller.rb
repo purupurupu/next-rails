@@ -54,8 +54,6 @@ module Api
       end
       
       head :ok
-    rescue ActiveRecord::RecordNotFound
-      head :not_found
     rescue => e
       Rails.logger.error "Failed to update todo order: #{e.message}"
       render json: { error: 'Failed to update todo order' }, status: :unprocessable_entity

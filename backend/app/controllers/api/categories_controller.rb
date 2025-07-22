@@ -43,8 +43,6 @@ class Api::CategoriesController < ApplicationController
 
   def set_category
     @category = current_user.categories.find(params[:id])
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Category not found' }, status: :not_found
   end
 
   def category_params
