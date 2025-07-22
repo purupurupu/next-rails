@@ -36,5 +36,9 @@ FactoryBot.define do
     trait :no_description do
       description { nil }
     end
+
+    trait :with_category do
+      association :category, factory: :category
+    end
   end
 end
