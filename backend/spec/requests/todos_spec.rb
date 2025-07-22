@@ -86,9 +86,16 @@ RSpec.describe 'Todos API', type: :request do
       end
 
       it 'assigns todo to current user' do
-        post '/api/todos', params: { todo: valid_attributes }, headers: headers
+        simple_attributes = { title: 'User Todo Test' }
+        puts "Headers: #{headers}"
+        post '/api/todos', params: { todo: simple_attributes }, headers: headers
         
+        puts "Response status: #{response.status}"
+        puts "Response body: #{response.body}"
+        
+        expect(response).to have_http_status(:created)
         todo = Todo.last
+        expect(todo).not_to be_nil
         expect(todo.user).to eq(user)
       end
 

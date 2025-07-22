@@ -79,6 +79,11 @@ RSpec.configure do |config|
   # Authentication helpers for request specs
   config.include AuthenticationHelpers, type: :request
   
+  # Clear authentication cache before each request spec
+  config.before(:each, type: :request) do
+    clear_auth_cache if respond_to?(:clear_auth_cache)
+  end
+  
   # Database Cleaner configuration
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction

@@ -1,5 +1,5 @@
 class TodoSerializer < ActiveModel::Serializer
-  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :created_at, :updated_at
+  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at, :updated_at
   
   belongs_to :category, serializer: CategorySerializer
 
