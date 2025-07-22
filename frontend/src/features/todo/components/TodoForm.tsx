@@ -26,6 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 import type { CreateTodoData, Todo, TodoPriority, TodoStatus } from "@/features/todo/types/todo";
+import { useCategories } from "@/features/category/hooks/useCategories";
 
 interface TodoFormProps {
   mode: "create" | "edit";
@@ -36,6 +37,7 @@ interface TodoFormProps {
 }
 
 export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormProps) {
+  const { categories } = useCategories();
   const [title, setTitle] = useState(todo?.title || "");
   const [dueDate, setDueDate] = useState<Date | undefined>(
     todo?.due_date ? new Date(todo.due_date) : undefined,
@@ -43,6 +45,7 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
   const [priority, setPriority] = useState<TodoPriority>(todo?.priority || "medium");
   const [status, setStatus] = useState<TodoStatus>(todo?.status || "pending");
   const [description, setDescription] = useState(todo?.description || "");
+  const [categoryId, setCategoryId] = useState<number | undefined>(todo?.category?.id);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -58,6 +61,7 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
         priority,
         status,
         description: description.trim() || null,
+        category_id: categoryId || null,
       };
 
       await onSubmit(data);
@@ -69,6 +73,7 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
         setPriority("medium");
         setStatus("pending");
         setDescription("");
+        setCategoryId(undefined);
       }
 
       onOpenChange(false);
@@ -84,6 +89,7 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
       setPriority("medium");
       setStatus("pending");
       setDescription("");
+      setCategoryId(undefined);
     }
     onOpenChange(newOpen);
   };
@@ -140,6 +146,44 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
                 <SelectItem value="pending">未着手</SelectItem>
                 <SelectItem value="in_progress">進行中</SelectItem>
                 <SelectItem value="completed">完了</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">カテゴリー（任意）</label>
+            <Select 
+              value={categoryId?.toString() || "none"} 
+              onValueChange={(value) => setCategoryId(value === "none" ? undefined : parseInt(value))}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="カテゴリーを選択">
+                  {categoryId ? (
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="h-3 w-3 rounded"
+                        style={{ backgroundColor: categories.find(c => c.id === categoryId)?.color }}
+                      />
+                      {categories.find(c => c.id === categoryId)?.name}
+                    </div>
+                  ) : (
+                    "カテゴリーなし"
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">カテゴリーなし</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id.toString()}>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="h-3 w-3 rounded"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      {category.name}
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
