@@ -1,6 +1,12 @@
 export type TodoPriority = "low" | "medium" | "high";
 export type TodoStatus = "pending" | "in_progress" | "completed";
 
+export interface TodoCategory {
+  id: number;
+  name: string;
+  color: string;
+}
+
 export interface Todo {
   id: number;
   title: string;
@@ -10,6 +16,7 @@ export interface Todo {
   priority: TodoPriority;
   status: TodoStatus;
   description: string | null;
+  category: TodoCategory | null;
   created_at: string;
   updated_at: string;
 }
@@ -20,6 +27,7 @@ export interface CreateTodoData {
   priority?: TodoPriority;
   status?: TodoStatus;
   description?: string | null;
+  category_id?: number | null;
 }
 
 export interface UpdateTodoData {
@@ -29,6 +37,7 @@ export interface UpdateTodoData {
   priority?: TodoPriority;
   status?: TodoStatus;
   description?: string | null;
+  category_id?: number | null;
 }
 
 export interface UpdateOrderData {
