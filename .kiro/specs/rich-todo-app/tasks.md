@@ -87,8 +87,8 @@
   - Update todo controller to handle category assignment
   - _Requirements: 2.1, 2.3_
 
-- [ ] 5. Implement Tag system with many-to-many relationships
-- [ ] 5.1 Create Tag model and junction table
+- [x] 5. Implement Tag system with many-to-many relationships
+- [x] 5.1 Create Tag model and junction table
 
   - Generate Tag model with proper validations
   - Create TodoTag junction model for many-to-many relationship
@@ -96,7 +96,7 @@
   - Write tests for tag associations and validations
   - _Requirements: 2.2, 2.6_
 
-- [ ] 5.2 Create Tag API endpoints
+- [x] 5.2 Create Tag API endpoints
 
   - Implement tag CRUD operations
   - Add tag search and autocomplete functionality
@@ -104,7 +104,7 @@
   - Write integration tests for tag management
   - _Requirements: 2.6_
 
-- [ ] 5.3 Update Todo operations to handle tags
+- [x] 5.3 Update Todo operations to handle tags
 
   - Modify todo creation/update to accept tag assignments
   - Implement tag filtering in todo list endpoint
