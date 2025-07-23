@@ -67,10 +67,14 @@ Todos with files include a `files` array in the response:
     },
     {
       "id": 124,
-      "filename": "image.jpg",
+      "filename": "photo.jpg",
       "content_type": "image/jpeg",
       "byte_size": 51200,
-      "url": "http://localhost:3001/rails/active_storage/blobs/redirect/..."
+      "url": "http://localhost:3001/rails/active_storage/blobs/redirect/...",
+      "variants": {
+        "thumb": "http://localhost:3001/rails/active_storage/representations/redirect/...",
+        "medium": "http://localhost:3001/rails/active_storage/representations/redirect/..."
+      }
     }
   ],
   // ... other todo fields
@@ -85,6 +89,9 @@ Each file object contains:
 - `content_type`: MIME type of the file
 - `byte_size`: File size in bytes
 - `url`: Direct URL to download the file
+- `variants`: (for images only) URLs for resized versions
+  - `thumb`: Thumbnail version (max 300x300)
+  - `medium`: Medium version (max 800x800)
 
 ## Frontend Implementation Notes
 
@@ -122,9 +129,18 @@ Files can be displayed or downloaded using the provided URLs:
   Download {file.filename}
 </a>
 
-// Display image
+// Display image with variants
 {file.content_type.startsWith('image/') && (
-  <img src={file.url} alt={file.filename} />
+  <>
+    {/* Thumbnail for previews */}
+    <img src={file.variants?.thumb || file.url} alt={file.filename} />
+    
+    {/* Medium size for modals/lightbox */}
+    <img src={file.variants?.medium || file.url} alt={file.filename} />
+    
+    {/* Full size original */}
+    <a href={file.url} target="_blank">View full size</a>
+  </>
 )}
 ```
 
@@ -151,39 +167,26 @@ Then update `config/environments/production.rb`:
 config.active_storage.service = :amazon
 ```
 
-## File Size Limits
+## File Validations
 
-Consider adding validations to the Todo model:
+The Todo model includes the following file validations:
 
-```ruby
-class Todo < ApplicationRecord
-  has_many_attached :files
-  
-  validate :acceptable_files
+### File Size
+- Maximum file size: **10MB per file**
+- Error message: "ファイルサイズは10MB以下にしてください"
 
-  private
+### Allowed File Types
+- **Images**: JPEG, PNG, GIF, WebP
+- **Documents**: PDF, Word (DOC, DOCX), Excel (XLS, XLSX)
+- **Text**: Plain text (TXT), CSV
+- Error message: "許可されていないファイルタイプです"
 
-  def acceptable_files
-    return unless files.attached?
-    
-    files.each do |file|
-      unless file.blob.byte_size <= 10.megabytes
-        errors.add(:files, "#{file.filename} is too large (max 10MB)")
-      end
-      
-      unless acceptable_types.include?(file.content_type)
-        errors.add(:files, "#{file.filename} has an invalid content type")
-      end
-    end
-  end
-  
-  def acceptable_types
-    ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 
-     'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-     'text/plain', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-  end
-end
-```
+### Image Variants
+For uploaded images, the following variants are automatically generated:
+- **thumb**: Maximum 300x300 pixels (for thumbnails)
+- **medium**: Maximum 800x800 pixels (for previews)
+
+The original image is always preserved for full-size viewing.
 
 ## Security Considerations
 
