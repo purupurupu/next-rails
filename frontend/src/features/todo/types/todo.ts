@@ -1,5 +1,6 @@
 import type { BaseEntity, ValidationErrors } from "@/types/common";
 import type { Category } from "@/features/category/types/category";
+import type { Tag } from "@/features/tag/types/tag";
 
 /**
  * Todo domain types
@@ -13,6 +14,9 @@ export type TodoFilter = "all" | "active" | "completed";
 // Category reference (simplified version for todos)
 export type TodoCategoryRef = Pick<Category, "id" | "name" | "color">;
 
+// Tag reference (simplified version for todos)
+export type TodoTagRef = Pick<Tag, "id" | "name" | "color">;
+
 // Main todo entity
 export interface Todo extends BaseEntity {
   title: string;
@@ -23,6 +27,7 @@ export interface Todo extends BaseEntity {
   status: TodoStatus;
   description: string | null;
   category: TodoCategoryRef | null;
+  tags: TodoTagRef[];
 }
 
 // Todo operations
@@ -33,6 +38,7 @@ export interface CreateTodoData {
   status?: TodoStatus;
   description?: string | null;
   category_id?: number | null;
+  tag_ids?: number[];
 }
 
 export interface UpdateTodoData {
@@ -43,6 +49,7 @@ export interface UpdateTodoData {
   status?: TodoStatus;
   description?: string | null;
   category_id?: number | null;
+  tag_ids?: number[];
 }
 
 export interface UpdateOrderData {

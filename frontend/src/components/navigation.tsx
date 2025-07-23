@@ -30,6 +30,9 @@ export function Navigation() {
               <Link href="/categories" className="text-sm text-gray-600 hover:text-gray-900">
                 カテゴリー
               </Link>
+              <Link href="/tags" className="text-sm text-gray-600 hover:text-gray-900">
+                タグ
+              </Link>
             </>
           )}
         </div>
