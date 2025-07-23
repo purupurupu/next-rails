@@ -23,8 +23,12 @@ Rails.application.routes.draw do
       collection do
         patch 'update_order'
       end
+      member do
+        patch 'tags', to: 'todos#update_tags'
+      end
     end
     resources :categories
+    resources :tags
   end
 
 end
