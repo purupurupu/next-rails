@@ -215,4 +215,181 @@ RSpec.describe 'Todos API', type: :request do
       end
     end
   end
+
+  describe 'PATCH /api/todos/:id/tags' do
+    let(:todo) { create(:todo, user: user) }
+    let(:tag1) { create(:tag, name: 'work', user: user) }
+    let(:tag2) { create(:tag, name: 'urgent', user: user) }
+    let(:tag3) { create(:tag, name: 'personal', user: user) }
+
+    context 'when authenticated' do
+      it 'updates todo tags' do
+        patch "/api/todos/#{todo.id}/tags", 
+              params: { tag_ids: [tag1.id, tag2.id] }, 
+              headers: headers, 
+              as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(todo.reload.tag_ids).to match_array([tag1.id, tag2.id])
+      end
+
+      it 'returns todo with tags in response' do
+        patch "/api/todos/#{todo.id}/tags", 
+              params: { tag_ids: [tag1.id] }, 
+              headers: headers, 
+              as: :json
+
+        expect(JSON.parse(response.body)['tags']).to be_an(Array)
+        expect(JSON.parse(response.body)['tags'].first['id']).to eq(tag1.id)
+        expect(JSON.parse(response.body)['tags'].first['name']).to eq(tag1.name)
+      end
+
+      it 'replaces existing tags' do
+        todo.tags << [tag1, tag2]
+        
+        patch "/api/todos/#{todo.id}/tags", 
+              params: { tag_ids: [tag3.id] }, 
+              headers: headers, 
+              as: :json
+
+        expect(todo.reload.tag_ids).to eq([tag3.id])
+      end
+
+      it 'removes all tags when empty array is provided' do
+        todo.tags << [tag1, tag2]
+        
+        patch "/api/todos/#{todo.id}/tags", 
+              params: { tag_ids: [] }, 
+              headers: headers, 
+              as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(todo.reload.tags).to be_empty
+      end
+
+      it 'prevents using tags from other users' do
+        other_user_tag = create(:tag, user: other_user)
+        
+        patch "/api/todos/#{todo.id}/tags", 
+              params: { tag_ids: [tag1.id, other_user_tag.id] }, 
+              headers: headers, 
+              as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(JSON.parse(response.body)['error']).to eq('Invalid tag IDs')
+        expect(todo.reload.tags).to be_empty
+      end
+
+      it 'prevents updating tags on other users todos' do
+        other_todo = create(:todo, user: other_user)
+        
+        patch "/api/todos/#{other_todo.id}/tags", 
+              params: { tag_ids: [tag1.id] }, 
+              headers: headers, 
+              as: :json
+
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it 'handles non-existent tag IDs' do
+        patch "/api/todos/#{todo.id}/tags", 
+              params: { tag_ids: [999999] }, 
+              headers: headers, 
+              as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(JSON.parse(response.body)['error']).to eq('Invalid tag IDs')
+      end
+    end
+
+    context 'when not authenticated' do
+      it 'returns unauthorized' do
+        patch "/api/todos/#{todo.id}/tags", 
+              params: { tag_ids: [tag1.id] }, 
+              as: :json
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe 'Todo creation and updates with tags' do
+    let(:tag1) { create(:tag, name: 'work', user: user) }
+    let(:tag2) { create(:tag, name: 'urgent', user: user) }
+
+    context 'when creating a todo with tags' do
+      it 'creates todo with specified tags' do
+        todo_params = {
+          title: 'New todo with tags',
+          tag_ids: [tag1.id, tag2.id]
+        }
+
+        post '/api/todos', params: { todo: todo_params }, headers: headers, as: :json
+
+        expect(response).to have_http_status(:created)
+        created_todo = Todo.find(JSON.parse(response.body)['id'])
+        expect(created_todo.tag_ids).to match_array([tag1.id, tag2.id])
+      end
+
+      it 'returns todo with tags in response' do
+        todo_params = {
+          title: 'New todo with tags',
+          tag_ids: [tag1.id]
+        }
+
+        post '/api/todos', params: { todo: todo_params }, headers: headers, as: :json
+
+        expect(JSON.parse(response.body)['tags']).to be_an(Array)
+        expect(JSON.parse(response.body)['tags'].length).to eq(1)
+        expect(JSON.parse(response.body)['tags'].first['id']).to eq(tag1.id)
+      end
+
+      it 'prevents using tags from other users during creation' do
+        other_user_tag = create(:tag, user: other_user)
+        todo_params = {
+          title: 'New todo',
+          tag_ids: [other_user_tag.id]
+        }
+
+        post '/api/todos', params: { todo: todo_params }, headers: headers, as: :json
+
+        # The todo should be created but without invalid tags
+        expect(response).to have_http_status(:created)
+        created_todo = Todo.find(JSON.parse(response.body)['id'])
+        expect(created_todo.tags).to be_empty
+      end
+    end
+
+    context 'when updating a todo with tags' do
+      let(:todo) { create(:todo, user: user) }
+
+      it 'updates todo tags along with other attributes' do
+        todo.tags << tag1
+
+        update_params = {
+          title: 'Updated title',
+          tag_ids: [tag2.id]
+        }
+
+        patch "/api/todos/#{todo.id}", params: { todo: update_params }, headers: headers, as: :json
+
+        expect(response).to have_http_status(:ok)
+        todo.reload
+        expect(todo.title).to eq('Updated title')
+        expect(todo.tag_ids).to eq([tag2.id])
+      end
+
+      it 'preserves existing tags when tag_ids not provided' do
+        todo.tags << [tag1, tag2]
+
+        patch "/api/todos/#{todo.id}", 
+              params: { todo: { title: 'Updated title' } }, 
+              headers: headers, 
+              as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(todo.reload.tag_ids).to match_array([tag1.id, tag2.id])
+      end
+    end
+  end
 end
