@@ -110,16 +110,19 @@ docker compose exec backend bundle exec rails db:reset  # drop + create + migrat
 
 **Core Models**:
 - **User**: Authentication with email/password
-- **Todo**: User's tasks with title, completion status, position, priority (low/medium/high), status (pending/in_progress/completed), optional description, due date, and category association
+- **Todo**: User's tasks with title, completion status, position, priority (low/medium/high), status (pending/in_progress/completed), optional description, due date, category association, and tag associations
 - **Category**: User-scoped organization categories with name and color for grouping todos
+- **Tag**: User-scoped flexible tags with name and color for labeling todos (many-to-many relationship)
+- **TodoTag**: Junction table for the many-to-many relationship between todos and tags
 - **JwtDenylist**: Revoked tokens for secure logout
 
 See [Database Architecture](./docs/architecture/database.md) for detailed schema.
 
 **API Endpoints**:
 - Authentication: `/auth/*` (login, register, logout)
-- Todos: `/api/todos/*` (CRUD + bulk reorder)
+- Todos: `/api/todos/*` (CRUD + bulk reorder + tag assignment)
 - Categories: `/api/categories/*` (CRUD operations)
+- Tags: `/api/tags/*` (CRUD operations)
 
 See [API Documentation](./docs/api/) for details.
 
@@ -129,14 +132,16 @@ The Rails backend provides:
 - **Authentication API** at `/auth/*` with user registration, login, and logout
 - **Todo API** at `/api/todos` with user-scoped CRUD operations
 - **Category API** at `/api/categories` with user-scoped CRUD operations
+- **Tag API** at `/api/tags` with user-scoped CRUD operations
 - **JWT Authentication** for API access with token-based authentication
 - Standard CRUD endpoints (GET, POST, PUT, DELETE)
 - Bulk update endpoint: `PATCH /api/todos/update_order` for drag-and-drop reordering
-- Todo model attributes: `title`, `completed`, `position`, `priority`, `status`, `description`, `due_date`, `category_id`, `user_id`
+- Todo model attributes: `title`, `completed`, `position`, `priority`, `status`, `description`, `due_date`, `category_id`, `tag_ids`, `user_id`
 - Category model attributes: `name`, `color`, `user_id`, `created_at`, `updated_at`
+- Tag model attributes: `name`, `color`, `user_id`, `created_at`, `updated_at`
 - User model attributes: `email`, `name`, `created_at`
 
-Frontend should make API calls to `http://localhost:3001/api/todos`, `http://localhost:3001/api/categories`, and `http://localhost:3001/auth/*`.
+Frontend should make API calls to `http://localhost:3001/api/todos`, `http://localhost:3001/api/categories`, `http://localhost:3001/api/tags`, and `http://localhost:3001/auth/*`.
 
 ## Key Implementation Details
 
@@ -183,6 +188,8 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 - Status completion toggle
 - Drag-and-drop reordering
 - Filtering (all, active, completed)
+- Category assignment (one-to-many)
+- Tag assignment (many-to-many)
 - Optimistic updates for better UX
 - Error handling and validation
 - Responsive design with Tailwind CSS
