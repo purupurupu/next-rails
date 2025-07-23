@@ -33,7 +33,7 @@ RSpec.describe Todo, type: :model do
       expect(medium_variant).to be_present
     end
     
-    it 'only applies variants to variable files' do
+    it 'only applies variants to image files' do
       # Attach a non-image file
       text_blob = ActiveStorage::Blob.create_and_upload!(
         io: StringIO.new('text content'),
@@ -45,8 +45,13 @@ RSpec.describe Todo, type: :model do
       text_file = todo.files.find { |f| f.content_type == 'text/plain' }
       image_file = todo.files.find { |f| f.content_type == 'image/png' }
       
-      expect(image_file.variable?).to be true
-      expect(text_file.variable?).to be false
+      # Check content types
+      expect(image_file.content_type).to start_with('image/')
+      expect(text_file.content_type).not_to start_with('image/')
+      
+      # Variants should only work for images
+      expect { image_file.variant(:thumb) }.not_to raise_error
+      expect { text_file.variant(:thumb) }.to raise_error(ActiveStorage::InvariableError)
     end
   end
 end

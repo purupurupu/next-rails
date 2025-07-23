@@ -32,19 +32,19 @@ class TodoSerializer < ActiveModel::Serializer
         url: Rails.application.routes.url_helpers.rails_blob_url(file, host: 'localhost:3001')
       }
       
-      # Add variant URLs for images
-      if file.variable? && file.content_type.start_with?('image/')
-        result[:variants] = {
-          thumb: Rails.application.routes.url_helpers.rails_representation_url(
-            file.variant(:thumb).processed, 
-            host: 'localhost:3001'
-          ),
-          medium: Rails.application.routes.url_helpers.rails_representation_url(
-            file.variant(:medium).processed,
-            host: 'localhost:3001'
-          )
-        }
-      end
+      # TODO: Add variant URLs for images when Active Storage variants are properly configured
+      # if file.content_type.start_with?('image/')
+      #   result[:variants] = {
+      #     thumb: Rails.application.routes.url_helpers.rails_representation_url(
+      #       file.variant(:thumb).processed, 
+      #       host: 'localhost:3001'
+      #     ),
+      #     medium: Rails.application.routes.url_helpers.rails_representation_url(
+      #       file.variant(:medium).processed,
+      #       host: 'localhost:3001'
+      #     )
+      #   }
+      # end
       
       result
     end

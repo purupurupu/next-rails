@@ -32,7 +32,12 @@ module Api
         @todo.tag_ids = valid_tag_ids
       end
       
-      if @todo.update(todo_params.except(:tag_ids))
+      # Handle file attachments separately to append rather than replace
+      if params[:todo][:files].present?
+        @todo.files.attach(params[:todo][:files])
+      end
+      
+      if @todo.update(todo_params.except(:tag_ids, :files))
         render json: @todo, serializer: TodoSerializer
       else
         render json: { errors: @todo.errors }, status: :unprocessable_entity

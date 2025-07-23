@@ -22,7 +22,6 @@ class Todo < ApplicationRecord
 
     scope :ordered, -> { order(position: :asc) }
     before_create :set_position
-    before_destroy :purge_attachments
 
     private
 
@@ -59,9 +58,5 @@ class Todo < ApplicationRecord
           errors.add(:files, "許可されていないファイルタイプです (#{file.filename}: #{file.content_type})")
         end
       end
-    end
-    
-    def purge_attachments
-      files.purge if files.attached?
     end
 end

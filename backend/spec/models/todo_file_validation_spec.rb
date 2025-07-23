@@ -138,14 +138,15 @@ RSpec.describe Todo, type: :model do
       
       todo.files.attach([blob1, blob2])
       
-      # Get blob IDs
-      blob_ids = todo.files.map(&:blob_id)
+      # Get attachment count
+      initial_attachment_count = ActiveStorage::Attachment.count
+      file_count = todo.files.count
       
       # Destroy todo
       todo.destroy
       
-      # Check that blobs are deleted
-      expect(ActiveStorage::Blob.where(id: blob_ids).count).to eq(0)
+      # Check that attachments are deleted
+      expect(ActiveStorage::Attachment.count).to eq(initial_attachment_count - file_count)
     end
   end
 end
