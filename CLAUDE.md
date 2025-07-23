@@ -46,6 +46,13 @@ docker compose exec backend rails console
 # View logs
 docker compose logs -f backend
 docker compose logs -f frontend
+
+# IMPORTANT: Rebuild after package updates
+# When you add new dependencies to package.json or Gemfile, you MUST rebuild the Docker image:
+docker compose build frontend    # After updating frontend/package.json
+docker compose build backend     # After updating backend/Gemfile
+# Or rebuild without cache if you encounter dependency issues:
+docker compose build --no-cache frontend
 ```
 
 ### Frontend Development
@@ -188,6 +195,7 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 3. **Authentication**: Check auth state before protected features
 4. **Commits**: Small, frequent commits with clear messages
 5. **Code Style**: Follow existing patterns in the codebase
+6. **Docker Dependencies**: After adding new packages to package.json or Gemfile, always rebuild the Docker image
 
 ### Git Commit Best Practices
 
@@ -231,6 +239,30 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 - Ensure all checks pass before pushing
 
 See [Development Guide](./docs/guides/development.md) for detailed guidelines.
+
+## Troubleshooting
+
+### Node modules issues in Docker
+
+If you encounter errors like "Module not found" after adding new packages:
+
+1. **Symptoms:**
+   - `Module not found: Can't resolve '@some-package'`
+   - pnpm store location mismatch errors
+   - Turbopack panic errors
+
+2. **Solution:**
+   ```bash
+   # Stop and rebuild the container
+   docker compose down
+   docker compose build --no-cache frontend
+   docker compose up -d
+   ```
+
+3. **Prevention:**
+   - Always rebuild Docker images after updating package.json
+   - Use `docker compose build frontend` after adding new npm packages
+   - Use `docker compose build backend` after adding new gems
 
 ## Frontend Architecture
 
