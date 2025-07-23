@@ -5,9 +5,9 @@ import { tagApiClient } from "../lib/api-client";
 import type { Tag, CreateTagData, UpdateTagData } from "../types/tag";
 import { toast } from "sonner";
 
-export function useTags() {
+export function useTags(fetchOnMount = true) {
   const [tags, setTags] = useState<Tag[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch all tags
@@ -69,10 +69,12 @@ export function useTags() {
     }
   }, []);
 
-  // Load tags on mount
+  // Load tags on mount if requested
   useEffect(() => {
-    fetchTags();
-  }, [fetchTags]);
+    if (fetchOnMount) {
+      fetchTags();
+    }
+  }, [fetchOnMount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     tags,

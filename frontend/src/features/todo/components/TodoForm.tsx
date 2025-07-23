@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -39,8 +39,8 @@ interface TodoFormProps {
 }
 
 export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormProps) {
-  const { categories } = useCategories();
-  const { tags } = useTags();
+  const { categories, fetchCategories } = useCategories(false);
+  const { tags, fetchTags } = useTags(false);
   const [title, setTitle] = useState(todo?.title || "");
   const [dueDate, setDueDate] = useState<Date | undefined>(
     todo?.due_date ? new Date(todo.due_date) : undefined,
@@ -54,6 +54,14 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+
+  // Fetch categories and tags when form opens
+  useEffect(() => {
+    if (open) {
+      fetchCategories();
+      fetchTags();
+    }
+  }, [open, fetchCategories, fetchTags]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
