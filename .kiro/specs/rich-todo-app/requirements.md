@@ -2,7 +2,7 @@
 
 ## Introduction
 
-現在の基本的なTODOアプリを、Railsの様々な機能を活用したリッチなTODOアプリに拡張します。この拡張の主な目的はRailsのキャッチアップであり、バックエンド側には学習のためのコメントや補足を多めに含めます。現在のアプリには基本的なCRUD操作、並び順管理、期限日機能が実装されており、これらを基盤として機能を拡張していきます。
+現在の基本的な TODO アプリを、Rails の様々な機能を活用したリッチな TODO アプリに拡張します。この拡張の主な目的は Rails のキャッチアップであり、バックエンド側には学習のためのコメントや補足を多めに含めます。現在のアプリには基本的な CRUD 操作、並び順管理、期限日機能が実装されており、これらを基盤として機能を拡張していきます。
 
 ## Requirements
 
@@ -91,7 +91,7 @@
 4. WHEN search results are displayed THEN the system SHALL highlight matching terms
 5. WHEN no results are found THEN the system SHALL provide helpful feedback and suggestions
 
-### Requirement 8: API設計の改善
+### Requirement 8: API 設計の改善
 
 **User Story:** As a developer, I want a well-designed API so that the frontend can efficiently interact with the backend
 

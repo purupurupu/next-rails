@@ -58,6 +58,13 @@ graph TB
 
 ### 1. 認証・認可システム
 
+**設計決定**: Devise + devise-jwt の組み合わせを採用
+**理由**:
+
+- Devise は Rails の標準的な認証ライブラリで、学習効果が高い
+- devise-jwt により JWT 認証を統合し、SPA との親和性を確保
+- トークン無効化戦略により、セキュアなログアウト機能を実現
+
 #### User Model
 
 ```ruby
@@ -73,10 +80,24 @@ class User < ApplicationRecord
   has_many :todos, dependent: :destroy
   has_many :categories, dependent: :destroy
   has_many :comments, dependent: :destroy
+  has_many :notification_preferences, dependent: :destroy
 
   # バリデーション（学習ポイント：カスタムバリデーション）
   validates :name, presence: true, length: { minimum: 2, maximum: 50 }
   validates :email, uniqueness: { case_sensitive: false }
+
+  # 通知設定のデフォルト値を設定
+  after_create :create_default_notification_preferences
+
+  private
+
+  def create_default_notification_preferences
+    NotificationPreference.create!(
+      user: self,
+      email_reminders: true,
+      reminder_hours_before: 24
+    )
+  end
 end
 ```
 
@@ -212,6 +233,85 @@ class Tag < ApplicationRecord
 end
 ```
 
+#### NotificationPreference Model
+
+```ruby
+# app/models/notification_preference.rb
+class NotificationPreference < ApplicationRecord
+  # 学習ポイント：ユーザー設定の管理
+  belongs_to :user
+
+  # バリデーション
+  validates :reminder_hours_before, presence: true,
+            numericality: { greater_than: 0, less_than_or_equal_to: 168 } # 最大1週間前
+
+  # デフォルト値の設定
+  after_initialize :set_defaults, if: :new_record?
+
+  private
+
+  def set_defaults
+    self.email_reminders ||= true
+    self.reminder_hours_before ||= 24
+  end
+end
+```
+
+#### Comment Model（Polymorphic）
+
+```ruby
+# app/models/comment.rb
+class Comment < ApplicationRecord
+  # 学習ポイント：Polymorphic関連付け
+  belongs_to :user
+  belongs_to :commentable, polymorphic: true
+
+  validates :content, presence: true, length: { maximum: 1000 }
+
+  # ソフトデリート機能（学習ポイント：履歴保持のための論理削除）
+  scope :active, -> { where(deleted_at: nil) }
+  scope :deleted, -> { where.not(deleted_at: nil) }
+
+  def soft_delete!
+    update!(deleted_at: Time.current)
+  end
+
+  def deleted?
+    deleted_at.present?
+  end
+end
+```
+
+#### TodoHistory Model
+
+```ruby
+# app/models/todo_history.rb
+class TodoHistory < ApplicationRecord
+  # 学習ポイント：変更履歴の追跡
+  belongs_to :todo
+  belongs_to :user
+
+  validates :field_name, presence: true
+  validates :action, presence: true
+
+  enum action: { created: 0, updated: 1, deleted: 2 }
+
+  # 変更内容の可読化
+  def human_readable_change
+    case field_name
+    when 'status'
+      "ステータスを「#{old_value}」から「#{new_value}」に変更"
+    when 'priority'
+      "優先度を「#{old_value}」から「#{new_value}」に変更"
+    when 'due_date'
+      "期限日を「#{old_value}」から「#{new_value}」に変更"
+    else
+      "#{field_name}を変更"
+    end
+  end
+end
+```
+
 ### 3. API 設計
 
 #### RESTful API 構造
@@ -290,9 +390,183 @@ class ReminderJob < ApplicationJob
 end
 ```
 
-### 5. 検索・フィルタリング
+### 5. ファイル添付システム
 
-#### 検索サービス
+**設計決定**: Active Storage を使用したファイル管理
+**理由**:
+
+- Rails 標準のファイル管理システムで学習効果が高い
+- 自動的な画像リサイズとバリアント生成機能
+- セキュアなファイル配信とアクセス制御
+
+#### Active Storage 設定
+
+```ruby
+# app/models/todo.rb (ファイル添付部分)
+class Todo < ApplicationRecord
+  # ファイル添付（学習ポイント：Active Storage）
+  has_many_attached :attachments do |attachable|
+    attachable.variant :thumb, resize_to_limit: [150, 150]
+    attachable.variant :medium, resize_to_limit: [500, 500]
+  end
+
+  # ファイル添付のバリデーション
+  validate :acceptable_attachments
+
+  private
+
+  def acceptable_attachments
+    return unless attachments.attached?
+
+    attachments.each do |attachment|
+      unless attachment.blob.byte_size <= 10.megabyte
+        errors.add(:attachments, 'ファイルサイズは10MB以下にしてください')
+      end
+
+      acceptable_types = %w[image/jpeg image/png image/gif application/pdf text/plain]
+      unless acceptable_types.include?(attachment.blob.content_type)
+        errors.add(:attachments, 'サポートされていないファイル形式です')
+      end
+    end
+  end
+end
+```
+
+#### ファイル配信コントローラー
+
+```ruby
+# app/controllers/api/v1/attachments_controller.rb
+class Api::V1::AttachmentsController < ApplicationController
+  # 学習ポイント：セキュアなファイル配信
+  before_action :authenticate_user!
+  before_action :set_todo
+  before_action :set_attachment
+
+  def show
+    # ユーザー認証済みの場合のみファイルを配信
+    redirect_to rails_blob_url(@attachment, disposition: 'inline')
+  end
+
+  def destroy
+    @attachment.purge
+    head :no_content
+  end
+
+  private
+
+  def set_todo
+    @todo = current_user.todos.find(params[:todo_id])
+  end
+
+  def set_attachment
+    @attachment = @todo.attachments.find(params[:id])
+  end
+end
+```
+
+### 6. 通知・メールシステム
+
+**設計決定**: Action Mailer + Active Job による非同期メール配信
+**理由**:
+
+- バックグラウンド処理により UI をブロックしない
+- 失敗時の再試行機能でメール配信の信頼性を確保
+- ユーザー設定に基づく柔軟な通知制御
+
+#### メーラー設計
+
+```ruby
+# app/mailers/todo_mailer.rb
+class TodoMailer < ApplicationMailer
+  # 学習ポイント：Action Mailerによるメール送信
+
+  def reminder(todo)
+    @todo = todo
+    @user = todo.user
+
+    mail(
+      to: @user.email,
+      subject: "リマインダー: #{@todo.title}",
+      template_path: 'todo_mailer',
+      template_name: 'reminder'
+    )
+  end
+
+  def status_changed(todo)
+    @todo = todo
+    @user = todo.user
+
+    mail(
+      to: @user.email,
+      subject: "TODO更新: #{@todo.title}",
+      template_path: 'todo_mailer',
+      template_name: 'status_changed'
+    )
+  end
+
+  def overdue_notification(todo)
+    @todo = todo
+    @user = todo.user
+
+    mail(
+      to: @user.email,
+      subject: "期限切れ: #{@todo.title}",
+      template_path: 'todo_mailer',
+      template_name: 'overdue'
+    )
+  end
+end
+```
+
+#### 通知ジョブシステム
+
+```ruby
+# app/jobs/reminder_job.rb
+class ReminderJob < ApplicationJob
+  # 学習ポイント：定期実行ジョブとエラーハンドリング
+  queue_as :default
+  retry_on StandardError, wait: 5.minutes, attempts: 3
+
+  def perform
+    # 通知設定が有効なユーザーの期限が近いTODOを取得
+    upcoming_todos = Todo.joins(:user, :notification_preferences)
+                        .where(notification_preferences: { email_reminders: true })
+                        .where('due_date = ?', Date.current + 1.day)
+                        .includes(:user)
+
+    upcoming_todos.find_each do |todo|
+      TodoMailer.reminder(todo).deliver_now
+    end
+  end
+end
+
+# app/jobs/overdue_check_job.rb
+class OverdueCheckJob < ApplicationJob
+  queue_as :default
+
+  def perform
+    overdue_todos = Todo.joins(:user, :notification_preferences)
+                       .where(notification_preferences: { email_reminders: true })
+                       .where('due_date < ? AND status != ?', Date.current, 'completed')
+                       .includes(:user)
+
+    overdue_todos.find_each do |todo|
+      TodoMailer.overdue_notification(todo).deliver_now
+    end
+  end
+end
+```
+
+### 7. 検索・フィルタリングシステム
+
+**設計決定**: サービスオブジェクトによる複雑な検索ロジックの分離
+**理由**:
+
+- コントローラーの責務を明確に分離
+- 複雑な検索条件の組み合わせを効率的に処理
+- テスタビリティの向上
+
+#### 高度な検索サービス
 
 ```ruby
 # app/services/todo_search_service.rb
@@ -308,8 +582,9 @@ class TodoSearchService
     todos = @user.todos.includes(:category, :tags, :comments)
     todos = apply_text_search(todos)
     todos = apply_filters(todos)
+    todos = apply_date_filters(todos)
     todos = apply_sorting(todos)
-    todos
+    paginate_results(todos)
   end
 
   private
@@ -318,12 +593,410 @@ class TodoSearchService
     return todos unless @params[:q].present?
 
     # 学習ポイント：PostgreSQLの全文検索機能
-    todos.where("title ILIKE ? OR description ILIKE ?",
-                "%#{@params[:q]}%", "%#{@params[:q]}%")
+    search_term = "%#{@params[:q]}%"
+    todos.where("title ILIKE ? OR description ILIKE ?", search_term, search_term)
   end
 
   def apply_filters(todos)
-    # カテゴリ、ステータス、優先度、期限日でのフィルタリング
+    todos = todos.where(category_id: @params[:category_id]) if @params[:category_id].present?
+    todos = todos.where(status: @params[:status]) if @params[:status].present?
+    todos = todos.where(priority: @params[:priority]) if @params[:priority].present?
+
+    if @params[:tag_ids].present?
+      todos = todos.joins(:tags).where(tags: { id: @params[:tag_ids] })
+    end
+
+    todos
+  end
+
+  def apply_date_filters(todos)
+    if @params[:due_date_from].present?
+      todos = todos.where('due_date >= ?', @params[:due_date_from])
+    end
+
+    if @params[:due_date_to].present?
+      todos = todos.where('due_date <= ?', @params[:due_date_to])
+    end
+
+    case @params[:due_status]
+    when 'overdue'
+      todos = todos.where('due_date < ?', Date.current)
+    when 'due_today'
+      todos = todos.where(due_date: Date.current)
+    when 'due_this_week'
+      todos = todos.where(due_date: Date.current..Date.current.end_of_week)
+    end
+
+    todos
+  end
+
+  def apply_sorting(todos)
+    case @params[:sort_by]
+    when 'due_date'
+      todos.order(:due_date)
+    when 'priority'
+      todos.order(:priority)
+    when 'created_at'
+      todos.order(:created_at)
+    else
+      todos.order(:position, :created_at)
+    end
+  end
+
+  def paginate_results(todos)
+    page = @params[:page]&.to_i || 1
+    per_page = [@params[:per_page]&.to_i || 20, 100].min # 最大100件まで
+
+    todos.offset((page - 1) * per_page).limit(per_page)
+  end
+end
+```
+
+### 8. API バージョニングと改善
+
+**設計決定**: URL ベースのバージョニングと JSON API 仕様の採用
+**理由**:
+
+- 明確なバージョン管理により後方互換性を確保
+- JSON API 仕様により一貫したレスポンス形式を提供
+- 開発者体験の向上と API 利用の簡素化
+
+#### API バージョニング戦略
+
+```ruby
+# config/routes.rb
+Rails.application.routes.draw do
+  namespace :api do
+    namespace :v1 do
+      # 現在のAPIエンドポイント
+      resources :todos do
+        resources :comments, only: [:index, :create, :destroy]
+        resources :attachments, only: [:show, :destroy]
+        collection do
+          patch :bulk_update
+          get :search
+        end
+      end
+      resources :categories
+      resources :tags, only: [:index, :create]
+    end
+
+    # 将来のバージョン対応
+    namespace :v2 do
+      # 新しいAPIバージョンのエンドポイント
+    end
+  end
+end
+```
+
+#### 統一された API レスポンス形式
+
+```ruby
+# app/controllers/concerns/api_response_formatter.rb
+module ApiResponseFormatter
+  extend ActiveSupport::Concern
+
+  private
+
+  def render_success(data, status: :ok, meta: {})
+    render json: {
+      data: data,
+      meta: meta,
+      status: 'success'
+    }, status: status
+  end
+
+  def render_error(message, status: :bad_request, details: [])
+    render json: {
+      error: {
+        message: message,
+        details: details
+      },
+      status: 'error'
+    }, status: status
+  end
+
+  def render_paginated(collection, serializer_class, meta: {})
+    render json: {
+      data: ActiveModelSerializers::SerializableResource.new(
+        collection,
+        each_serializer: serializer_class
+      ),
+      meta: pagination_meta(collection).merge(meta),
+      status: 'success'
+    }
+  end
+
+  def pagination_meta(collection)
+    {
+      current_page: collection.current_page,
+      per_page: collection.limit_value,
+      total_pages: collection.total_pages,
+      total_count: collection.total_count
+    }
+  end
+end
+```
+
+### 9. パフォーマンス最適化
+
+**設計決定**: 多層キャッシュ戦略とクエリ最適化
+**理由**:
+
+- N+1 クエリ問題の解決により応答時間を大幅改善
+- Redis キャッシュにより頻繁にアクセスされるデータの高速化
+- 適切なインデックス設計によりデータベースパフォーマンスを向上
+
+#### クエリ最適化戦略
+
+```ruby
+# app/controllers/api/v1/todos_controller.rb
+class Api::V1::TodosController < ApplicationController
+  def index
+    # N+1クエリを避けるための適切なincludesの使用
+    @todos = current_user.todos
+                        .includes(:category, :tags, :comments, attachments_attachments: :blob)
+                        .order(:position, :created_at)
+
+    # 検索・フィルタリングの適用
+    @todos = TodoSearchService.new(current_user, search_params).call
+
+    render_paginated(@todos, TodoSerializer)
+  end
+
+  def show
+    # 詳細表示時の関連データの効率的な読み込み
+    @todo = current_user.todos
+                       .includes(:category, :tags,
+                                comments: :user,
+                                todo_histories: :user,
+                                attachments_attachments: :blob)
+                       .find(params[:id])
+
+    render_success(@todo, serializer: TodoSerializer)
+  end
+end
+```
+
+#### キャッシュ戦略
+
+```ruby
+# app/models/concerns/cacheable.rb
+module Cacheable
+  extend ActiveSupport::Concern
+
+  included do
+    after_update :expire_cache
+    after_destroy :expire_cache
+  end
+
+  def cache_key_with_version
+    "#{model_name.cache_key}/#{id}-#{updated_at.to_i}"
+  end
+
+  private
+
+  def expire_cache
+    Rails.cache.delete_matched("#{model_name.cache_key}/#{id}-*")
+  end
+end
+
+# app/models/todo.rb (キャッシュ機能追加)
+class Todo < ApplicationRecord
+  include Cacheable
+
+  # 頻繁にアクセスされる統計情報のキャッシュ
+  def self.stats_for_user(user)
+    Rails.cache.fetch("user_#{user.id}_todo_stats", expires_in: 1.hour) do
+      {
+        total: user.todos.count,
+        completed: user.todos.completed.count,
+        overdue: user.todos.overdue.count,
+        due_today: user.todos.due_today.count
+      }
+    end
+  end
+end
+```
+
+#### データベースインデックス最適化
+
+```sql
+-- 複合インデックスによる検索性能向上
+CREATE INDEX idx_todos_user_status_priority ON todos(user_id, status, priority);
+CREATE INDEX idx_todos_user_due_date ON todos(user_id, due_date) WHERE due_date IS NOT NULL;
+CREATE INDEX idx_todos_user_category ON todos(user_id, category_id) WHERE category_id IS NOT NULL;
+
+-- 全文検索用のインデックス（PostgreSQL）
+CREATE INDEX idx_todos_search ON todos USING gin(to_tsvector('japanese', title || ' ' || COALESCE(description, '')));
+
+-- 部分インデックスによる効率化
+CREATE INDEX idx_active_todos ON todos(user_id, created_at) WHERE status != 2; -- 完了以外
+CREATE INDEX idx_overdue_todos ON todos(user_id, due_date) WHERE due_date < CURRENT_DATE AND status != 2;
+```
+
+### 10. 品質管理とモニタリング
+
+**設計決定**: 包括的なテスト戦略と継続的品質管理
+**理由**:
+
+- 高いテストカバレッジにより品質を保証
+- 自動化されたコード品質チェックにより一貫性を確保
+- パフォーマンスモニタリングにより問題の早期発見
+
+#### テスト戦略の詳細設計
+
+```ruby
+# spec/support/shared_examples/api_authentication.rb
+RSpec.shared_examples 'requires authentication' do
+  context 'when user is not authenticated' do
+    it 'returns 401 unauthorized' do
+      subject
+      expect(response).to have_http_status(:unauthorized)
+      expect(json_response['error']['type']).to eq('authentication_error')
+    end
+  end
+end
+
+# spec/support/shared_examples/api_pagination.rb
+RSpec.shared_examples 'paginatable endpoint' do
+  it 'includes pagination metadata' do
+    subject
+    expect(json_response['meta']).to include(
+      'current_page',
+      'per_page',
+      'total_pages',
+      'total_count'
+    )
+  end
+
+  it 'respects per_page parameter' do
+    get endpoint_path, params: { per_page: 5 }
+    expect(json_response['data'].length).to be <= 5
+  end
+end
+```
+
+#### パフォーマンステスト
+
+```ruby
+# spec/performance/todos_performance_spec.rb
+RSpec.describe 'Todos API Performance', type: :request do
+  let(:user) { create(:user) }
+  let!(:todos) { create_list(:todo, 100, :with_category, :with_tags, user: user) }
+
+  before { sign_in user }
+
+  it 'loads todos index within acceptable time' do
+    expect {
+      get '/api/v1/todos'
+    }.to perform_under(500).ms
+  end
+
+  it 'avoids N+1 queries when loading todos with associations' do
+    expect {
+      get '/api/v1/todos'
+    }.to perform_constant_number_of_queries
+  end
+end
+```
+
+#### コード品質設定
+
+```ruby
+# .rubocop.yml
+AllCops:
+  TargetRubyVersion: 3.1
+  NewCops: enable
+  Exclude:
+    - 'db/schema.rb'
+    - 'db/migrate/*'
+    - 'vendor/**/*'
+    - 'node_modules/**/*'
+
+Metrics/ClassLength:
+  Max: 150
+  Exclude:
+    - 'spec/**/*'
+
+Metrics/MethodLength:
+  Max: 20
+  Exclude:
+    - 'spec/**/*'
+
+Style/Documentation:
+  Enabled: false
+
+Rails/FilePath:
+  Enabled: false
+```
+
+#### アプリケーションモニタリング
+
+```ruby
+# app/controllers/concerns/performance_monitoring.rb
+module PerformanceMonitoring
+  extend ActiveSupport::Concern
+
+  included do
+    around_action :monitor_performance
+  end
+
+  private
+
+  def monitor_performance
+    start_time = Time.current
+    yield
+  ensure
+    duration = Time.current - start_time
+
+    if duration > 1.second
+      Rails.logger.warn "Slow request: #{request.method} #{request.path} took #{duration}s"
+
+      # 本番環境では外部監視サービスに送信
+      if Rails.env.production?
+        # NewRelic, DataDog, Sentryなどへの送信
+      end
+    end
+  end
+end
+
+# app/controllers/api/v1/health_controller.rb
+class Api::V1::HealthController < ApplicationController
+  skip_before_action :authenticate_user!
+
+  def show
+    health_status = {
+      status: 'healthy',
+      timestamp: Time.current.iso8601,
+      version: Rails.application.config.version,
+      database: database_healthy?,
+      redis: redis_healthy?,
+      storage: storage_healthy?
+    }
+
+    render json: health_status
+  end
+
+  private
+
+  def database_healthy?
+    ActiveRecord::Base.connection.execute('SELECT 1')
+    true
+  rescue
+    false
+  end
+
+  def redis_healthy?
+    Rails.cache.redis.ping == 'PONG'
+  rescue
+    false
+  end
+
+  def storage_healthy?
+    ActiveStorage::Blob.service.exist?('health_check')
+  rescue
+    false
   end
 end
 ```

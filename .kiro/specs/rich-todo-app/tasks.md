@@ -5,6 +5,7 @@
   - Add required gems to Gemfile (devise, jwt, active_model_serializers, etc.)
   - Configure database for new tables and relationships
   - Set up RSpec testing framework with Factory Bot
+  - Configure Active Storage with local storage
   - _Requirements: 8.1, 9.1, 9.2_
 
 - [x] 2. Implement user authentication system
@@ -112,28 +113,29 @@
   - Add tests for todo-tag operations
   - _Requirements: 2.2, 2.4_
 
-- [ ] 6. Implement file attachment system with Active Storage
-- [ ] 6.1 Configure Active Storage for file attachments
-
-  - Set up Active Storage configuration
-  - Create migration for Active Storage tables
-  - Configure image processing for automatic resizing
-  - Set up file storage service (local/cloud)
-  - _Requirements: 4.1, 4.2_
-
-- [ ] 6.2 Add file attachment to Todo model
+- [x] 6. Implement file attachment system with Active Storage
+- [ ] 6.1 Add file attachment to Todo model
 
   - Add has_many_attached :attachments to Todo model
-  - Create file upload endpoint for todos
-  - Implement secure file serving with proper authorization
-  - Write tests for file upload and retrieval
+  - Configure image processing gem (image_processing) for automatic resizing
+  - Update TodoSerializer to include attachment URLs
+  - Write unit tests for Todo model with attachments
+  - _Requirements: 4.1, 4.2_
+
+- [ ] 6.2 Create file upload API endpoints
+
+  - Add file upload endpoint to todos controller
+  - Implement secure file serving with proper user authorization
+  - Add file deletion endpoint for individual attachments
+  - Write integration tests for file upload and retrieval
   - _Requirements: 4.1, 4.3, 4.4_
 
-- [ ] 6.3 Handle file cleanup and validation
+- [ ] 6.3 Add file validation and optimization
 
-  - Add file type and size validations
-  - Implement automatic cleanup when todos are deleted
-  - Add image optimization and thumbnail generation
+  - Add file type validation (images, documents)
+  - Add file size validation (max 10MB per file)
+  - Implement automatic image resizing and thumbnail generation
+  - Add automatic cleanup when todos are deleted
   - Write tests for file validation and cleanup
   - _Requirements: 4.2, 4.5_
 
@@ -212,8 +214,8 @@
   - Write performance tests and benchmarks
   - _Requirements: 10.1, 10.2_
 
-- [ ] 10. Enhance API design with serializers and versioning
-- [ ] 10.1 Implement JSON API serializers
+- [-] 10. Enhance API design with serializers and versioning
+- [x] 10.1 Implement JSON API serializers
 
   - Create comprehensive serializers for all models
   - Implement nested resource serialization
