@@ -108,6 +108,7 @@ X-Request-Id: <unique_request_id>
 ### Resources
 - [Todos API](./todos.md) - Todo CRUD operations and batch updates
 - [Categories API](./categories.md) - Category CRUD operations
+- [Tags API](./tags.md) - Tag CRUD operations for flexible todo organization
 
 ## Pagination
 

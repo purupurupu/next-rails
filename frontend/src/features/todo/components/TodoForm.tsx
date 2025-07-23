@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -27,6 +27,8 @@ import { Badge } from "@/components/ui/badge";
 
 import type { CreateTodoData, Todo, TodoPriority, TodoStatus } from "@/features/todo/types/todo";
 import { useCategories } from "@/features/category/hooks/useCategories";
+import { useTags } from "@/features/tag/hooks/useTags";
+import { TagSelector } from "@/features/tag/components/TagSelector";
 
 interface TodoFormProps {
   mode: "create" | "edit";
@@ -37,7 +39,8 @@ interface TodoFormProps {
 }
 
 export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormProps) {
-  const { categories } = useCategories();
+  const { categories, fetchCategories } = useCategories(false);
+  const { tags, fetchTags } = useTags(false);
   const [title, setTitle] = useState(todo?.title || "");
   const [dueDate, setDueDate] = useState<Date | undefined>(
     todo?.due_date ? new Date(todo.due_date) : undefined,
@@ -46,8 +49,19 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
   const [status, setStatus] = useState<TodoStatus>(todo?.status || "pending");
   const [description, setDescription] = useState(todo?.description || "");
   const [categoryId, setCategoryId] = useState<number | undefined>(todo?.category?.id);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>(
+    todo?.tags?.map((tag) => tag.id) || [],
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+
+  // Fetch categories and tags when form opens
+  useEffect(() => {
+    if (open) {
+      fetchCategories();
+      fetchTags();
+    }
+  }, [open, fetchCategories, fetchTags]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +76,7 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
         status,
         description: description.trim() || null,
         category_id: categoryId || null,
+        tag_ids: selectedTagIds,
       };
 
       await onSubmit(data);
@@ -74,6 +89,7 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
         setStatus("pending");
         setDescription("");
         setCategoryId(undefined);
+        setSelectedTagIds([]);
       }
 
       onOpenChange(false);
@@ -90,6 +106,7 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
       setStatus("pending");
       setDescription("");
       setCategoryId(undefined);
+      setSelectedTagIds([]);
     }
     onOpenChange(newOpen);
   };
@@ -188,6 +205,16 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">タグ（任意）</label>
+            <TagSelector
+              tags={tags}
+              selectedTagIds={selectedTagIds}
+              onSelectionChange={setSelectedTagIds}
+              placeholder="タグを選択..."
+            />
           </div>
 
           <div className="space-y-2">

@@ -1,9 +1,9 @@
 module Api
   class TodosController < ApplicationController
-    before_action :set_todo, only: [:show, :update, :destroy]
+    before_action :set_todo, only: [:show, :update, :destroy, :update_tags]
 
     def index
-      @todos = current_user.todos.includes(:category).ordered
+      @todos = current_user.todos.includes(:category, :tags).ordered
       render json: @todos, each_serializer: TodoSerializer
     end
 
@@ -12,7 +12,13 @@ module Api
     end
 
     def create
-      @todo = current_user.todos.build(todo_params)
+      @todo = current_user.todos.build(todo_params.except(:tag_ids))
+      
+      if params[:todo][:tag_ids].present?
+        valid_tag_ids = current_user.tags.where(id: params[:todo][:tag_ids]).pluck(:id)
+        @todo.tag_ids = valid_tag_ids
+      end
+      
       if @todo.save
         render json: @todo, serializer: TodoSerializer, status: :created
       else
@@ -21,7 +27,12 @@ module Api
     end
 
     def update
-      if @todo.update(todo_params)
+      if params[:todo][:tag_ids].present?
+        valid_tag_ids = current_user.tags.where(id: params[:todo][:tag_ids]).pluck(:id)
+        @todo.tag_ids = valid_tag_ids
+      end
+      
+      if @todo.update(todo_params.except(:tag_ids))
         render json: @todo, serializer: TodoSerializer
       else
         render json: { errors: @todo.errors }, status: :unprocessable_entity
@@ -31,6 +42,20 @@ module Api
     def destroy
       @todo.destroy
       head :no_content
+    end
+
+    def update_tags
+      tag_ids = params[:tag_ids] || []
+      
+      # Validate that all tags belong to current user
+      user_tag_ids = current_user.tags.where(id: tag_ids).pluck(:id)
+      
+      if user_tag_ids.sort == tag_ids.sort
+        @todo.tag_ids = tag_ids
+        render json: @todo, serializer: TodoSerializer
+      else
+        render json: { error: 'Invalid tag IDs' }, status: :unprocessable_entity
+      end
     end
 
     def update_order
@@ -66,7 +91,7 @@ module Api
     end
 
     def todo_params
-      params.require(:todo).permit(:title, :completed, :position, :due_date, :priority, :status, :description, :category_id)
+      params.require(:todo).permit(:title, :completed, :position, :due_date, :priority, :status, :description, :category_id, tag_ids: [])
     end
   end
 end

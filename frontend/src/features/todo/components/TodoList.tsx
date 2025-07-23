@@ -134,12 +134,14 @@ export function TodoList() {
             )}
       </div>
 
-      <TodoForm
-        mode="create"
-        open={isCreateFormOpen}
-        onOpenChange={setIsCreateFormOpen}
-        onSubmit={handleCreateTodo}
-      />
+      {isCreateFormOpen && (
+        <TodoForm
+          mode="create"
+          open={isCreateFormOpen}
+          onOpenChange={setIsCreateFormOpen}
+          onSubmit={handleCreateTodo}
+        />
+      )}
 
       {editingTodo && (
         <TodoForm

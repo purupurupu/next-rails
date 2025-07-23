@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { isOverdue, isDueToday, isDueSoon } from "@/lib/utils";
 
 import type { Todo } from "@/features/todo/types/todo";
+import { TagBadge } from "@/features/tag/components/TagBadge";
 
 interface TodoItemProps {
   todo: Todo;
@@ -187,6 +188,19 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
                 </Badge>
               )}
             </div>
+
+            {todo.tags && todo.tags.length > 0 && (
+              <div className="flex items-center gap-1 mt-2 flex-wrap">
+                {todo.tags.map((tag) => (
+                  <TagBadge
+                    key={tag.id}
+                    name={tag.name}
+                    color={tag.color}
+                    className="text-xs"
+                  />
+                ))}
+              </div>
+            )}
 
             {todo.description && (
               <div className="mt-2">

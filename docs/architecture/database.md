@@ -9,37 +9,88 @@
 
 ## Entity Relationship Diagram
 
+```mermaid
+erDiagram
+    users ||--o{ todos : "has many"
+    users ||--o{ categories : "has many"
+    users ||--o{ tags : "has many"
+    categories ||--o{ todos : "has many"
+    todos }o--o{ tags : "many-to-many"
+    todos ||--o{ todo_tags : "has many"
+    tags ||--o{ todo_tags : "has many"
+
+    users {
+        bigserial id PK
+        varchar email UK
+        varchar encrypted_password
+        varchar name
+        varchar reset_password_token
+        timestamp reset_password_sent_at
+        timestamp remember_created_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    todos {
+        bigserial id PK
+        varchar title
+        integer position
+        boolean completed
+        integer priority
+        integer status
+        text description
+        date due_date
+        bigint user_id FK
+        bigint category_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    categories {
+        bigserial id PK
+        varchar name
+        varchar color
+        bigint user_id FK
+        integer todos_count
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    tags {
+        bigserial id PK
+        varchar name
+        varchar color
+        bigint user_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    todo_tags {
+        bigserial id PK
+        bigint todo_id FK
+        bigint tag_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    jwt_denylists {
+        bigserial id PK
+        varchar jti
+        timestamp exp
+        timestamp created_at
+        timestamp updated_at
+    }
 ```
-┌─────────────────┐         ┌─────────────────┐
-│     users       │         │   jwt_denylists │
-├─────────────────┤         ├─────────────────┤
-│ id (PK)         │         │ id (PK)         │
-│ email           │         │ jti             │
-│ encrypted_pass  │         │ exp             │
-│ name            │         │ created_at      │
-│ created_at      │         │ updated_at      │
-│ updated_at      │         └─────────────────┘
-└─────────┬───────┘
-          │ 1
-          │
-          │ *                ┌─────────────────┐
-┌─────────┴───────┐         │   categories    │
-│     todos       │         ├─────────────────┤
-├─────────────────┤         │ id (PK)         │
-│ id (PK)         │    ┌────┤ name            │
-│ title           │    │    │ color           │
-│ completed       │    │    │ user_id (FK)    │
-│ position        │    │    │ todos_count     │ ← COUNTER CACHE
-│ priority        │    │    │ created_at      │
-│ status          │    │    │ updated_at      │
-│ description     │    │    └─────────────────┘
-│ due_date        │    │              │ 1
-│ user_id (FK)    │────┘              │
-│ category_id(FK) │───────────────────┘ *
-│ created_at      │
-│ updated_at      │
-└─────────────────┘
-```
+
+### 主要な関係性
+
+1. **User → Todos**: 1対多の関係。各ユーザーは複数のTodoを持つ
+2. **User → Categories**: 1対多の関係。各ユーザーは複数のカテゴリーを持つ
+3. **User → Tags**: 1対多の関係。各ユーザーは複数のタグを持つ
+4. **Category → Todos**: 1対多の関係。各カテゴリーは複数のTodoを含む（オプション）
+5. **Todo ↔ Tags**: 多対多の関係。TodoTagsテーブルを介して実現
+   - 1つのTodoは複数のタグを持てる
+   - 1つのタグは複数のTodoに付けられる
 
 ## Schema Details
 
@@ -129,6 +180,51 @@ CREATE UNIQUE INDEX index_categories_on_user_id_and_name ON categories(user_id, 
 - `user_id`: Owner of the category (foreign key)
 - `todos_count`: **Counter cache** for efficient todo counting (eliminates N+1 queries)
 
+### tags table
+```sql
+CREATE TABLE tags (
+  id bigserial PRIMARY KEY,
+  name varchar NOT NULL,
+  color varchar NOT NULL,
+  user_id bigint NOT NULL,
+  created_at timestamp(6) NOT NULL,
+  updated_at timestamp(6) NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE INDEX index_tags_on_user_id ON tags(user_id);
+CREATE UNIQUE INDEX index_tags_on_user_id_and_name ON tags(user_id, name);
+```
+
+**Purpose**: Stores user-defined tags for flexible todo organization
+**Key Fields**:
+- `name`: Tag name (required, unique per user)
+- `color`: HEX color code for visual identification
+- `user_id`: Owner of the tag (foreign key)
+
+### todo_tags table
+```sql
+CREATE TABLE todo_tags (
+  id bigserial PRIMARY KEY,
+  todo_id bigint NOT NULL,
+  tag_id bigint NOT NULL,
+  created_at timestamp(6) NOT NULL,
+  updated_at timestamp(6) NOT NULL,
+  FOREIGN KEY (todo_id) REFERENCES todos(id),
+  FOREIGN KEY (tag_id) REFERENCES tags(id)
+);
+
+CREATE INDEX index_todo_tags_on_todo_id ON todo_tags(todo_id);
+CREATE INDEX index_todo_tags_on_tag_id ON todo_tags(tag_id);
+CREATE UNIQUE INDEX index_todo_tags_on_todo_id_and_tag_id ON todo_tags(todo_id, tag_id);
+```
+
+**Purpose**: Junction table for many-to-many relationship between todos and tags
+**Key Fields**:
+- `todo_id`: Reference to todo (foreign key)
+- `tag_id`: Reference to tag (foreign key)
+- Unique constraint ensures a todo can have each tag only once
+
 ### jwt_denylists table
 ```sql
 CREATE TABLE jwt_denylists (
@@ -155,11 +251,26 @@ CREATE INDEX index_jwt_denylists_on_jti ON jwt_denylists(jti);
 3. **todos.priority** - For filtering/sorting by priority
 4. **todos.status** - For filtering by task status
 5. **todos.user_id** - For filtering todos by user
-6. **jwt_denylists.jti** - For checking token revocation
+6. **todos.category_id** - For filtering todos by category
+7. **categories.user_id** - For filtering categories by user
+8. **categories.(user_id, name)** - Unique constraint for category names per user
+9. **tags.user_id** - For filtering tags by user
+10. **tags.(user_id, name)** - Unique constraint for tag names per user
+11. **todo_tags.todo_id** - For finding tags of a todo
+12. **todo_tags.tag_id** - For finding todos with a tag
+13. **todo_tags.(todo_id, tag_id)** - Unique constraint for todo-tag pairs
+14. **jwt_denylists.jti** - For checking token revocation
 
 ### Referential Integrity
 - Foreign key constraint on `todos.user_id` → `users.id`
-- Cascade delete: When user is deleted, all their todos are deleted
+- Foreign key constraint on `todos.category_id` → `categories.id`
+- Foreign key constraint on `categories.user_id` → `users.id`
+- Foreign key constraint on `tags.user_id` → `users.id`
+- Foreign key constraint on `todo_tags.todo_id` → `todos.id`
+- Foreign key constraint on `todo_tags.tag_id` → `tags.id`
+- Cascade delete: When user is deleted, all their todos, categories, and tags are deleted
+- Cascade delete: When todo is deleted, all its todo_tags are deleted
+- Cascade delete: When tag is deleted, all its todo_tags are deleted
 
 ## Migrations History
 
@@ -208,6 +319,23 @@ add_column :todos, :description, :text
 # 20250722132849_add_todos_count_to_categories.rb
 add_column :categories, :todos_count, :integer, default: 0, null: false
 Category.find_each { |category| Category.reset_counters(category.id, :todos) }
+
+# 20250723120402_create_tags.rb
+create_table :tags do |t|
+  t.string :name, null: false
+  t.string :color, null: false
+  t.references :user, null: false, foreign_key: true
+  t.timestamps
+end
+add_index :tags, [:user_id, :name], unique: true
+
+# 20250723120409_create_todo_tags.rb
+create_table :todo_tags do |t|
+  t.references :todo, null: false, foreign_key: true
+  t.references :tag, null: false, foreign_key: true
+  t.timestamps
+end
+add_index :todo_tags, [:todo_id, :tag_id], unique: true
 ```
 
 ## Data Integrity Rules
@@ -237,6 +365,10 @@ Category.find_each { |category| Category.reset_counters(category.id, :todos) }
 4. **Status enum**: Must be one of [pending=0, in_progress=1, completed=2]
 5. **Email format**: Must be valid email
 6. **Password**: Minimum 6 characters
+7. **Category names**: Unique per user, 1-30 characters
+8. **Tag names**: Unique per user, 1-30 characters, normalized (trimmed)
+9. **Tag colors**: Must be valid hex color format (#RRGGBB), normalized to uppercase
+10. **Todo-Tag relationship**: Each todo can have multiple tags, each tag only once per todo
 
 ## Query Patterns
 
@@ -265,6 +397,23 @@ ORDER BY position;
 -- Check if JWT is revoked
 SELECT 1 FROM jwt_denylists 
 WHERE jti = ? LIMIT 1;
+
+-- User's tags ordered by name
+SELECT * FROM tags 
+WHERE user_id = ? 
+ORDER BY name;
+
+-- Todos with specific tag
+SELECT DISTINCT t.* FROM todos t
+INNER JOIN todo_tags tt ON t.id = tt.todo_id
+WHERE tt.tag_id = ? AND t.user_id = ?
+ORDER BY t.position;
+
+-- Tags for a specific todo
+SELECT tags.* FROM tags
+INNER JOIN todo_tags ON tags.id = todo_tags.tag_id
+WHERE todo_tags.todo_id = ?
+ORDER BY tags.name;
 ```
 
 ### Performance Considerations (ENHANCED)

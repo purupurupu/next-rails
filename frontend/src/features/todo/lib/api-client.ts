@@ -31,6 +31,10 @@ class TodoApiClient extends HttpClient {
   async updateTodoOrder(todos: UpdateOrderData[]): Promise<void> {
     return this.patch<void>(API_ENDPOINTS.UPDATE_ORDER, { todos });
   }
+
+  async updateTodoTags(id: number, tagIds: number[]): Promise<Todo> {
+    return this.patch<Todo>(API_ENDPOINTS.UPDATE_TODO_TAGS(id), { tag_ids: tagIds });
+  }
 }
 
 export const todoApiClient = new TodoApiClient();

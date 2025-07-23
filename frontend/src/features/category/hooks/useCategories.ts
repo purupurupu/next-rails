@@ -3,9 +3,9 @@ import { categoryApiClient, ApiError } from "../lib/api-client";
 import type { Category, CreateCategoryData, UpdateCategoryData } from "../types/category";
 import { toast } from "sonner";
 
-export function useCategories() {
+export function useCategories(fetchOnMount = true) {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchCategories = useCallback(async () => {
@@ -64,8 +64,10 @@ export function useCategories() {
   }, []);
 
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    if (fetchOnMount) {
+      fetchCategories();
+    }
+  }, [fetchOnMount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     categories,
@@ -74,6 +76,7 @@ export function useCategories() {
     createCategory,
     updateCategory,
     deleteCategory,
+    fetchCategories,
     refetch: fetchCategories,
   };
 }
