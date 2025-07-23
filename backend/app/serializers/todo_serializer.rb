@@ -1,5 +1,5 @@
 class TodoSerializer < ActiveModel::Serializer
-  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at, :updated_at, :category
+  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at, :updated_at, :category, :tags
 
   def category
     return nil unless object.category
@@ -8,5 +8,15 @@ class TodoSerializer < ActiveModel::Serializer
       name: object.category.name,
       color: object.category.color
     }
+  end
+
+  def tags
+    object.tags.map do |tag|
+      {
+        id: tag.id,
+        name: tag.name,
+        color: tag.color
+      }
+    end
   end
 end
