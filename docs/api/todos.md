@@ -38,6 +38,8 @@ Get all todos for the authenticated user.
       "name": "Work",
       "color": "#3B82F6"
     },
+    "tags": [],
+    "files": [],
     "created_at": "2024-01-01T00:00:00.000Z",
     "updated_at": "2024-01-01T00:00:00.000Z"
   },
@@ -50,6 +52,23 @@ Get all todos for the authenticated user.
     "status": "completed",
     "description": null,
     "due_date": null,
+    "category": null,
+    "tags": [
+      {
+        "id": 1,
+        "name": "urgent",
+        "color": "#EF4444"
+      }
+    ],
+    "files": [
+      {
+        "id": 123,
+        "filename": "code_review.pdf",
+        "content_type": "application/pdf",
+        "byte_size": 204800,
+        "url": "http://localhost:3001/rails/active_storage/blobs/redirect/..."
+      }
+    ],
     "created_at": "2024-01-01T00:00:00.000Z",
     "updated_at": "2024-01-02T00:00:00.000Z"
   }
@@ -250,6 +269,24 @@ Bulk update todo positions for drag-and-drop reordering.
 - All todos must belong to the authenticated user
 - Invalid IDs will cause the entire operation to fail
 - Positions should be sequential starting from 0
+
+### File Attachments
+
+Todos support multiple file attachments. See [Todo File Uploads API](./todos-file-uploads.md) for detailed documentation.
+
+**Delete File Attachment:** `DELETE /api/todos/:todo_id/files/:file_id`
+
+Removes a specific file from a todo.
+
+**Success Response (200 OK):**
+Returns the updated todo without the deleted file.
+
+**Error Response (404 Not Found):**
+```json
+{
+  "error": "File not found"
+}
+```
 
 ## Data Validation
 

@@ -1,6 +1,6 @@
 module Api
   class TodosController < ApplicationController
-    before_action :set_todo, only: [:show, :update, :destroy, :update_tags]
+    before_action :set_todo, only: [:show, :update, :destroy, :update_tags, :destroy_file]
 
     def index
       @todos = current_user.todos.includes(:category, :tags).ordered
@@ -84,6 +84,14 @@ module Api
       render json: { error: 'Failed to update todo order' }, status: :unprocessable_entity
     end
 
+    def destroy_file
+      file = @todo.files.find(params[:file_id])
+      file.purge
+      render json: @todo, serializer: TodoSerializer
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: 'File not found' }, status: :not_found
+    end
+
     private
 
     def set_todo
@@ -91,7 +99,7 @@ module Api
     end
 
     def todo_params
-      params.require(:todo).permit(:title, :completed, :position, :due_date, :priority, :status, :description, :category_id, tag_ids: [])
+      params.require(:todo).permit(:title, :completed, :position, :due_date, :priority, :status, :description, :category_id, tag_ids: [], files: [])
     end
   end
 end

@@ -25,6 +25,7 @@ Rails.application.routes.draw do
       end
       member do
         patch 'tags', to: 'todos#update_tags'
+        delete 'files/:file_id', to: 'todos#destroy_file', as: :destroy_file
       end
     end
     resources :categories

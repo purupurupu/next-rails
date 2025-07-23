@@ -5,6 +5,9 @@ class Todo < ApplicationRecord
     has_many :todo_tags, dependent: :destroy
     has_many :tags, through: :todo_tags
     
+    # Active Storage attachments
+    has_many_attached :files
+    
     # Enums
     enum priority: { low: 0, medium: 1, high: 2 }, _default: :medium
     enum status: { pending: 0, in_progress: 1, completed: 2 }, _default: :pending
