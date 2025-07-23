@@ -23,7 +23,7 @@ import {
 import { TagForm } from "./TagForm";
 import { TagBadge } from "./TagBadge";
 import { useTags } from "../hooks/useTags";
-import type { Tag } from "../types/tag";
+import type { Tag, CreateTagData, UpdateTagData } from "../types/tag";
 
 export function TagManager() {
   const { tags, createTag, updateTag, deleteTag } = useTags();
@@ -31,14 +31,14 @@ export function TagManager() {
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [deletingTag, setDeletingTag] = useState<Tag | null>(null);
 
-  const handleCreate = async (data: { name: string; color: string }) => {
-    await createTag(data);
+  const handleCreate = async (data: CreateTagData | UpdateTagData) => {
+    await createTag(data as CreateTagData);
     setIsCreateDialogOpen(false);
   };
 
-  const handleUpdate = async (data: { name?: string; color?: string }) => {
+  const handleUpdate = async (data: CreateTagData | UpdateTagData) => {
     if (!editingTag) return;
-    await updateTag(editingTag.id, data);
+    await updateTag(editingTag.id, data as UpdateTagData);
     setEditingTag(null);
   };
 

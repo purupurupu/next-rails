@@ -4,13 +4,7 @@ import { useState } from "react";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -71,54 +65,68 @@ export function TagSelector({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
-          <Command>
-            <CommandInput
+        <PopoverContent className="w-full p-2">
+          <div className="space-y-2">
+            <Input
               placeholder="Search tags..."
               value={search}
-              onValueChange={setSearch}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full"
             />
-            <CommandEmpty>
-              <div className="p-2 text-center text-sm text-muted-foreground">
-                No tags found.
-                {onCreateTag && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setOpen(false);
-                      onCreateTag();
-                    }}
-                    className="mt-2 w-full"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create new tag
-                  </Button>
-                )}
-              </div>
-            </CommandEmpty>
-            <CommandGroup>
-              {tags.map((tag) => (
-                <CommandItem
-                  key={tag.id}
-                  value={tag.name}
-                  onSelect={() => toggleTag(tag.id)}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                  <TagBadge
-                    name={tag.name}
-                    color={tag.color}
-                    className="mr-2"
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
+            <div className="max-h-[300px] overflow-y-auto">
+              {(() => {
+                const filteredTags = tags.filter((tag) =>
+                  tag.name.toLowerCase().includes(search.toLowerCase()),
+                );
+
+                if (filteredTags.length === 0) {
+                  return (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      No tags found.
+                      {onCreateTag && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setOpen(false);
+                            onCreateTag();
+                          }}
+                          className="mt-2 w-full"
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Create new tag
+                        </Button>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-1">
+                    {filteredTags.map((tag) => (
+                      <button
+                        key={tag.id}
+                        onClick={() => toggleTag(tag.id)}
+                        className="flex items-center w-full rounded-md px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                        <TagBadge
+                          name={tag.name}
+                          color={tag.color}
+                          className="mr-2"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
         </PopoverContent>
       </Popover>
 
