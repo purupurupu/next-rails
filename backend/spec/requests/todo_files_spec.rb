@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'Todo Files API', type: :request do
   let(:user) { create(:user) }
+  let(:other_user) { create(:user) }
   let(:auth_headers) { auth_headers_for(user) }
   let(:todo) { create(:todo, user: user) }
   
@@ -147,32 +148,41 @@ RSpec.describe 'Todo Files API', type: :request do
   end
   
   describe 'authorization' do
-    let(:other_user) { create(:user) }
-    let(:other_auth_headers) { auth_headers_for(other_user) }
-    let(:text_file) { fixture_file_upload('test_file.txt', 'text/plain') }
-    
-    before do
-      # Clear auth cache to ensure fresh tokens
-      clear_auth_cache
+    it 'prevents other users from accessing todos' do
+      # First verify basic todo access control
+      other_headers = auth_headers_for(other_user)
       
+      get api_todo_path(todo), headers: other_headers
+      expect(response).to have_http_status(:not_found)
+    end
+    
+    it 'prevents other users from deleting files' do
       # Add file to todo
+      text_file = fixture_file_upload('test_file.txt', 'text/plain')
       patch api_todo_path(todo),
             params: { todo: { files: [text_file] } },
             headers: auth_headers
       
+      expect(response).to have_http_status(:ok)
       todo.reload
-    end
-    
-    xit 'prevents other users from deleting files' do  # TODO: Fix authentication issue
       file = todo.files.first
+      expect(file).to be_present
       
-      # Ensure we have different users
-      expect(user.id).not_to eq(other_user.id)
+      # Store IDs to avoid lazy evaluation issues
+      file_id = file.id
+      todo_id = todo.id
       
-      delete destroy_file_api_todo_path(todo, file),
-             headers: other_auth_headers
+      # Sign out current user to ensure clean authentication state
+      # This prevents JWT token context pollution in tests
+      delete '/auth/sign_out', headers: auth_headers
       
-      # Should get 404 because other_user cannot access this todo
+      # Authenticate as other_user and attempt to delete the file
+      other_headers = auth_headers_for(other_user)
+      
+      delete destroy_file_api_todo_path(todo_id, file_id),
+             headers: other_headers
+      
+      # Should get 404 because other_user cannot access user's todo
       expect(response).to have_http_status(:not_found)
       
       # Verify file still exists
