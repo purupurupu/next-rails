@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_07_22_132849) do
+ActiveRecord::Schema[7.1].define(version: 2025_07_23_120409) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -61,6 +61,26 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_22_132849) do
     t.index ["jti"], name: "index_jwt_denylists_on_jti"
   end
 
+  create_table "tags", force: :cascade do |t|
+    t.string "name", null: false
+    t.bigint "user_id", null: false
+    t.string "color", default: "#6B7280"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "name"], name: "index_tags_on_user_id_and_name", unique: true
+    t.index ["user_id"], name: "index_tags_on_user_id"
+  end
+
+  create_table "todo_tags", force: :cascade do |t|
+    t.bigint "todo_id", null: false
+    t.bigint "tag_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tag_id"], name: "index_todo_tags_on_tag_id"
+    t.index ["todo_id", "tag_id"], name: "index_todo_tags_on_todo_id_and_tag_id", unique: true
+    t.index ["todo_id"], name: "index_todo_tags_on_todo_id"
+  end
+
   create_table "todos", force: :cascade do |t|
     t.string "title", null: false
     t.integer "position"
@@ -96,6 +116,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_22_132849) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "categories", "users"
+  add_foreign_key "tags", "users"
+  add_foreign_key "todo_tags", "tags"
+  add_foreign_key "todo_tags", "todos"
   add_foreign_key "todos", "categories"
   add_foreign_key "todos", "users"
 end
