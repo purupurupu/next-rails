@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe Todo, type: :model do
-  describe 'file attachments' do
+  describe 'file uploads' do
     let(:user) { create(:user) }
     let(:todo) { create(:todo, user: user) }
     
@@ -12,12 +12,12 @@ RSpec.describe Todo, type: :model do
       end
     end
     
-    describe 'attaching files' do
+    describe 'uploading files' do
       let(:text_file) { fixture_file_upload('test_file.txt', 'text/plain') }
       let(:image_file) { fixture_file_upload('test_image.png', 'image/png') }
       
-      it 'can attach a single file' do
-        # Attach without analysis to avoid background job
+      it 'can upload a single file' do
+        # Upload without analysis to avoid background job
         blob = ActiveStorage::Blob.create_and_upload!(
           io: text_file,
           filename: 'test_file.txt',
@@ -30,7 +30,7 @@ RSpec.describe Todo, type: :model do
         expect(todo.files.first.filename.to_s).to eq('test_file.txt')
       end
       
-      it 'can attach multiple files' do
+      it 'can upload multiple files' do
         # Create blobs without analysis
         text_blob = ActiveStorage::Blob.create_and_upload!(
           io: text_file,
@@ -49,7 +49,7 @@ RSpec.describe Todo, type: :model do
       end
       
       it 'preserves existing files when adding new ones' do
-        # Attach first file
+        # Upload first file
         text_blob = ActiveStorage::Blob.create_and_upload!(
           io: text_file,
           filename: 'test_file.txt',
@@ -58,7 +58,7 @@ RSpec.describe Todo, type: :model do
         todo.files.attach(text_blob)
         expect(todo.files.count).to eq(1)
         
-        # Attach second file
+        # Upload second file
         image_blob = ActiveStorage::Blob.create_and_upload!(
           io: image_file,
           filename: 'test_image.png',

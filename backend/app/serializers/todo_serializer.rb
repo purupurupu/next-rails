@@ -1,5 +1,5 @@
 class TodoSerializer < ActiveModel::Serializer
-  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at, :updated_at, :category, :tags, :attachments
+  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at, :updated_at, :category, :tags, :files
 
   def category
     return nil unless object.category
@@ -20,16 +20,16 @@ class TodoSerializer < ActiveModel::Serializer
     end
   end
 
-  def attachments
-    object.attachments.map do |attachment|
+  def files
+    return [] unless object.files.attached?
+
+    object.files.map do |file|
       {
-        id: attachment.id,
-        filename: attachment.filename,
-        file_size: attachment.file_size,
-        file_type: attachment.file_type,
-        human_file_size: attachment.human_file_size,
-        url: attachment.file_url,
-        created_at: attachment.created_at.iso8601
+        id: file.id,
+        filename: file.filename.to_s,
+        content_type: file.content_type,
+        byte_size: file.byte_size,
+        url: Rails.application.routes.url_helpers.rails_blob_url(file, host: 'localhost:3001')
       }
     end
   end

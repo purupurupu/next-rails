@@ -18,7 +18,7 @@ RSpec.describe 'Todo Files API', type: :request do
       }
     end
     
-    context 'when creating todo with file attachments' do
+    context 'when creating todo with files' do
       let(:text_file) { fixture_file_upload('test_file.txt', 'text/plain') }
       let(:image_file) { fixture_file_upload('test_image.png', 'image/png') }
       
@@ -113,7 +113,7 @@ RSpec.describe 'Todo Files API', type: :request do
       
       file_to_delete = todo.files.first
       
-      delete destroy_file_api_todo_path(todo, file_to_delete),
+      delete "/api/todos/#{todo.id}/files/#{file_to_delete.id}",
              headers: auth_headers
       
       expect(response).to have_http_status(:ok)
@@ -126,7 +126,7 @@ RSpec.describe 'Todo Files API', type: :request do
     end
     
     it 'returns 404 for non-existent file' do
-      delete destroy_file_api_todo_path(todo, 'non-existent-id'),
+      delete "/api/todos/#{todo.id}/files/non-existent-id",
              headers: auth_headers
       
       expect(response).to have_http_status(:not_found)
@@ -140,7 +140,7 @@ RSpec.describe 'Todo Files API', type: :request do
       
       other_file = other_todo.files.first
       
-      delete destroy_file_api_todo_path(todo, other_file),
+      delete "/api/todos/#{todo.id}/files/#{other_file.id}",
              headers: auth_headers
       
       expect(response).to have_http_status(:not_found)
@@ -179,7 +179,7 @@ RSpec.describe 'Todo Files API', type: :request do
       # Authenticate as other_user and attempt to delete the file
       other_headers = auth_headers_for(other_user)
       
-      delete destroy_file_api_todo_path(todo_id, file_id),
+      delete "/api/todos/#{todo_id}/files/#{file_id}",
              headers: other_headers
       
       # Should get 404 because other_user cannot access user's todo
