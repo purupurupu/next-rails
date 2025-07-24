@@ -31,6 +31,8 @@ Rails.application.routes.draw do
         end
         # 学習ポイント：ネストされたリソースでポリモーフィックコメントを実装
         resources :comments, only: [:index, :create, :update, :destroy]
+        # 学習ポイント：変更履歴の参照（読み取り専用）
+        resources :histories, only: [:index], controller: 'todo_histories'
       end
       resources :categories
       resources :tags

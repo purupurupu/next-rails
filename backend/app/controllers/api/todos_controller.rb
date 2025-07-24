@@ -14,6 +14,9 @@ module Api
     def create
       @todo = current_user.todos.build(todo_params.except(:tag_ids, :files))
       
+      # 学習ポイント：履歴記録のためにcurrent_userを設定
+      @todo.current_user = current_user
+      
       if params[:todo][:tag_ids].present?
         valid_tag_ids = current_user.tags.where(id: params[:todo][:tag_ids]).pluck(:id)
         @todo.tag_ids = valid_tag_ids
@@ -32,6 +35,9 @@ module Api
     end
 
     def update
+      # 学習ポイント：履歴記録のためにcurrent_userを設定
+      @todo.current_user = current_user
+      
       if params[:todo][:tag_ids].present?
         valid_tag_ids = current_user.tags.where(id: params[:todo][:tag_ids]).pluck(:id)
         @todo.tag_ids = valid_tag_ids

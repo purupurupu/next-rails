@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_07_24_122745) do
+ActiveRecord::Schema[7.1].define(version: 2025_07_24_124424) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -85,6 +85,20 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_24_122745) do
     t.index ["user_id"], name: "index_tags_on_user_id"
   end
 
+  create_table "todo_histories", force: :cascade do |t|
+    t.bigint "todo_id", null: false
+    t.bigint "user_id", null: false
+    t.string "field_name", null: false
+    t.text "old_value"
+    t.text "new_value"
+    t.integer "action", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.index ["field_name"], name: "index_todo_histories_on_field_name"
+    t.index ["todo_id", "created_at"], name: "index_todo_histories_on_todo_id_and_created_at"
+    t.index ["todo_id"], name: "index_todo_histories_on_todo_id"
+    t.index ["user_id"], name: "index_todo_histories_on_user_id"
+  end
+
   create_table "todo_tags", force: :cascade do |t|
     t.bigint "todo_id", null: false
     t.bigint "tag_id", null: false
@@ -132,6 +146,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_24_122745) do
   add_foreign_key "categories", "users"
   add_foreign_key "comments", "users"
   add_foreign_key "tags", "users"
+  add_foreign_key "todo_histories", "todos"
+  add_foreign_key "todo_histories", "users"
   add_foreign_key "todo_tags", "tags"
   add_foreign_key "todo_tags", "todos"
   add_foreign_key "todos", "categories"

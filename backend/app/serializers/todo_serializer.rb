@@ -1,5 +1,5 @@
 class TodoSerializer < ActiveModel::Serializer
-  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at, :updated_at, :category, :tags, :files, :comments_count, :latest_comments
+  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at, :updated_at, :category, :tags, :files, :comments_count, :latest_comments, :history_count
 
   def category
     return nil unless object.category
@@ -57,5 +57,10 @@ class TodoSerializer < ActiveModel::Serializer
   
   def current_user
     @instance_options[:current_user] || scope
+  end
+  
+  # 学習ポイント：履歴数の取得
+  def history_count
+    object.todo_histories.count
   end
 end

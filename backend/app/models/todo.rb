@@ -9,6 +9,9 @@ class Todo < ApplicationRecord
     # as: :commentableにより、Commentモデルからポリモーフィックに参照される
     has_many :comments, as: :commentable, dependent: :destroy
     
+    # 学習ポイント：変更履歴の追跡
+    has_many :todo_histories, dependent: :destroy
+    
     # Active Storage files
     has_many_attached :files do |attachable|
       attachable.variant :thumb, resize_to_limit: [300, 300]
@@ -26,6 +29,14 @@ class Todo < ApplicationRecord
 
     scope :ordered, -> { order(position: :asc) }
     before_create :set_position
+    
+    # 学習ポイント：変更履歴の記録
+    # 作成時と更新時に履歴を記録
+    after_create :record_creation
+    around_update :track_changes_with_user
+    
+    # 学習ポイント：現在のユーザーを一時的に保持（履歴記録用）
+    attr_accessor :current_user
 
     private
 
@@ -61,6 +72,85 @@ class Todo < ApplicationRecord
         unless allowed_types.include?(file.content_type)
           errors.add(:files, "許可されていないファイルタイプです (#{file.filename}: #{file.content_type})")
         end
+      end
+    end
+    
+    # 学習ポイント：作成時の履歴記録
+    def record_creation
+      return unless current_user
+      
+      todo_histories.create!(
+        user: current_user,
+        field_name: 'created',
+        action: 'created',
+        new_value: title
+      )
+    end
+    
+    # 学習ポイント：around_updateコールバックで変更を追跡
+    def track_changes_with_user
+      # 変更前の状態を保存
+      changes_to_track = {}
+      tracked_attributes = %w[title status priority due_date completed category_id description]
+      
+      tracked_attributes.each do |attr|
+        if will_save_change_to_attribute?(attr)
+          changes_to_track[attr] = {
+            old_value: attribute_in_database(attr),
+            new_value: send(attr)
+          }
+        end
+      end
+      
+      # 実際の更新を実行
+      yield
+      
+      # 学習ポイント：更新後に履歴を記録
+      track_changes(changes_to_track) if current_user && changes_to_track.any?
+    end
+    
+    # 学習ポイント：更新時の変更追跡（内部メソッド）
+    def track_changes(changes_to_track)
+      return unless current_user
+      
+      changes_to_track.each do |attr, changes|
+        old_val = changes[:old_value]
+        new_val = changes[:new_value]
+        
+        # 学習ポイント：特別なアクションの判定
+        action_type = determine_action_type(attr, old_val, new_val)
+        
+        todo_histories.create!(
+          user: current_user,
+          field_name: attr,
+          old_value: format_value_for_history(attr, old_val),
+          new_value: format_value_for_history(attr, new_val),
+          action: action_type
+        )
+      end
+    end
+    
+    # 学習ポイント：アクションタイプの判定
+    def determine_action_type(attr, old_val, new_val)
+      case attr
+      when 'status'
+        'status_changed'
+      when 'priority'
+        'priority_changed'
+      else
+        'updated'
+      end
+    end
+    
+    # 学習ポイント：履歴用の値フォーマット
+    def format_value_for_history(attr, value)
+      case attr
+      when 'category_id'
+        value.present? ? Category.find_by(id: value)&.name : nil
+      when 'due_date'
+        value&.to_s
+      else
+        value.to_s
       end
     end
 end
