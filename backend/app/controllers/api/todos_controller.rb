@@ -3,16 +3,19 @@ module Api
     before_action :set_todo, only: [:show, :update, :destroy, :update_tags, :destroy_file]
 
     def index
-      @todos = current_user.todos.includes(:category, :tags).ordered
-      render json: @todos, each_serializer: TodoSerializer
+      @todos = current_user.todos.includes(:category, :tags, :comments).ordered
+      render json: @todos, each_serializer: TodoSerializer, current_user: current_user
     end
 
     def show
-      render json: @todo, serializer: TodoSerializer
+      render json: @todo, serializer: TodoSerializer, current_user: current_user
     end
 
     def create
       @todo = current_user.todos.build(todo_params.except(:tag_ids, :files))
+      
+      # 学習ポイント：履歴記録のためにcurrent_userを設定
+      @todo.current_user = current_user
       
       if params[:todo][:tag_ids].present?
         valid_tag_ids = current_user.tags.where(id: params[:todo][:tag_ids]).pluck(:id)
@@ -25,13 +28,16 @@ module Api
           @todo.files.attach(params[:todo][:files])
         end
         
-        render json: @todo, serializer: TodoSerializer, status: :created
+        render json: @todo, serializer: TodoSerializer, current_user: current_user, current_user: current_user, status: :created
       else
         render json: { errors: @todo.errors }, status: :unprocessable_entity
       end
     end
 
     def update
+      # 学習ポイント：履歴記録のためにcurrent_userを設定
+      @todo.current_user = current_user
+      
       if params[:todo][:tag_ids].present?
         valid_tag_ids = current_user.tags.where(id: params[:todo][:tag_ids]).pluck(:id)
         @todo.tag_ids = valid_tag_ids
@@ -43,7 +49,7 @@ module Api
       end
       
       if @todo.update(todo_params.except(:tag_ids, :files))
-        render json: @todo, serializer: TodoSerializer
+        render json: @todo, serializer: TodoSerializer, current_user: current_user, current_user: current_user
       else
         render json: { errors: @todo.errors }, status: :unprocessable_entity
       end
@@ -62,7 +68,7 @@ module Api
       
       if user_tag_ids.sort == tag_ids.sort
         @todo.tag_ids = tag_ids
-        render json: @todo, serializer: TodoSerializer
+        render json: @todo, serializer: TodoSerializer, current_user: current_user
       else
         render json: { error: 'Invalid tag IDs' }, status: :unprocessable_entity
       end

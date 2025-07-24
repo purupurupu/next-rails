@@ -40,6 +40,9 @@ Get all todos for the authenticated user.
     },
     "tags": [],
     "files": [],
+    "comments_count": 2,
+    "latest_comments": [],
+    "history_count": 5,
     "created_at": "2024-01-01T00:00:00.000Z",
     "updated_at": "2024-01-01T00:00:00.000Z"
   },
@@ -69,6 +72,9 @@ Get all todos for the authenticated user.
         "url": "http://localhost:3001/rails/active_storage/blobs/redirect/..."
       }
     ],
+    "comments_count": 0,
+    "latest_comments": [],
+    "history_count": 3,
     "created_at": "2024-01-01T00:00:00.000Z",
     "updated_at": "2024-01-02T00:00:00.000Z"
   }
@@ -78,6 +84,9 @@ Get all todos for the authenticated user.
 **Notes:**
 - Todos are returned ordered by `position`
 - Empty array `[]` if no todos exist
+- `comments_count` shows the total number of comments on the todo
+- `latest_comments` may contain recent comments for preview (currently empty)
+- `history_count` shows the total number of change history entries
 
 ### Get Single Todo
 
@@ -287,6 +296,30 @@ Returns the updated todo without the deleted file.
   "error": "File not found"
 }
 ```
+
+### Comments
+
+Todos support commenting functionality. See [Comments API](./comments.md) for detailed documentation.
+
+**Endpoints:**
+- `GET /api/todos/:todo_id/comments` - List all comments for a todo
+- `POST /api/todos/:todo_id/comments` - Create a new comment
+- `PUT /api/todos/:todo_id/comments/:id` - Update a comment
+- `DELETE /api/todos/:todo_id/comments/:id` - Soft delete a comment
+
+### History
+
+Todo changes are automatically tracked. See [Todo History API](./todo-histories.md) for detailed documentation.
+
+**Endpoints:**
+- `GET /api/todos/:todo_id/histories` - List all history entries for a todo
+
+**Tracked Actions:**
+- Todo creation
+- Todo updates (title, status, priority, etc.)
+- Todo deletion
+- Status changes
+- Priority changes
 
 ## Data Validation
 

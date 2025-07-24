@@ -41,11 +41,32 @@ frontend/src/
 │   │   │   └── api-client.ts
 │   │   └── types/       # Category types
 │   │       └── category.ts
+│   ├── comment/         # Comment feature (NEW)
+│   │   ├── components/   # Comment components
+│   │   │   ├── CommentForm.tsx
+│   │   │   ├── CommentItem.tsx
+│   │   │   └── CommentList.tsx
+│   │   ├── hooks/       # Comment hooks
+│   │   │   └── useComments.ts
+│   │   ├── lib/         # Comment API client
+│   │   │   └── api-client.ts
+│   │   └── types/       # Comment types
+│   │       └── comment.ts
+│   ├── history/         # History tracking feature (NEW)
+│   │   ├── components/   # History components
+│   │   │   ├── HistoryItem.tsx
+│   │   │   └── HistoryList.tsx
+│   │   ├── hooks/       # History hooks
+│   │   │   └── useHistory.ts
+│   │   ├── lib/         # History API client
+│   │   │   └── api-client.ts
+│   │   └── types/       # History types
+│   │       └── history.ts
 │   └── todo/            # Todo feature
 │       ├── components/   # Todo-specific components
 │       │   ├── TodoList.tsx
 │       │   ├── TodoItem.tsx
-│       │   ├── TodoForm.tsx
+│       │   ├── TodoForm.tsx       # Now includes comment/history tabs
 │       │   └── TodoFilters.tsx
 │       ├── hooks/       # Todo hooks (REFACTORED)
 │       │   ├── useTodos.ts              # Main hook
@@ -107,6 +128,17 @@ class CategoryApiClient extends HttpClient {
   async createCategory(data: CreateCategoryData): Promise<Category>
   // ...
 }
+
+class CommentApiClient extends HttpClient {
+  async getComments(todoId: number): Promise<Comment[]>
+  async createComment(todoId: number, data: CreateCommentData): Promise<Comment>
+  async updateComment(todoId: number, commentId: number, data: UpdateCommentData): Promise<Comment>
+  async deleteComment(todoId: number, commentId: number): Promise<void>
+}
+
+class TodoHistoryApiClient extends HttpClient {
+  async getHistory(todoId: number): Promise<TodoHistory[]>
+}
 ```
 
 ### 3. Authentication Flow
@@ -144,6 +176,9 @@ interface Todo extends BaseEntity {
   title: string;
   completed: boolean;
   category: TodoCategoryRef | null;
+  comments_count: number;
+  latest_comments: unknown[];
+  history_count: number;
   // ...
 }
 

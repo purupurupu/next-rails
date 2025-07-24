@@ -31,6 +31,10 @@ import { useTags } from "@/features/tag/hooks/useTags";
 import { TagSelector } from "@/features/tag/components/TagSelector";
 import { FileUpload } from "@/features/todo/components/FileUpload";
 import { AttachmentList } from "@/features/todo/components/AttachmentList";
+import { CommentList } from "@/features/comment/components/CommentList";
+import { HistoryList } from "@/features/history/components/HistoryList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 interface TodoFormProps {
   mode: "create" | "edit";
@@ -129,7 +133,12 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit, onFileDelet
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col">
+      <DialogContent
+        className={cn(
+          "sm:max-w-md flex flex-col",
+          mode === "edit" ? "max-h-[95vh]" : "max-h-[85vh]",
+        )}
+      >
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {mode === "create" ? "タスクを追加" : "タスクを編集"}
@@ -326,6 +335,24 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit, onFileDelet
                 disabled={isSubmitting}
               />
             </div>
+
+            {/* 編集モードでのみコメントと履歴を表示 */}
+            {mode === "edit" && todo && (
+              <div className="mt-6">
+                <Tabs defaultValue="comments" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="comments">コメント</TabsTrigger>
+                    <TabsTrigger value="history">変更履歴</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="comments" className="mt-4">
+                    <CommentList todoId={todo.id} />
+                  </TabsContent>
+                  <TabsContent value="history" className="mt-4">
+                    <HistoryList todoId={todo.id} />
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
           </div>
 
           <DialogFooter className="flex-shrink-0 pt-4 border-t">

@@ -19,6 +19,26 @@ Rails.application.routes.draw do
 
   # TODO App
   namespace :api do
+    # API v1ルート（将来的なバージョニングに対応）
+    namespace :v1 do
+      resources :todos do
+        collection do
+          patch 'update_order'
+        end
+        member do
+          patch 'tags', to: 'todos#update_tags'
+          delete 'files/:file_id', to: 'todos#destroy_file', as: 'destroy_file'
+        end
+        # 学習ポイント：ネストされたリソースでポリモーフィックコメントを実装
+        resources :comments, only: [:index, :create, :update, :destroy]
+        # 学習ポイント：変更履歴の参照（読み取り専用）
+        resources :histories, only: [:index], controller: 'todo_histories'
+      end
+      resources :categories
+      resources :tags
+    end
+    
+    # 後方互換性のため、v1なしのルートも維持
     resources :todos do
       collection do
         patch 'update_order'
