@@ -1,0 +1,183 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe "Api::V1::Comments", type: :request do
+  # 学習ポイント：認証を含むAPIテストのセットアップ
+  let(:user) { create(:user) }
+  let(:other_user) { create(:user) }
+  let(:todo) { create(:todo, user: user) }
+  let(:other_todo) { create(:todo, user: other_user) }
+  
+  # 学習ポイント：認証ヘルパーの使用
+  # リクエストスペックではauth_headers_forを使って認証
+  let(:auth_headers) { auth_headers_for(user) }
+  let(:other_auth_headers) { auth_headers_for(other_user) }
+  
+  describe "GET /api/v1/todos/:todo_id/comments" do
+    let!(:comments) { create_list(:comment, 3, commentable: todo) }
+    let!(:old_comment) { create(:comment, commentable: todo, created_at: 2.days.ago) }
+    
+    context "with valid todo_id" do
+      it "returns comments in chronological order" do
+        get "/api/v1/todos/#{todo.id}/comments", headers: auth_headers, headers: auth_headers
+        
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json.length).to eq(4)
+        # 古いコメントが最初に来ることを確認
+        expect(json.first['id']).to eq(old_comment.id)
+      end
+      
+      it "includes user information" do
+        get "/api/v1/todos/#{todo.id}/comments", headers: auth_headers
+        
+        json = JSON.parse(response.body)
+        expect(json.first['user']).to be_present
+        expect(json.first['user']['id']).to be_present
+        expect(json.first['user']['name']).to be_present
+      end
+      
+      it "includes editable flag" do
+        get "/api/v1/todos/#{todo.id}/comments", headers: auth_headers
+        
+        json = JSON.parse(response.body)
+        expect(json.first).to have_key('editable')
+      end
+    end
+    
+    context "with other user's todo" do
+      it "returns 404" do
+        get "/api/v1/todos/#{other_todo.id}/comments", headers: auth_headers
+        
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+  
+  describe "POST /api/v1/todos/:todo_id/comments" do
+    let(:valid_params) { { comment: { content: "This is a test comment" } } }
+    let(:invalid_params) { { comment: { content: "" } } }
+    
+    context "with valid params" do
+      it "creates a new comment" do
+        expect {
+          post "/api/v1/todos/#{todo.id}/comments", params: valid_params.to_json, headers: auth_headers
+        }.to change { todo.comments.count }.by(1)
+        
+        expect(response).to have_http_status(:created)
+        json = JSON.parse(response.body)
+        expect(json['content']).to eq("This is a test comment")
+        expect(json['user']['id']).to eq(user.id)
+      rescue => e
+        puts "Response status: #{response.status}"
+        puts "Response body: #{response.body}"
+        raise e
+      end
+    end
+    
+    context "with invalid params" do
+      it "returns unprocessable entity" do
+        post "/api/v1/todos/#{todo.id}/comments", params: invalid_params.to_json, headers: auth_headers
+        
+        expect(response).to have_http_status(:unprocessable_entity)
+        json = JSON.parse(response.body)
+        expect(json['errors']).to be_present
+      end
+    end
+    
+    context "with other user's todo" do
+      it "returns 404" do
+        post "/api/v1/todos/#{other_todo.id}/comments", params: valid_params.to_json, headers: auth_headers
+        
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+  
+  describe "PATCH /api/v1/todos/:todo_id/comments/:id" do
+    let(:comment) { create(:comment, commentable: todo, user: user) }
+    let(:other_comment) { create(:comment, commentable: todo, user: other_user) }
+    let(:update_params) { { comment: { content: "Updated comment" } } }
+    
+    context "when user owns the comment" do
+      context "within editable time" do
+        it "updates the comment" do
+          patch "/api/v1/todos/#{todo.id}/comments/#{comment.id}", params: update_params.to_json, headers: auth_headers
+          
+          expect(response).to have_http_status(:ok)
+          json = JSON.parse(response.body)
+          expect(json['content']).to eq("Updated comment")
+        end
+      end
+      
+      context "after editable time" do
+        before { comment.update!(created_at: 20.minutes.ago) }
+        
+        it "returns unprocessable entity" do
+          patch "/api/v1/todos/#{todo.id}/comments/#{comment.id}", params: update_params.to_json, headers: auth_headers
+          
+          expect(response).to have_http_status(:unprocessable_entity)
+          json = JSON.parse(response.body)
+          expect(json['error']).to include('編集可能時間')
+        end
+      end
+    end
+    
+    context "when user does not own the comment" do
+      it "returns forbidden" do
+        patch "/api/v1/todos/#{todo.id}/comments/#{other_comment.id}", params: update_params.to_json, headers: auth_headers
+        
+        expect(response).to have_http_status(:forbidden)
+        json = JSON.parse(response.body)
+        expect(json['error']).to include('編集権限')
+      end
+    end
+  end
+  
+  describe "DELETE /api/v1/todos/:todo_id/comments/:id" do
+    let!(:comment) { create(:comment, commentable: todo, user: user) }
+    let!(:other_comment) { create(:comment, commentable: todo, user: other_user) }
+    
+    context "when user owns the comment" do
+      it "soft deletes the comment" do
+        expect {
+          delete "/api/v1/todos/#{todo.id}/comments/#{comment.id}", headers: auth_headers
+        }.not_to change { Comment.unscoped.count }
+        
+        expect(response).to have_http_status(:no_content)
+        expect(comment.reload.deleted?).to be true
+      end
+    end
+    
+    context "when user does not own the comment" do
+      it "returns forbidden" do
+        delete "/api/v1/todos/#{todo.id}/comments/#{other_comment.id}", headers: auth_headers
+        
+        expect(response).to have_http_status(:forbidden)
+        json = JSON.parse(response.body)
+        expect(json['error']).to include('削除権限')
+      end
+    end
+  end
+  
+  describe "authentication requirements" do
+    # 学習ポイント：認証なしでのアクセステスト
+    # ヘッダーを送らないことで未認証状態をテスト
+    
+    it "requires authentication for all endpoints" do
+      # 学習ポイント：Deviseの挙動により、認証なしのアクセスは403(forbidden)を返す
+      get "/api/v1/todos/#{todo.id}/comments"
+      expect(response).to have_http_status(:forbidden)
+      
+      post "/api/v1/todos/#{todo.id}/comments", params: { comment: { content: "Test" } }.to_json
+      expect(response).to have_http_status(:forbidden)
+      
+      patch "/api/v1/todos/#{todo.id}/comments/1", params: { comment: { content: "Test" } }.to_json
+      expect(response).to have_http_status(:forbidden)
+      
+      delete "/api/v1/todos/#{todo.id}/comments/1"
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
+end
