@@ -21,9 +21,7 @@ export function CommentForm({
   const [content, setContent] = useState(initialContent);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!content.trim()) return;
 
     setIsSubmitting(true);
@@ -37,11 +35,19 @@ export function CommentForm({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <div className="space-y-3">
       <Textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
+        onKeyDown={handleKeyDown}
         placeholder="コメントを入力..."
         className="resize-none"
         rows={3}
@@ -49,7 +55,8 @@ export function CommentForm({
       />
       <div className="flex gap-2">
         <Button
-          type="submit"
+          type="button"
+          onClick={handleSubmit}
           disabled={!content.trim() || isSubmitting}
           size="sm"
         >
@@ -68,6 +75,6 @@ export function CommentForm({
           </Button>
         )}
       </div>
-    </form>
+    </div>
   );
 }
