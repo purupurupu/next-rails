@@ -17,13 +17,14 @@ interface UseTodosReturn {
     completed: number;
   };
   // Actions
-  createTodo: (data: CreateTodoData) => Promise<void>;
-  updateTodo: (id: number, data: UpdateTodoData) => Promise<void>;
+  createTodo: (data: CreateTodoData, files?: File[]) => Promise<void>;
+  updateTodo: (id: number, data: UpdateTodoData, files?: File[]) => Promise<void>;
   deleteTodo: (id: number) => Promise<void>;
   updateTodoOrder: (todos: UpdateOrderData[]) => Promise<void>;
   toggleTodoComplete: (id: number) => Promise<void>;
   setFilter: (filter: TodoFilter) => void;
   refreshTodos: () => Promise<void>;
+  deleteTodoFile: (todoId: number, fileId: string | number) => Promise<void>;
 }
 
 /**
@@ -85,5 +86,6 @@ export function useTodos(): UseTodosReturn {
     toggleTodoComplete: mutations.toggleTodoComplete,
     setFilter,
     refreshTodos,
+    deleteTodoFile: mutations.deleteTodoFile,
   };
 }

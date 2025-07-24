@@ -25,7 +25,11 @@ Rails.application.routes.draw do
       end
       member do
         patch 'tags', to: 'todos#update_tags'
-        delete 'files/:file_id', to: 'todos#destroy_file', as: :destroy_file
+      end
+      resources :attachments, only: [:create, :destroy] do
+        member do
+          get 'download'
+        end
       end
     end
     resources :categories

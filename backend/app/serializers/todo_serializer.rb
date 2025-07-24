@@ -1,5 +1,5 @@
 class TodoSerializer < ActiveModel::Serializer
-  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at, :updated_at, :category, :tags, :files
+  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at, :updated_at, :category, :tags, :attachments
 
   def category
     return nil unless object.category
@@ -20,33 +20,17 @@ class TodoSerializer < ActiveModel::Serializer
     end
   end
 
-  def files
-    return [] unless object.files.attached?
-    
-    object.files.map do |file|
-      result = {
-        id: file.id,
-        filename: file.filename.to_s,
-        content_type: file.content_type,
-        byte_size: file.byte_size,
-        url: Rails.application.routes.url_helpers.rails_blob_url(file, host: 'localhost:3001')
+  def attachments
+    object.attachments.map do |attachment|
+      {
+        id: attachment.id,
+        filename: attachment.filename,
+        file_size: attachment.file_size,
+        file_type: attachment.file_type,
+        human_file_size: attachment.human_file_size,
+        url: attachment.file_url,
+        created_at: attachment.created_at.iso8601
       }
-      
-      # TODO: Add variant URLs for images when Active Storage variants are properly configured
-      # if file.content_type.start_with?('image/')
-      #   result[:variants] = {
-      #     thumb: Rails.application.routes.url_helpers.rails_representation_url(
-      #       file.variant(:thumb).processed, 
-      #       host: 'localhost:3001'
-      #     ),
-      #     medium: Rails.application.routes.url_helpers.rails_representation_url(
-      #       file.variant(:medium).processed,
-      #       host: 'localhost:3001'
-      #     )
-      #   }
-      # end
-      
-      result
     end
   end
 end

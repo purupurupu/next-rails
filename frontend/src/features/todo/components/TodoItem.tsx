@@ -14,6 +14,7 @@ import { isOverdue, isDueToday, isDueSoon } from "@/lib/utils";
 
 import type { Todo } from "@/features/todo/types/todo";
 import { TagBadge } from "@/features/tag/components/TagBadge";
+import { AttachmentList } from "@/features/todo/components/AttachmentList";
 
 interface TodoItemProps {
   todo: Todo;
@@ -229,6 +230,16 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
                     {todo.description}
                   </div>
                 )}
+              </div>
+            )}
+
+            {todo.files && todo.files.length > 0 && (
+              <div className="mt-2">
+                <AttachmentList
+                  todoId={todo.id}
+                  files={todo.files}
+                  compact
+                />
               </div>
             )}
           </div>

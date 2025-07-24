@@ -29,16 +29,19 @@ import type { CreateTodoData, Todo, TodoPriority, TodoStatus } from "@/features/
 import { useCategories } from "@/features/category/hooks/useCategories";
 import { useTags } from "@/features/tag/hooks/useTags";
 import { TagSelector } from "@/features/tag/components/TagSelector";
+import { FileUpload } from "@/features/todo/components/FileUpload";
+import { AttachmentList } from "@/features/todo/components/AttachmentList";
 
 interface TodoFormProps {
   mode: "create" | "edit";
   todo?: Todo;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateTodoData) => Promise<void>;
+  onSubmit: (data: CreateTodoData, files?: File[]) => Promise<void>;
+  onFileDelete?: (fileId: string | number) => void;
 }
 
-export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormProps) {
+export function TodoForm({ mode, todo, open, onOpenChange, onSubmit, onFileDelete }: TodoFormProps) {
   const { categories, fetchCategories } = useCategories(false);
   const { tags, fetchTags } = useTags(false);
   const [title, setTitle] = useState(todo?.title || "");
@@ -52,6 +55,7 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>(
     todo?.tags?.map((tag) => tag.id) || [],
   );
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -79,7 +83,12 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
         tag_ids: selectedTagIds,
       };
 
-      await onSubmit(data);
+      // For edit mode with files, use onSubmit with files
+      if (mode === "edit" && selectedFiles.length > 0) {
+        await onSubmit(data, selectedFiles);
+      } else {
+        await onSubmit(data);
+      }
 
       // Reset form for create mode
       if (mode === "create") {
@@ -90,6 +99,7 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
         setDescription("");
         setCategoryId(undefined);
         setSelectedTagIds([]);
+        setSelectedFiles([]);
       }
 
       onOpenChange(false);
@@ -107,6 +117,7 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
       setDescription("");
       setCategoryId(undefined);
       setSelectedTagIds([]);
+      setSelectedFiles([]);
     }
     onOpenChange(newOpen);
   };
@@ -296,6 +307,23 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit }: TodoFormP
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">添付ファイル</label>
+            {mode === "edit" && todo && todo.files && todo.files.length > 0 && (
+              <AttachmentList
+                todoId={todo.id}
+                files={todo.files}
+                onDelete={onFileDelete}
+                disabled={isSubmitting}
+              />
+            )}
+            <FileUpload
+              onFileSelect={setSelectedFiles}
+              existingFiles={selectedFiles}
+              disabled={isSubmitting}
+            />
           </div>
 
           <DialogFooter>

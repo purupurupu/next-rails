@@ -25,6 +25,7 @@ export function TodoList() {
     deleteTodo,
     toggleTodoComplete,
     setFilter,
+    deleteTodoFile,
   } = useTodos();
 
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
@@ -37,13 +38,13 @@ export function TodoList() {
     completed: allTodos.filter((todo) => todo.completed).length,
   };
 
-  const handleCreateTodo = async (data: CreateTodoData) => {
-    await createTodo(data);
+  const handleCreateTodo = async (data: CreateTodoData, files?: File[]) => {
+    await createTodo(data, files);
   };
 
-  const handleUpdateTodo = async (data: UpdateTodoData) => {
+  const handleUpdateTodo = async (data: UpdateTodoData, files?: File[]) => {
     if (!editingTodo) return;
-    await updateTodo(editingTodo.id, data);
+    await updateTodo(editingTodo.id, data, files);
     setEditingTodo(null);
   };
 
@@ -150,6 +151,7 @@ export function TodoList() {
           open={!!editingTodo}
           onOpenChange={(open) => !open && setEditingTodo(null)}
           onSubmit={handleUpdateTodo}
+          onFileDelete={(fileId) => deleteTodoFile(editingTodo.id, fileId)}
         />
       )}
     </div>
