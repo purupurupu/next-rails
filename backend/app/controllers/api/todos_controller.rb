@@ -12,7 +12,7 @@ module Api
     end
 
     def create
-      @todo = current_user.todos.build(todo_params.except(:tag_ids))
+      @todo = current_user.todos.build(todo_params.except(:tag_ids, :files))
       
       if params[:todo][:tag_ids].present?
         valid_tag_ids = current_user.tags.where(id: params[:todo][:tag_ids]).pluck(:id)
@@ -20,6 +20,11 @@ module Api
       end
       
       if @todo.save
+        # Attach files after successful save
+        if params[:todo][:files].present?
+          @todo.files.attach(params[:todo][:files])
+        end
+        
         render json: @todo, serializer: TodoSerializer, status: :created
       else
         render json: { errors: @todo.errors }, status: :unprocessable_entity

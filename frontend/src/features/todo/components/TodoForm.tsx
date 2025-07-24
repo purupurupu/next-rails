@@ -83,8 +83,8 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit, onFileDelet
         tag_ids: selectedTagIds,
       };
 
-      // For edit mode with files, use onSubmit with files
-      if (mode === "edit" && selectedFiles.length > 0) {
+      // Submit with files if any are selected
+      if (selectedFiles.length > 0) {
         await onSubmit(data, selectedFiles);
       } else {
         await onSubmit(data);
