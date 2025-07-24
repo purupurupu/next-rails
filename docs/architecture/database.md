@@ -18,6 +18,10 @@ erDiagram
     todos }o--o{ tags : "many-to-many"
     todos ||--o{ todo_tags : "has many"
     tags ||--o{ todo_tags : "has many"
+    todos ||--o{ comments : "has many"
+    users ||--o{ comments : "has many"
+    todos ||--o{ todo_histories : "has many"
+    users ||--o{ todo_histories : "has many"
 
     users {
         bigserial id PK
@@ -80,6 +84,27 @@ erDiagram
         timestamp created_at
         timestamp updated_at
     }
+
+    comments {
+        bigserial id PK
+        text content
+        bigint user_id FK
+        varchar commentable_type
+        bigint commentable_id
+        timestamp deleted_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    todo_histories {
+        bigserial id PK
+        bigint todo_id FK
+        bigint user_id FK
+        integer action
+        jsonb changes
+        timestamp created_at
+        timestamp updated_at
+    }
 ```
 
 ### 主要な関係性
@@ -91,6 +116,10 @@ erDiagram
 5. **Todo ↔ Tags**: 多対多の関係。TodoTagsテーブルを介して実現
    - 1つのTodoは複数のタグを持てる
    - 1つのタグは複数のTodoに付けられる
+6. **Todo → Comments**: 1対多の関係（ポリモーフィック）。各Todoは複数のコメントを持つ
+7. **User → Comments**: 1対多の関係。各ユーザーは複数のコメントを投稿できる
+8. **Todo → TodoHistories**: 1対多の関係。各Todoは複数の履歴エントリを持つ
+9. **User → TodoHistories**: 1対多の関係。変更を行ったユーザーを記録
 
 ## Schema Details
 
@@ -243,6 +272,60 @@ CREATE INDEX index_jwt_denylists_on_jti ON jwt_denylists(jti);
 - `jti`: JWT ID (unique identifier for each token)
 - `exp`: Token expiration time
 
+### comments table
+```sql
+CREATE TABLE comments (
+  id bigserial PRIMARY KEY,
+  content text NOT NULL,
+  user_id bigint NOT NULL,
+  commentable_type varchar NOT NULL,
+  commentable_id bigint NOT NULL,
+  deleted_at timestamp,
+  created_at timestamp(6) NOT NULL,
+  updated_at timestamp(6) NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE INDEX index_comments_on_user_id ON comments(user_id);
+CREATE INDEX index_comments_on_commentable_type_and_commentable_id 
+  ON comments(commentable_type, commentable_id);
+CREATE INDEX index_comments_on_deleted_at ON comments(deleted_at);
+```
+
+**Purpose**: Stores comments for todos (polymorphic, can be extended to other models)
+**Key Fields**:
+- `content`: Comment text (required)
+- `user_id`: Author of the comment (foreign key)
+- `commentable_type`: Type of commented resource (e.g., "Todo")
+- `commentable_id`: ID of commented resource
+- `deleted_at`: Soft delete timestamp (null if active)
+
+### todo_histories table
+```sql
+CREATE TABLE todo_histories (
+  id bigserial PRIMARY KEY,
+  todo_id bigint NOT NULL,
+  user_id bigint NOT NULL,
+  action integer NOT NULL,
+  changes jsonb DEFAULT '{}',
+  created_at timestamp(6) NOT NULL,
+  updated_at timestamp(6) NOT NULL,
+  FOREIGN KEY (todo_id) REFERENCES todos(id),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE INDEX index_todo_histories_on_todo_id ON todo_histories(todo_id);
+CREATE INDEX index_todo_histories_on_user_id ON todo_histories(user_id);
+CREATE INDEX index_todo_histories_on_action ON todo_histories(action);
+```
+
+**Purpose**: Tracks all changes to todos for audit history
+**Key Fields**:
+- `todo_id`: Todo being tracked (foreign key)
+- `user_id`: User who made the change (foreign key)
+- `action`: Type of action (0=created, 1=updated, 2=deleted, 3=status_changed, 4=priority_changed)
+- `changes`: JSONB field storing the changes made
+
 ## Indexes
 
 ### Performance Indexes
@@ -260,6 +343,12 @@ CREATE INDEX index_jwt_denylists_on_jti ON jwt_denylists(jti);
 12. **todo_tags.tag_id** - For finding todos with a tag
 13. **todo_tags.(todo_id, tag_id)** - Unique constraint for todo-tag pairs
 14. **jwt_denylists.jti** - For checking token revocation
+15. **comments.user_id** - For finding user's comments
+16. **comments.(commentable_type, commentable_id)** - For finding comments on a resource
+17. **comments.deleted_at** - For filtering active comments
+18. **todo_histories.todo_id** - For finding history of a todo
+19. **todo_histories.user_id** - For finding changes by a user
+20. **todo_histories.action** - For filtering by action type
 
 ### Referential Integrity
 - Foreign key constraint on `todos.user_id` → `users.id`
@@ -268,8 +357,11 @@ CREATE INDEX index_jwt_denylists_on_jti ON jwt_denylists(jti);
 - Foreign key constraint on `tags.user_id` → `users.id`
 - Foreign key constraint on `todo_tags.todo_id` → `todos.id`
 - Foreign key constraint on `todo_tags.tag_id` → `tags.id`
-- Cascade delete: When user is deleted, all their todos, categories, and tags are deleted
-- Cascade delete: When todo is deleted, all its todo_tags are deleted
+- Foreign key constraint on `comments.user_id` → `users.id`
+- Foreign key constraint on `todo_histories.todo_id` → `todos.id`
+- Foreign key constraint on `todo_histories.user_id` → `users.id`
+- Cascade delete: When user is deleted, all their todos, categories, tags, and comments are deleted
+- Cascade delete: When todo is deleted, all its todo_tags, comments, and histories are deleted
 - Cascade delete: When tag is deleted, all its todo_tags are deleted
 
 ## Migrations History
@@ -336,6 +428,28 @@ create_table :todo_tags do |t|
   t.timestamps
 end
 add_index :todo_tags, [:todo_id, :tag_id], unique: true
+
+# 20250724XXXXXX_create_comments.rb
+create_table :comments do |t|
+  t.text :content, null: false
+  t.references :user, null: false, foreign_key: true
+  t.string :commentable_type, null: false
+  t.bigint :commentable_id, null: false
+  t.datetime :deleted_at
+  t.timestamps
+end
+add_index :comments, [:commentable_type, :commentable_id]
+add_index :comments, :deleted_at
+
+# 20250724XXXXXX_create_todo_histories.rb
+create_table :todo_histories do |t|
+  t.references :todo, null: false, foreign_key: true
+  t.references :user, null: false, foreign_key: true
+  t.integer :action, null: false
+  t.jsonb :changes, default: {}
+  t.timestamps
+end
+add_index :todo_histories, :action
 ```
 
 ## Data Integrity Rules
@@ -369,6 +483,9 @@ add_index :todo_tags, [:todo_id, :tag_id], unique: true
 8. **Tag names**: Unique per user, 1-30 characters, normalized (trimmed)
 9. **Tag colors**: Must be valid hex color format (#RRGGBB), normalized to uppercase
 10. **Todo-Tag relationship**: Each todo can have multiple tags, each tag only once per todo
+11. **Comment content**: Required, cannot be blank
+12. **Comment soft delete**: Comments are soft-deleted to preserve history
+13. **Todo history**: Automatically tracked via callbacks, cannot be modified via API
 
 ## Query Patterns
 
@@ -414,6 +531,18 @@ SELECT tags.* FROM tags
 INNER JOIN todo_tags ON tags.id = todo_tags.tag_id
 WHERE todo_tags.todo_id = ?
 ORDER BY tags.name;
+
+-- Active comments for a todo
+SELECT * FROM comments
+WHERE commentable_type = 'Todo' 
+  AND commentable_id = ?
+  AND deleted_at IS NULL
+ORDER BY created_at;
+
+-- Todo history
+SELECT * FROM todo_histories
+WHERE todo_id = ?
+ORDER BY created_at;
 ```
 
 ### Performance Considerations (ENHANCED)
@@ -474,8 +603,10 @@ end
 
 ## Future Considerations
 
-1. **Soft Deletes**: Add `deleted_at` for recoverable todos
-2. **Audit Trail**: Track changes to todos
+1. **Soft Deletes**: Add `deleted_at` for recoverable todos (already implemented for comments)
+2. **Audit Trail**: Track changes to todos (already implemented with todo_histories)
 3. **Full-Text Search**: PostgreSQL FTS for todo search
 4. **Archiving**: Move old completed todos to archive table
 5. **Multi-tenancy**: If scaling to organizations/teams
+6. **Real-time Updates**: WebSocket support for live comments and updates
+7. **File Storage**: Move from Active Storage to cloud storage for scalability

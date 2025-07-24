@@ -109,6 +109,8 @@ X-Request-Id: <unique_request_id>
 - [Todos API](./todos.md) - Todo CRUD operations and batch updates
 - [Categories API](./categories.md) - Category CRUD operations
 - [Tags API](./tags.md) - Tag CRUD operations for flexible todo organization
+- [Comments API](./comments.md) - Comment functionality for todos
+- [Todo History API](./todo-histories.md) - Change tracking and audit history for todos
 
 ## Pagination
 
