@@ -46,6 +46,8 @@ module AuthenticationHelpers
 
   # Helper method to set authorization headers for request specs
   def auth_headers_for(user)
+    # Always get a fresh token to avoid caching issues
+    jwt_tokens.delete(user.id) if jwt_tokens[user.id]
     token = jwt_token_for(user)
     {
       'Authorization' => token,

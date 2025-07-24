@@ -12,8 +12,14 @@ require 'rspec/rails'
 require 'factory_bot_rails'
 require 'database_cleaner/active_record'
 
+# Include file upload helpers
+include ActionDispatch::TestProcess::FixtureFile
+
 # Configure host authorization to allow all hosts for tests
 Rails.application.config.host_authorization = { exclude: ->(request) { true } }
+
+# Configure Active Job to use inline adapter for tests to avoid Redis dependency
+Rails.application.config.active_job.queue_adapter = :inline
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
@@ -98,6 +104,11 @@ RSpec.configure do |config|
     # Allow remote database URLs for Docker testing
     DatabaseCleaner.allow_remote_database_url = true
     DatabaseCleaner.clean_with(:truncation)
+    
+    # Suppress Sidekiq logs in tests
+    if defined?(Sidekiq)
+      Sidekiq.logger.level = Logger::WARN
+    end
   end
 
   config.around(:each) do |example|

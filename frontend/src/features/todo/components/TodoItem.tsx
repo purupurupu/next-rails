@@ -14,6 +14,7 @@ import { isOverdue, isDueToday, isDueSoon } from "@/lib/utils";
 
 import type { Todo } from "@/features/todo/types/todo";
 import { TagBadge } from "@/features/tag/components/TagBadge";
+import { AttachmentList } from "@/features/todo/components/AttachmentList";
 
 interface TodoItemProps {
   todo: Todo;
@@ -115,17 +116,17 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
     )}
     >
       <CardContent className="p-4">
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3 w-full">
           <Checkbox
             checked={todo.completed}
             onCheckedChange={() => onToggleComplete(todo.id)}
             className="mt-0.5 flex-shrink-0"
           />
 
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 w-full">
             <div className="flex items-start justify-between gap-2">
               <h3 className={cn(
-                "text-sm font-medium break-words",
+                "text-sm font-medium break-words flex-1 min-w-0",
                 todo.completed && "line-through text-muted-foreground",
               )}
               >
@@ -229,6 +230,16 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
                     {todo.description}
                   </div>
                 )}
+              </div>
+            )}
+
+            {todo.files && todo.files.length > 0 && (
+              <div className="mt-2">
+                <AttachmentList
+                  todoId={todo.id}
+                  files={todo.files}
+                  compact
+                />
               </div>
             )}
           </div>

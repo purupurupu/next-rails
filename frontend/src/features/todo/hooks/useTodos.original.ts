@@ -94,6 +94,7 @@ export function useTodos(): UseTodosReturn {
       description: data.description || null,
       category: null, // Will be updated when real todo is returned from server
       tags: [], // Will be updated when real todo is returned from server
+      files: [], // Will be updated when real todo is returned from server
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

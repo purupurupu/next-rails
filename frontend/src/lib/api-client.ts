@@ -103,6 +103,40 @@ class HttpClient {
       method: "DELETE",
     });
   }
+
+  async uploadFile<T>(endpoint: string, formData: FormData, method: string = "POST"): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+
+    const config: RequestInit = {
+      method,
+      headers: {
+        ...this.getAuthHeaders(),
+        // Don't set Content-Type - let browser set it with boundary for multipart/form-data
+      },
+      credentials: "include",
+      body: formData,
+    };
+
+    try {
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(
+          `HTTP ${response.status}: ${response.statusText}`,
+          response.status,
+          errorData,
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError("Network error occurred", 0);
+    }
+  }
 }
 
 export const httpClient = new HttpClient();

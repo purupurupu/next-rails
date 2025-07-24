@@ -30,7 +30,7 @@ module App
     config.api_only = true
     
     # Configure Active Job to use Sidekiq for background processing
-    config.active_job.queue_adapter = :sidekiq
+    config.active_job.queue_adapter = :sidekiq unless Rails.env.test?
     
     # Enable sessions for JWT authentication with Devise
     config.middleware.use ActionDispatch::Cookies

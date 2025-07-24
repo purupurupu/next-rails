@@ -36,6 +36,9 @@ Rails.application.configure do
 
   # Store uploaded files on the local file system in a temporary directory.
   config.active_storage.service = :test
+  
+  # Disable Active Storage analysis in tests
+  config.active_storage.analyze_on_upload = false
 
   config.action_mailer.perform_caching = false
 
@@ -61,6 +64,9 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions
   config.action_controller.raise_on_missing_callback_actions = true
+  
+  # Use test adapter for Active Job in tests
+  config.active_job.queue_adapter = :test
   
   # Disable host authorization for tests
   config.host_authorization = { exclude: ->(request) { true } }

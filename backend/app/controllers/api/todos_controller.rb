@@ -1,6 +1,6 @@
 module Api
   class TodosController < ApplicationController
-    before_action :set_todo, only: [:show, :update, :destroy, :update_tags]
+    before_action :set_todo, only: [:show, :update, :destroy, :update_tags, :destroy_file]
 
     def index
       @todos = current_user.todos.includes(:category, :tags).ordered
@@ -12,7 +12,7 @@ module Api
     end
 
     def create
-      @todo = current_user.todos.build(todo_params.except(:tag_ids))
+      @todo = current_user.todos.build(todo_params.except(:tag_ids, :files))
       
       if params[:todo][:tag_ids].present?
         valid_tag_ids = current_user.tags.where(id: params[:todo][:tag_ids]).pluck(:id)
@@ -20,6 +20,11 @@ module Api
       end
       
       if @todo.save
+        # Attach files after successful save
+        if params[:todo][:files].present?
+          @todo.files.attach(params[:todo][:files])
+        end
+        
         render json: @todo, serializer: TodoSerializer, status: :created
       else
         render json: { errors: @todo.errors }, status: :unprocessable_entity
@@ -32,7 +37,12 @@ module Api
         @todo.tag_ids = valid_tag_ids
       end
       
-      if @todo.update(todo_params.except(:tag_ids))
+      # Handle file attachments separately to append rather than replace
+      if params[:todo][:files].present?
+        @todo.files.attach(params[:todo][:files])
+      end
+      
+      if @todo.update(todo_params.except(:tag_ids, :files))
         render json: @todo, serializer: TodoSerializer
       else
         render json: { errors: @todo.errors }, status: :unprocessable_entity
@@ -84,6 +94,14 @@ module Api
       render json: { error: 'Failed to update todo order' }, status: :unprocessable_entity
     end
 
+    def destroy_file
+      file = @todo.files.find(params[:file_id])
+      file.purge
+      render json: @todo, serializer: TodoSerializer
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: 'File not found' }, status: :not_found
+    end
+
     private
 
     def set_todo
@@ -91,7 +109,7 @@ module Api
     end
 
     def todo_params
-      params.require(:todo).permit(:title, :completed, :position, :due_date, :priority, :status, :description, :category_id, tag_ids: [])
+      params.require(:todo).permit(:title, :completed, :position, :due_date, :priority, :status, :description, :category_id, tag_ids: [], files: [])
     end
   end
 end

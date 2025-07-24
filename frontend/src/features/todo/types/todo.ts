@@ -17,6 +17,19 @@ export type TodoCategoryRef = Pick<Category, "id" | "name" | "color">;
 // Tag reference (simplified version for todos)
 export type TodoTagRef = Pick<Tag, "id" | "name" | "color">;
 
+// File type (Active Storage format)
+export interface TodoFile {
+  id: string | number;
+  filename: string;
+  content_type: string;
+  byte_size: number;
+  url: string;
+  variants?: {
+    thumb?: string;
+    medium?: string;
+  };
+}
+
 // Main todo entity
 export interface Todo extends BaseEntity {
   title: string;
@@ -28,6 +41,7 @@ export interface Todo extends BaseEntity {
   description: string | null;
   category: TodoCategoryRef | null;
   tags: TodoTagRef[];
+  files: TodoFile[];
 }
 
 // Todo operations
