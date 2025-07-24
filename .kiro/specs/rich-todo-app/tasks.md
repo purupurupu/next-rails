@@ -114,7 +114,7 @@
   - _Requirements: 2.2, 2.4_
 
 - [x] 6. Implement file attachment system with Active Storage
-- [ ] 6.1 Add file attachment to Todo model
+- [x] 6.1 Add file attachment to Todo model
 
   - Add has_many_attached :attachments to Todo model
   - Configure image processing gem (image_processing) for automatic resizing
@@ -122,7 +122,7 @@
   - Write unit tests for Todo model with attachments
   - _Requirements: 4.1, 4.2_
 
-- [ ] 6.2 Create file upload API endpoints
+- [x] 6.2 Create file upload API endpoints
 
   - Add file upload endpoint to todos controller
   - Implement secure file serving with proper user authorization
@@ -130,7 +130,7 @@
   - Write integration tests for file upload and retrieval
   - _Requirements: 4.1, 4.3, 4.4_
 
-- [ ] 6.3 Add file validation and optimization
+- [x] 6.3 Add file validation and optimization
 
   - Add file type validation (images, documents)
   - Add file size validation (max 10MB per file)
