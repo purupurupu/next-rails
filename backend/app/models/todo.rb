@@ -5,6 +5,10 @@ class Todo < ApplicationRecord
     has_many :todo_tags, dependent: :destroy
     has_many :tags, through: :todo_tags
     
+    # 学習ポイント：ポリモーフィック関連
+    # as: :commentableにより、Commentモデルからポリモーフィックに参照される
+    has_many :comments, as: :commentable, dependent: :destroy
+    
     # Active Storage files
     has_many_attached :files do |attachable|
       attachable.variant :thumb, resize_to_limit: [300, 300]
