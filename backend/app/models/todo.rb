@@ -6,7 +6,10 @@ class Todo < ApplicationRecord
     has_many :tags, through: :todo_tags
     
     # Active Storage files
-    has_many_attached :files
+    has_many_attached :files do |attachable|
+      attachable.variant :thumb, resize_to_limit: [300, 300]
+      attachable.variant :medium, resize_to_limit: [800, 800]
+    end
     
     # Enums
     enum priority: { low: 0, medium: 1, high: 2 }, _default: :medium

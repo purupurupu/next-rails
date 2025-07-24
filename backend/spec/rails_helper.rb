@@ -104,6 +104,11 @@ RSpec.configure do |config|
     # Allow remote database URLs for Docker testing
     DatabaseCleaner.allow_remote_database_url = true
     DatabaseCleaner.clean_with(:truncation)
+    
+    # Suppress Sidekiq logs in tests
+    if defined?(Sidekiq)
+      Sidekiq.logger.level = Logger::WARN
+    end
   end
 
   config.around(:each) do |example|
