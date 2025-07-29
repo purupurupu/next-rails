@@ -7,6 +7,24 @@ module Api
       render json: @todos, each_serializer: TodoSerializer, current_user: current_user
     end
 
+    def search
+      @todos = ::Services::TodoSearchService.new(current_user, search_params).call
+      
+      render json: {
+        todos: ActiveModelSerializers::SerializableResource.new(
+          @todos,
+          each_serializer: TodoSerializer,
+          current_user: current_user,
+          highlight_query: search_params[:q] || search_params[:query] || search_params[:search]
+        ).as_json,
+        meta: {
+          total: @todos.count,
+          search_query: search_params[:q] || search_params[:query] || search_params[:search],
+          filters_applied: active_filters
+        }
+      }
+    end
+
     def show
       render json: @todo, serializer: TodoSerializer, current_user: current_user
     end
@@ -116,6 +134,33 @@ module Api
 
     def todo_params
       params.require(:todo).permit(:title, :completed, :position, :due_date, :priority, :status, :description, :category_id, tag_ids: [], files: [])
+    end
+
+    def search_params
+      params.permit(
+        :q, :query, :search,
+        :category_id,
+        :due_date_from, :due_date_to,
+        :sort_by, :sort_order,
+        :tag_mode,
+        status: [],
+        priority: [],
+        tag_ids: []
+      )
+    end
+
+    def active_filters
+      filters = {}
+      filters[:search] = search_params[:q] || search_params[:query] || search_params[:search] if search_params[:q] || search_params[:query] || search_params[:search]
+      filters[:category_id] = search_params[:category_id] if search_params[:category_id].present?
+      filters[:status] = search_params[:status] if search_params[:status].present?
+      filters[:priority] = search_params[:priority] if search_params[:priority].present?
+      filters[:tag_ids] = search_params[:tag_ids] if search_params[:tag_ids].present?
+      filters[:date_range] = {
+        from: search_params[:due_date_from],
+        to: search_params[:due_date_to]
+      } if search_params[:due_date_from].present? || search_params[:due_date_to].present?
+      filters
     end
   end
 end
