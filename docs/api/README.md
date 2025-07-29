@@ -6,8 +6,10 @@ The Todo application provides a RESTful JSON API built with Rails API-only mode.
 
 ## Base URL
 
-- **Development**: `http://localhost:3001`
+- **Development**: `http://localhost:3001/api/v1`
 - **Production**: Configure in deployment
+
+**Note**: The API supports versioning through URL path (`/api/v1`), Accept header, or X-API-Version header. See [API Versioning](./versioning.md) for details.
 
 ## Authentication
 
@@ -30,6 +32,7 @@ Authorization: Bearer <jwt_token>
 ```
 Content-Type: application/json
 X-Request-Id: <unique_request_id>
+X-API-Version: v1
 ```
 
 ## Response Format (UNIFIED)
@@ -73,19 +76,20 @@ X-Request-Id: <unique_request_id>
 ### Error Response
 ```json
 {
-  "error": "Record not found"
-}
-```
-
-### Validation Error Response
-```json
-{
-  "errors": {
-    "title": ["can't be blank"],
-    "due_date": ["must be in the future"]
+  "error": {
+    "code": "RESOURCE_NOT_FOUND",
+    "message": "Todo with ID '123' not found",
+    "details": {
+      "resource": "Todo",
+      "id": "123"
+    },
+    "request_id": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": "2025-01-29T10:00:00Z"
   }
 }
 ```
+
+See [Error Handling](./errors.md) for complete error documentation.
 
 ## HTTP Status Codes
 
@@ -101,6 +105,10 @@ X-Request-Id: <unique_request_id>
 | 500 | Internal Server Error - Server error |
 
 ## API Endpoints
+
+### Core Documentation
+- [Error Handling](./errors.md) - Error codes, formats, and troubleshooting
+- [API Versioning](./versioning.md) - Version support and migration guides
 
 ### Authentication
 - [Authentication API](./authentication.md) - User registration, login, and logout
@@ -151,9 +159,13 @@ X-RateLimit-Reset: 1640995200
 
 ## Versioning
 
-Currently using unversioned API. Future versions may use:
-- URL versioning: `/api/v1/todos`
-- Header versioning: `Accept: application/vnd.api+json;version=1`
+The API supports three versioning methods:
+
+1. **URL Path**: `/api/v1/todos` (Recommended)
+2. **Accept Header**: `Accept: application/vnd.todo-api.v1+json`
+3. **Custom Header**: `X-API-Version: v1`
+
+See [API Versioning](./versioning.md) for detailed documentation.
 
 ## CORS
 
@@ -170,9 +182,14 @@ curl -X POST http://localhost:3001/auth/sign_in \
   -H "Content-Type: application/json" \
   -d '{"user":{"email":"user@example.com","password":"password"}}'
 
-# Get todos
-curl -X GET http://localhost:3001/api/todos \
+# Get todos (with URL versioning)
+curl -X GET http://localhost:3001/api/v1/todos \
   -H "Authorization: Bearer <jwt_token>"
+
+# Get todos (with header versioning)
+curl -X GET http://localhost:3001/api/todos \
+  -H "Authorization: Bearer <jwt_token>" \
+  -H "X-API-Version: v1"
 ```
 
 ### Using JavaScript (Fetch)
@@ -186,19 +203,30 @@ const response = await fetch('http://localhost:3001/auth/sign_in', {
   })
 });
 
-// Get todos
-const todos = await fetch('http://localhost:3001/api/todos', {
+// Get todos (with URL versioning)
+const todos = await fetch('http://localhost:3001/api/v1/todos', {
   headers: { 'Authorization': `Bearer ${token}` }
+}).then(res => res.json());
+
+// Get todos (with header versioning)
+const todosAlt = await fetch('http://localhost:3001/api/todos', {
+  headers: { 
+    'Authorization': `Bearer ${token}`,
+    'X-API-Version': 'v1'
+  }
 }).then(res => res.json());
 ```
 
 ## Error Handling Best Practices
 
 1. Always check response status before parsing
-2. Handle network errors separately from API errors
-3. Display user-friendly error messages
-4. Log errors for debugging
-5. Implement retry logic for transient failures
+2. Use error codes for programmatic handling
+3. Log request IDs for debugging
+4. Handle authentication errors by redirecting to login
+5. Implement retry logic for 5xx errors only
+6. Display user-friendly messages based on error codes
+
+See [Error Handling](./errors.md) for detailed error handling guidelines.
 
 ## Security Considerations
 
