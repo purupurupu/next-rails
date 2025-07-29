@@ -1,5 +1,5 @@
 class TodoSerializer < ActiveModel::Serializer
-  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at, :updated_at, :category, :tags, :files, :comments_count, :latest_comments, :history_count
+  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at, :updated_at, :category, :tags, :files, :comments_count, :latest_comments, :history_count, :highlights
 
   def category
     return nil unless object.category
@@ -62,5 +62,45 @@ class TodoSerializer < ActiveModel::Serializer
   # 学習ポイント：履歴数の取得
   def history_count
     object.todo_histories.count
+  end
+
+  # 検索結果のハイライト情報
+  def highlights
+    query = @instance_options[:highlight_query]
+    return nil unless query.present?
+
+    highlights = {}
+    search_term = query.downcase
+
+    # タイトルでのマッチ位置を検出
+    if object.title.downcase.include?(search_term)
+      highlights[:title] = find_match_positions(object.title, search_term)
+    end
+
+    # 説明文でのマッチ位置を検出
+    if object.description.present? && object.description.downcase.include?(search_term)
+      highlights[:description] = find_match_positions(object.description, search_term)
+    end
+
+    highlights.present? ? highlights : nil
+  end
+
+  private
+
+  def find_match_positions(text, search_term)
+    positions = []
+    text_lower = text.downcase
+    index = 0
+
+    while (match_index = text_lower.index(search_term, index))
+      positions << {
+        start: match_index,
+        end: match_index + search_term.length,
+        matched_text: text[match_index, search_term.length]
+      }
+      index = match_index + 1
+    end
+
+    positions
   end
 end

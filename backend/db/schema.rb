@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_07_24_124424) do
+ActiveRecord::Schema[7.1].define(version: 2025_07_29_121452) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -122,9 +122,19 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_24_124424) do
     t.text "description"
     t.bigint "category_id"
     t.index ["category_id"], name: "index_todos_on_category_id"
+    t.index ["created_at"], name: "index_todos_on_created_at"
+    t.index ["description"], name: "index_todos_on_description"
+    t.index ["due_date"], name: "index_todos_on_due_date"
     t.index ["position"], name: "index_todos_on_position"
     t.index ["priority"], name: "index_todos_on_priority"
     t.index ["status"], name: "index_todos_on_status"
+    t.index ["title"], name: "index_todos_on_title"
+    t.index ["updated_at"], name: "index_todos_on_updated_at"
+    t.index ["user_id", "category_id"], name: "index_todos_on_user_id_and_category_id"
+    t.index ["user_id", "due_date"], name: "index_todos_on_user_id_and_due_date"
+    t.index ["user_id", "position"], name: "index_todos_on_user_id_and_position"
+    t.index ["user_id", "priority"], name: "index_todos_on_user_id_and_priority"
+    t.index ["user_id", "status"], name: "index_todos_on_user_id_and_status"
     t.index ["user_id"], name: "index_todos_on_user_id"
   end
 

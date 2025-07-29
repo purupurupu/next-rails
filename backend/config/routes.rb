@@ -24,6 +24,7 @@ Rails.application.routes.draw do
       resources :todos do
         collection do
           patch 'update_order'
+          get 'search'
         end
         member do
           patch 'tags', to: 'todos#update_tags'
@@ -42,6 +43,7 @@ Rails.application.routes.draw do
     resources :todos do
       collection do
         patch 'update_order'
+        get 'search'
       end
       member do
         patch 'tags', to: 'todos#update_tags'
