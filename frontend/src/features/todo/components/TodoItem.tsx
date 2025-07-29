@@ -15,6 +15,7 @@ import { isOverdue, isDueToday, isDueSoon } from "@/lib/utils";
 import type { Todo } from "@/features/todo/types/todo";
 import { TagBadge } from "@/features/tag/components/TagBadge";
 import { AttachmentList } from "@/features/todo/components/AttachmentList";
+import { HighlightedText } from "@/features/todo/components/HighlightedText";
 
 interface TodoItemProps {
   todo: Todo;
@@ -130,7 +131,10 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
                 todo.completed && "line-through text-muted-foreground",
               )}
               >
-                {todo.title}
+                <HighlightedText 
+                  text={todo.title} 
+                  highlights={todo.highlights?.title}
+                />
               </h3>
 
               <div className="flex items-center gap-1 flex-shrink-0">
@@ -227,7 +231,10 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
                 </Button>
                 {showDescription && (
                   <div className="mt-1 p-2 bg-muted/50 rounded text-xs text-muted-foreground whitespace-pre-wrap">
-                    {todo.description}
+                    <HighlightedText 
+                      text={todo.description} 
+                      highlights={todo.highlights?.description}
+                    />
                   </div>
                 )}
               </div>
