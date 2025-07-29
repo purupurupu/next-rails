@@ -31,7 +31,7 @@ RSpec.describe 'TodoSearchService Performance', type: :performance do
   describe 'search performance' do
     it 'performs text search within acceptable time' do
       time = Benchmark.realtime do
-        result = Services::TodoSearchService.new(user, { q: 'urgent' }).call
+        result = TodoSearchService.new(user, { q: 'urgent' }).call
         result.to_a # Force query execution
       end
       
@@ -40,7 +40,7 @@ RSpec.describe 'TodoSearchService Performance', type: :performance do
 
     it 'performs complex filtering within acceptable time' do
       time = Benchmark.realtime do
-        result = Services::TodoSearchService.new(user, {
+        result = TodoSearchService.new(user, {
           q: 'task',
           status: ['pending', 'in_progress'],
           priority: 'high',
@@ -61,12 +61,12 @@ RSpec.describe 'TodoSearchService Performance', type: :performance do
       
       # First search (uncached)
       first_time = Benchmark.realtime do
-        Services::TodoSearchService.new(user, params).call.to_a
+        TodoSearchService.new(user, params).call.to_a
       end
       
       # Second search (should be cached)
       second_time = Benchmark.realtime do
-        Services::TodoSearchService.new(user, params).call.to_a
+        TodoSearchService.new(user, params).call.to_a
       end
       
       # Cached search should be significantly faster
@@ -75,7 +75,7 @@ RSpec.describe 'TodoSearchService Performance', type: :performance do
 
     it 'handles pagination efficiently' do
       time = Benchmark.realtime do
-        result = Services::TodoSearchService.new(user, {
+        result = TodoSearchService.new(user, {
           page: 10,
           per_page: 50
         }).call
@@ -87,7 +87,7 @@ RSpec.describe 'TodoSearchService Performance', type: :performance do
 
     it 'avoids N+1 queries' do
       expect {
-        result = Services::TodoSearchService.new(user, { q: 'task' }).call
+        result = TodoSearchService.new(user, { q: 'task' }).call
         result.each do |todo|
           # Access associations that should be preloaded
           todo.category&.name

@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Services::TodoSearchService do
+RSpec.describe TodoSearchService do
   let(:user) { create(:user) }
   let(:other_user) { create(:user) }
   let(:category) { create(:category, user: user) }

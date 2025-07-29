@@ -8,7 +8,7 @@ module Api
     end
 
     def search
-      @todos = ::Services::TodoSearchService.new(current_user, search_params).call
+      @todos = TodoSearchService.new(current_user, search_params).call
       
       response_data = {
         todos: ActiveModelSerializers::SerializableResource.new(

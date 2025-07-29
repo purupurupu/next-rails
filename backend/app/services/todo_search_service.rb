@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-module Services
-  class TodoSearchService
+class TodoSearchService
     attr_reader :user, :params
 
     def initialize(user, params = {})
@@ -214,5 +213,4 @@ module Services
       
       scope.page(page).per(per_page)
     end
-  end
 end
