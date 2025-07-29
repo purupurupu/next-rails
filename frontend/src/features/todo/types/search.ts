@@ -35,4 +35,3 @@ export interface SearchResponse {
   meta: SearchMeta;
   suggestions?: SearchSuggestion[];
 }
-
