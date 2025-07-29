@@ -41,6 +41,7 @@ module Services
       scope = filter_by_status(scope)
       scope = filter_by_priority(scope)
       scope = filter_by_tags(scope)
+      scope = filter_by_date_range(scope)
       scope
     end
 
@@ -103,6 +104,36 @@ module Services
       else
         # Find todos that have ANY of the specified tags (OR)
         scope.joins(:todo_tags).where(todo_tags: { tag_id: valid_tag_ids }).distinct
+      end
+    end
+
+    def filter_by_date_range(scope)
+      scope = filter_by_due_date_from(scope)
+      scope = filter_by_due_date_to(scope)
+      scope
+    end
+
+    def filter_by_due_date_from(scope)
+      return scope unless params[:due_date_from].present?
+
+      begin
+        date_from = Date.parse(params[:due_date_from])
+        scope.where('due_date >= ?', date_from)
+      rescue ArgumentError
+        # Invalid date format, skip filter
+        scope
+      end
+    end
+
+    def filter_by_due_date_to(scope)
+      return scope unless params[:due_date_to].present?
+
+      begin
+        date_to = Date.parse(params[:due_date_to])
+        scope.where('due_date <= ?', date_to)
+      rescue ArgumentError
+        # Invalid date format, skip filter
+        scope
       end
     end
 
