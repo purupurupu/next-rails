@@ -10,22 +10,12 @@ module Api
       API_VERSION_HEADER = 'X-API-Version'
       
       before_action :set_api_version_header
-      before_action :check_api_deprecation
       
       private
       
       # Set API version in response headers
       def set_api_version_header
         response.headers[API_VERSION_HEADER] = API_VERSION
-      end
-      
-      # Check if client is using deprecated API version via non-versioned URLs
-      def check_api_deprecation
-        if request.path.match?(%r{^/api/(?!v\d+/)})
-          response.headers['X-API-Deprecation-Warning'] = 
-            'Non-versioned API endpoints are deprecated. Please use /api/v1/* endpoints.'
-          response.headers['X-API-Deprecation-Date'] = '2025-06-01'
-        end
       end
       
       # Override render to ensure consistent API responses

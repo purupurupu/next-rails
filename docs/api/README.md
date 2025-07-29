@@ -9,7 +9,7 @@ The Todo application provides a RESTful JSON API built with Rails API-only mode.
 - **Development**: `http://localhost:3001/api/v1`
 - **Production**: Configure in deployment
 
-**Note**: The API supports versioning through URL path (`/api/v1`), Accept header, or X-API-Version header. See [API Versioning](./versioning.md) for details.
+**Note**: The API uses URL-based versioning (`/api/v1`). All endpoints must include the version in the URL path.
 
 ## Authentication
 
@@ -159,13 +159,11 @@ X-RateLimit-Reset: 1640995200
 
 ## Versioning
 
-The API supports three versioning methods:
+The API uses URL-based versioning. All endpoints must include the version number in the path:
 
-1. **URL Path**: `/api/v1/todos` (Recommended)
-2. **Accept Header**: `Accept: application/vnd.todo-api.v1+json`
-3. **Custom Header**: `X-API-Version: v1`
-
-See [API Versioning](./versioning.md) for detailed documentation.
+- **Current Version**: `v1`
+- **URL Format**: `/api/v1/{resource}`
+- **Example**: `/api/v1/todos`
 
 ## CORS
 
@@ -182,14 +180,9 @@ curl -X POST http://localhost:3001/auth/sign_in \
   -H "Content-Type: application/json" \
   -d '{"user":{"email":"user@example.com","password":"password"}}'
 
-# Get todos (with URL versioning)
+# Get todos
 curl -X GET http://localhost:3001/api/v1/todos \
   -H "Authorization: Bearer <jwt_token>"
-
-# Get todos (with header versioning)
-curl -X GET http://localhost:3001/api/todos \
-  -H "Authorization: Bearer <jwt_token>" \
-  -H "X-API-Version: v1"
 ```
 
 ### Using JavaScript (Fetch)
@@ -203,17 +196,9 @@ const response = await fetch('http://localhost:3001/auth/sign_in', {
   })
 });
 
-// Get todos (with URL versioning)
+// Get todos
 const todos = await fetch('http://localhost:3001/api/v1/todos', {
   headers: { 'Authorization': `Bearer ${token}` }
-}).then(res => res.json());
-
-// Get todos (with header versioning)
-const todosAlt = await fetch('http://localhost:3001/api/todos', {
-  headers: { 
-    'Authorization': `Bearer ${token}`,
-    'X-API-Version': 'v1'
-  }
 }).then(res => res.json());
 ```
 
