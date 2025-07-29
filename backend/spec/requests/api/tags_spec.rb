@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe "Api::Tags", type: :request do
+RSpec.describe "Api::V1::Tags", type: :request do
   let(:user) { create(:user) }
   let(:headers) { auth_headers_for(user) }
   let(:valid_attributes) { { name: 'Work', color: '#FF0000' } }
@@ -14,7 +14,7 @@ RSpec.describe "Api::Tags", type: :request do
       end
 
       it "returns all tags for the current user" do
-        get '/api/tags', headers: headers
+        get '/api/v1/tags', headers: headers
         expect(response).to have_http_status(:ok)
         expect(JSON.parse(response.body).size).to eq(3)
       end
@@ -24,13 +24,13 @@ RSpec.describe "Api::Tags", type: :request do
         create(:tag, name: 'Alpha', user: user)
         create(:tag, name: 'Beta', user: user)
 
-        get '/api/tags', headers: headers
+        get '/api/v1/tags', headers: headers
         names = JSON.parse(response.body).map { |tag| tag['name'] }
         expect(names).to eq(names.sort)
       end
 
       it "does not return other users' tags" do
-        get '/api/tags', headers: headers
+        get '/api/v1/tags', headers: headers
         returned_tags = JSON.parse(response.body)
         # Since user_id is not in the serializer, we need to verify by checking the count
         expect(returned_tags.size).to eq(3) # Only the user's 3 tags
@@ -39,7 +39,7 @@ RSpec.describe "Api::Tags", type: :request do
 
     context "when not authenticated" do
       it "returns forbidden status" do
-        get '/api/tags'
+        get '/api/v1/tags'
         expect(response).to have_http_status(:forbidden)
       end
     end
@@ -83,24 +83,24 @@ RSpec.describe "Api::Tags", type: :request do
       context "with valid parameters" do
         it "creates a new tag" do
           expect {
-            post '/api/tags', params: { tag: valid_attributes }, headers: headers, as: :json
+            post '/api/v1/tags', params: { tag: valid_attributes }, headers: headers, as: :json
           }.to change(Tag, :count).by(1)
         end
 
         it "returns the created tag" do
-          post '/api/tags', params: { tag: valid_attributes }, headers: headers, as: :json
+          post '/api/v1/tags', params: { tag: valid_attributes }, headers: headers, as: :json
           expect(response).to have_http_status(:created)
           expect(JSON.parse(response.body)['name']).to eq('work') # normalized
           expect(JSON.parse(response.body)['color']).to eq('#FF0000')
         end
 
         it "normalizes the tag name" do
-          post '/api/tags', params: { tag: { name: '  WORK  ' } }, headers: headers, as: :json
+          post '/api/v1/tags', params: { tag: { name: '  WORK  ' } }, headers: headers, as: :json
           expect(JSON.parse(response.body)['name']).to eq('work')
         end
 
         it "normalizes the color" do
-          post '/api/tags', params: { tag: { name: 'test', color: '#ff0000' } }, headers: headers, as: :json
+          post '/api/v1/tags', params: { tag: { name: 'test', color: '#ff0000' } }, headers: headers, as: :json
           expect(JSON.parse(response.body)['color']).to eq('#FF0000')
         end
       end
@@ -108,29 +108,29 @@ RSpec.describe "Api::Tags", type: :request do
       context "with invalid parameters" do
         it "does not create a new tag" do
           expect {
-            post '/api/tags', params: { tag: invalid_attributes }, headers: headers, as: :json
+            post '/api/v1/tags', params: { tag: invalid_attributes }, headers: headers, as: :json
           }.not_to change(Tag, :count)
         end
 
         it "returns unprocessable entity status" do
-          post '/api/tags', params: { tag: invalid_attributes }, headers: headers, as: :json
+          post '/api/v1/tags', params: { tag: invalid_attributes }, headers: headers, as: :json
           expect(response).to have_http_status(:unprocessable_entity)
         end
 
         it "returns validation errors" do
-          post '/api/tags', params: { tag: { name: '' } }, headers: headers, as: :json
+          post '/api/v1/tags', params: { tag: { name: '' } }, headers: headers, as: :json
           expect(JSON.parse(response.body)['errors']).to include("Name can't be blank")
         end
 
         it "returns error for duplicate name" do
           create(:tag, name: 'work', user: user)
-          post '/api/tags', params: { tag: { name: 'WORK' } }, headers: headers, as: :json
+          post '/api/v1/tags', params: { tag: { name: 'WORK' } }, headers: headers, as: :json
           expect(response).to have_http_status(:unprocessable_entity)
           expect(JSON.parse(response.body)['errors']).to include("Name has already been taken")
         end
 
         it "returns error for invalid color format" do
-          post '/api/tags', params: { tag: { name: 'test', color: 'red' } }, headers: headers, as: :json
+          post '/api/v1/tags', params: { tag: { name: 'test', color: 'red' } }, headers: headers, as: :json
           expect(JSON.parse(response.body)['errors']).to include("Color must be a valid hex color")
         end
       end
@@ -138,7 +138,7 @@ RSpec.describe "Api::Tags", type: :request do
 
     context "when not authenticated" do
       it "returns forbidden status" do
-        post '/api/tags', params: { tag: valid_attributes }
+        post '/api/v1/tags', params: { tag: valid_attributes }
         expect(response).to have_http_status(:forbidden)
       end
     end

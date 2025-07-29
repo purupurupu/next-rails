@@ -223,19 +223,19 @@ RSpec.describe 'Authentication', type: :request do
       auth_token = response.headers['Authorization']
       
       # Use token to access protected resource
-      get '/api/todos', headers: headers.merge({ 'Authorization' => auth_token }), as: :json
+      get '/api/v1/todos', headers: headers.merge({ 'Authorization' => auth_token }), as: :json
       
       expect(response).to have_http_status(:ok)
     end
 
     it 'denies access to protected resources with invalid token' do
-      get '/api/todos', headers: headers.merge({ 'Authorization' => 'Bearer invalid_token' }), as: :json
+      get '/api/v1/todos', headers: headers.merge({ 'Authorization' => 'Bearer invalid_token' }), as: :json
       
       expect(response).to have_http_status(:unauthorized)
     end
 
     it 'denies access to protected resources without token' do
-      get '/api/todos', as: :json, headers: headers
+      get '/api/v1/todos', as: :json, headers: headers
       
       expect(response).to have_http_status(:unauthorized)
     end
@@ -249,7 +249,7 @@ RSpec.describe 'Authentication', type: :request do
       delete '/auth/sign_out', headers: headers.merge({ 'Authorization' => auth_token }), as: :json
       
       # Try to access protected resource with revoked token
-      get '/api/todos', headers: headers.merge({ 'Authorization' => auth_token }), as: :json
+      get '/api/v1/todos', headers: headers.merge({ 'Authorization' => auth_token }), as: :json
       
       expect(response).to have_http_status(:unauthorized)
     end

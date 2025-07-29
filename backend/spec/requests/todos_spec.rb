@@ -13,7 +13,7 @@ RSpec.describe 'Todos API', type: :request do
 
     context 'when authenticated' do
       it 'returns only current user todos' do
-        get '/api/todos', headers: headers
+        get '/api/v1/todos', headers: headers
 
         expect(response).to have_http_status(:ok)
         todos = JSON.parse(response.body)
@@ -33,7 +33,7 @@ RSpec.describe 'Todos API', type: :request do
           due_date: Date.tomorrow
         )
         
-        get '/api/todos', headers: headers
+        get '/api/v1/todos', headers: headers
 
         expect(response).to have_http_status(:ok)
         todos = JSON.parse(response.body)
@@ -54,7 +54,7 @@ RSpec.describe 'Todos API', type: :request do
 
     context 'when unauthenticated' do
       it 'returns unauthorized' do
-        get '/api/todos'
+        get '/api/v1/todos'
         
         # Unauthenticated requests return forbidden status
         expect(response).to have_http_status(:forbidden)
@@ -77,7 +77,7 @@ RSpec.describe 'Todos API', type: :request do
       it 'creates a new todo' do
         simple_params = { todo: { title: 'Simple Todo' } }
         
-        post '/api/todos', params: simple_params, headers: headers, as: :json
+        post '/api/v1/todos', params: simple_params, headers: headers, as: :json
         
         expect(response).to have_http_status(:created)
         todo = JSON.parse(response.body)
@@ -86,7 +86,7 @@ RSpec.describe 'Todos API', type: :request do
 
       it 'assigns todo to current user' do
         simple_attributes = { title: 'User Todo Test' }
-        post '/api/todos', params: { todo: simple_attributes }, headers: headers, as: :json
+        post '/api/v1/todos', params: { todo: simple_attributes }, headers: headers, as: :json
         
         expect(response).to have_http_status(:created)
         todo = Todo.last
@@ -96,7 +96,7 @@ RSpec.describe 'Todos API', type: :request do
 
       it 'uses default values when not provided' do
         minimal_attributes = { title: 'Minimal Todo' }
-        post '/api/todos', params: { todo: minimal_attributes }, headers: headers, as: :json
+        post '/api/v1/todos', params: { todo: minimal_attributes }, headers: headers, as: :json
 
         expect(response).to have_http_status(:created)
         todo = JSON.parse(response.body)
@@ -106,7 +106,7 @@ RSpec.describe 'Todos API', type: :request do
       end
 
       it 'returns error for invalid attributes' do
-        post '/api/todos', params: { todo: { title: '' } }, headers: headers, as: :json
+        post '/api/v1/todos', params: { todo: { title: '' } }, headers: headers, as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)
         errors = JSON.parse(response.body)
@@ -324,7 +324,7 @@ RSpec.describe 'Todos API', type: :request do
           tag_ids: [tag1.id, tag2.id]
         }
 
-        post '/api/todos', params: { todo: todo_params }, headers: headers, as: :json
+        post '/api/v1/todos', params: { todo: todo_params }, headers: headers, as: :json
 
         expect(response).to have_http_status(:created)
         created_todo = Todo.find(JSON.parse(response.body)['id'])
@@ -337,7 +337,7 @@ RSpec.describe 'Todos API', type: :request do
           tag_ids: [tag1.id]
         }
 
-        post '/api/todos', params: { todo: todo_params }, headers: headers, as: :json
+        post '/api/v1/todos', params: { todo: todo_params }, headers: headers, as: :json
 
         expect(JSON.parse(response.body)['tags']).to be_an(Array)
         expect(JSON.parse(response.body)['tags'].length).to eq(1)
@@ -351,7 +351,7 @@ RSpec.describe 'Todos API', type: :request do
           tag_ids: [other_user_tag.id]
         }
 
-        post '/api/todos', params: { todo: todo_params }, headers: headers, as: :json
+        post '/api/v1/todos', params: { todo: todo_params }, headers: headers, as: :json
 
         # The todo should be created but without invalid tags
         expect(response).to have_http_status(:created)
