@@ -10,7 +10,7 @@ module Api
     def search
       @todos = ::Services::TodoSearchService.new(current_user, search_params).call
       
-      render json: {
+      response_data = {
         todos: ActiveModelSerializers::SerializableResource.new(
           @todos,
           each_serializer: TodoSerializer,
@@ -26,6 +26,13 @@ module Api
           filters_applied: active_filters
         }
       }
+
+      # Add helpful feedback when no results found
+      if @todos.total_count == 0
+        response_data[:suggestions] = search_suggestions
+      end
+
+      render json: response_data
     end
 
     def show
@@ -165,6 +172,61 @@ module Api
         to: search_params[:due_date_to]
       } if search_params[:due_date_from].present? || search_params[:due_date_to].present?
       filters
+    end
+
+    def search_suggestions
+      suggestions = []
+      
+      # Check if search query is present
+      if search_params[:q].present? || search_params[:query].present? || search_params[:search].present?
+        suggestions << {
+          type: 'spelling',
+          message: '検索キーワードのスペルを確認してください。'
+        }
+        suggestions << {
+          type: 'broader_search',
+          message: 'より一般的なキーワードで検索してみてください。'
+        }
+      end
+
+      # Check if too many filters are applied
+      if active_filters.size > 3
+        suggestions << {
+          type: 'reduce_filters',
+          message: 'フィルター条件を減らしてみてください。',
+          current_filters: active_filters.keys
+        }
+      end
+
+      # Specific filter suggestions
+      if search_params[:status].present? && Array(search_params[:status]).size > 1
+        suggestions << {
+          type: 'status_filter',
+          message: 'ステータスフィルターを1つに絞ってみてください。'
+        }
+      end
+
+      if search_params[:tag_ids].present? && search_params[:tag_mode] == 'all'
+        suggestions << {
+          type: 'tag_mode',
+          message: 'タグの検索モードを「いずれか」（ANY）に変更してみてください。'
+        }
+      end
+
+      if search_params[:due_date_from].present? && search_params[:due_date_to].present?
+        suggestions << {
+          type: 'date_range',
+          message: '日付範囲を広げてみてください。'
+        }
+      end
+
+      # General suggestions
+      suggestions << {
+        type: 'clear_filters',
+        message: 'すべてのフィルターをクリアして、もう一度お試しください。'
+      }
+
+      suggestions
     end
   end
 end
