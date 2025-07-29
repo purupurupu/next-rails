@@ -15,6 +15,7 @@ module Services
       scope = apply_filters(scope)
       scope = apply_sorting(scope)
       scope = apply_includes(scope)
+      scope = apply_pagination(scope)
       
       scope
     end
@@ -165,6 +166,17 @@ module Services
 
     def apply_includes(scope)
       scope.includes(:category, :tags, :comments, :user, files_attachments: :blob)
+    end
+
+    def apply_pagination(scope)
+      page = (params[:page] || 1).to_i
+      per_page = (params[:per_page] || 20).to_i
+      
+      # Limit per_page to prevent abuse
+      per_page = 100 if per_page > 100
+      per_page = 1 if per_page < 1
+      
+      scope.page(page).per(per_page)
     end
   end
 end

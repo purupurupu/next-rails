@@ -18,7 +18,10 @@ module Api
           highlight_query: search_params[:q] || search_params[:query] || search_params[:search]
         ).as_json,
         meta: {
-          total: @todos.count,
+          total: @todos.total_count,
+          current_page: @todos.current_page,
+          total_pages: @todos.total_pages,
+          per_page: @todos.limit_value,
           search_query: search_params[:q] || search_params[:query] || search_params[:search],
           filters_applied: active_filters
         }
@@ -143,6 +146,7 @@ module Api
         :due_date_from, :due_date_to,
         :sort_by, :sort_order,
         :tag_mode,
+        :page, :per_page,
         status: [],
         priority: [],
         tag_ids: []
