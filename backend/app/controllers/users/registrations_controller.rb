@@ -13,7 +13,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
         status: :created
       )
     else
-      error = ValidationError.new(
+      error = ::ValidationError.new(
         "User couldn't be created successfully",
         errors: resource.errors
       )

@@ -23,7 +23,7 @@ class ErrorHandler
   
   def handle_error(error, request)
     case error
-    when ApiError
+    when ::ApiError
       render_api_error(error, request)
     when ActiveRecord::RecordNotFound
       handle_record_not_found(error, request)
@@ -60,7 +60,7 @@ class ErrorHandler
     # Extract model name from error message
     model_name = error.model || extract_model_from_message(error.message)
     
-    not_found_error = NotFoundError.new(
+    not_found_error = ::NotFoundError.new(
       resource: model_name,
       id: error.id
     )
@@ -71,7 +71,7 @@ class ErrorHandler
   def handle_validation_error(error, request)
     log_error(error, request, :warn)
     
-    validation_error = ValidationError.new(
+    validation_error = ::ValidationError.new(
       errors: error.record.errors
     )
     
@@ -97,7 +97,7 @@ class ErrorHandler
   def handle_jwt_error(error, request)
     log_error(error, request, :warn)
     
-    auth_error = AuthenticationError.new(
+    auth_error = ::AuthenticationError.new(
       'Invalid or expired token',
       details: { error_type: error.class.name }
     )

@@ -4,7 +4,7 @@ class ApplicationController < ActionController::API
   before_action :set_request_id
   
   # Unified error handling using custom error classes
-  rescue_from ApiError, with: :handle_api_error
+  rescue_from ::ApiError, with: :handle_api_error
   rescue_from ActiveRecord::RecordNotFound, with: :handle_not_found
   rescue_from ActiveRecord::RecordInvalid, with: :handle_unprocessable_entity
   rescue_from ActionController::ParameterMissing, with: :handle_parameter_missing
@@ -44,7 +44,7 @@ class ApplicationController < ActionController::API
     model_name = exception.model if exception.respond_to?(:model)
     record_id = exception.id if exception.respond_to?(:id)
     
-    error = NotFoundError.new(
+    error = ::NotFoundError.new(
       resource: model_name,
       id: record_id
     )
@@ -54,7 +54,7 @@ class ApplicationController < ActionController::API
 
   def handle_unprocessable_entity(exception)
     log_error(exception, :warn)
-    error = ValidationError.new(
+    error = ::ValidationError.new(
       errors: exception.record&.errors
     )
     
@@ -72,7 +72,7 @@ class ApplicationController < ActionController::API
 
   def handle_authentication_error(exception)
     log_error(exception, :warn)
-    error = AuthenticationError.new(
+    error = ::AuthenticationError.new(
       'Invalid or expired token',
       details: { error_type: exception.class.name }
     )
@@ -82,7 +82,7 @@ class ApplicationController < ActionController::API
 
   # Common error response rendering
   def render_error_response(error:, status: :unprocessable_entity, details: nil)
-    error_body = if error.is_a?(ApiError)
+    error_body = if error.is_a?(::ApiError)
       {
         error: {
           code: error.code,

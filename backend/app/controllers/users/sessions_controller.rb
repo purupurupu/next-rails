@@ -9,7 +9,7 @@ class Users::SessionsController < Devise::SessionsController
   end
   
   def auth_failure
-    error = AuthenticationError.new('Invalid email or password')
+    error = ::AuthenticationError.new('Invalid email or password')
     render_error_response(error: error, status: :unauthorized)
   end
 
@@ -26,7 +26,7 @@ class Users::SessionsController < Devise::SessionsController
     if current_user
       success_response(message: 'Logged out successfully.')
     else
-      error = AuthenticationError.new('No active session found')
+      error = ::AuthenticationError.new('No active session found')
       render_error_response(error: error, status: :unauthorized)
     end
   end
