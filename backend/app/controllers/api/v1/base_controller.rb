@@ -34,19 +34,7 @@ module Api
         render json: response_body, status: status
       end
       
-      def render_error_response(error:, status: :unprocessable_entity, details: nil)
-        error_body = {
-          error: {
-            code: error_code_for(error),
-            message: error.is_a?(String) ? error : error.message,
-            details: details || extract_error_details(error),
-            request_id: request.request_id,
-            timestamp: Time.current.iso8601
-          }
-        }
-        
-        render json: error_body, status: status
-      end
+      # render_error_response is inherited from ApplicationController
       
       private
       
@@ -92,20 +80,7 @@ module Api
         end
       end
       
-      def error_code_for(error)
-        case error
-        when ActiveRecord::RecordNotFound
-          'RESOURCE_NOT_FOUND'
-        when ActiveRecord::RecordInvalid
-          'VALIDATION_FAILED'
-        when ActionController::ParameterMissing
-          'PARAMETER_MISSING'
-        when ArgumentError
-          'INVALID_ARGUMENT'
-        else
-          'UNKNOWN_ERROR'
-        end
-      end
+      # error_code_for and extract_error_details are inherited from ApplicationController
       
       def extract_error_details(error)
         case error
