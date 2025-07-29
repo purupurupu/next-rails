@@ -50,9 +50,10 @@ RSpec.describe 'Todo Search API', type: :request do
 
   describe 'GET /api/todos/search' do
     context 'without authentication' do
-      it 'returns 401 unauthorized' do
+      it 'returns 403 forbidden' do
         get '/api/todos/search'
-        expect(response).to have_http_status(:unauthorized)
+        # Devise JWT returns 403 for unauthenticated requests
+        expect(response).to have_http_status(:forbidden)
       end
     end
 
@@ -320,9 +321,13 @@ RSpec.describe 'Todo Search API', type: :request do
               headers: auth_headers
           
           json = JSON.parse(response.body)
+          # This should return 0 results, triggering suggestions
+          expect(json['todos']).to be_empty
+          expect(json['suggestions']).to be_present
+          
           suggestions = json['suggestions'].find { |s| s['type'] == 'reduce_filters' }
           expect(suggestions).to be_present
-          expect(suggestions['current_filters']).to include('search', 'status', 'priority', 'category_id', 'tag_ids')
+          expect(suggestions['current_filters']).to match_array(['search', 'status', 'priority', 'category_id', 'tag_ids'])
         end
       end
 

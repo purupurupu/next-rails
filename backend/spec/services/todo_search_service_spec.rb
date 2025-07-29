@@ -304,7 +304,12 @@ RSpec.describe TodoSearchService do
         let(:params) { { sort_by: 'due_date', sort_order: 'asc' } }
 
         it 'sorts by due date ascending with nulls last' do
-          expect(search_results.first).to eq(todo3)
+          # todo1: 1.day.from_now, todo2: 3.days.from_now, todo3: nil
+          # Expected order: todo1, todo2, todo3 (nulls last)
+          results = search_results.to_a
+          expect(results[0]).to eq(todo1)
+          expect(results[1]).to eq(todo2)
+          expect(results[2]).to eq(todo3)
         end
       end
 

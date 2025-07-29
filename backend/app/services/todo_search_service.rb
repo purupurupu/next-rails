@@ -93,7 +93,10 @@ class TodoSearchService
 
       # Validate tag IDs belong to current user
       valid_tag_ids = user.tags.where(id: tag_ids).pluck(:id)
-      return scope if valid_tag_ids.empty?
+      
+      # If no valid tags were found, return empty result
+      # This handles both non-existent tags and tags from other users
+      return scope.none if valid_tag_ids.empty?
 
       # Filter by tag IDs with AND/OR logic
       tag_mode = params[:tag_mode] || 'any' # 'any' for OR, 'all' for AND
