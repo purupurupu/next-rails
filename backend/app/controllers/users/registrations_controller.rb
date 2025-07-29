@@ -9,12 +9,15 @@ class Users::RegistrationsController < Devise::RegistrationsController
     if resource.persisted?
       success_response(
         message: 'Signed up successfully.',
-        data: user_data(resource)
+        data: user_data(resource),
+        status: :created
       )
     else
-      error_response(
-        message: "User couldn't be created successfully. #{resource.errors.full_messages.to_sentence}"
+      error = ValidationError.new(
+        "User couldn't be created successfully",
+        errors: resource.errors
       )
+      render_error_response(error: error, status: :unprocessable_entity)
     end
   end
 end
