@@ -22,11 +22,12 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
   // Debounce search query
   const debouncedSearchQuery = useDebounce(searchParams.q || "", 300);
 
-  // Create debounced search params
+  // Create debounced search params with stable reference
+  const searchParamsKey = JSON.stringify(searchParams);
   const debouncedSearchParams = useMemo(() => ({
     ...searchParams,
     q: debouncedSearchQuery,
-  }), [searchParams, debouncedSearchQuery]);
+  }), [searchParamsKey, debouncedSearchQuery]);
 
   const searchTodos = useCallback(async (params: TodoSearchParams) => {
     try {

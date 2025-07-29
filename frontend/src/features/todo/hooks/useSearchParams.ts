@@ -25,7 +25,7 @@ const defaultParams: TodoSearchParams = {
 };
 
 export function useSearchParams(): UseSearchParamsReturn {
-  const [searchParams, setSearchParams] = useState<TodoSearchParams>(defaultParams);
+  const [searchParams, setSearchParams] = useState<TodoSearchParams>(() => ({ ...defaultParams }));
 
   // Update search query
   const updateSearchQuery = useCallback((query: string) => {
@@ -142,7 +142,8 @@ export function useSearchParams(): UseSearchParamsReturn {
     });
   }, []);
 
-  // Calculate active filters
+  // Calculate active filters with stable dependency
+  const searchParamsKey = JSON.stringify(searchParams);
   const activeFilters = useMemo<ActiveFilters>(() => {
     const filters: ActiveFilters = {};
 
@@ -159,7 +160,7 @@ export function useSearchParams(): UseSearchParamsReturn {
     }
 
     return filters;
-  }, [searchParams]);
+  }, [searchParamsKey]);
 
   // Check if any filters are active
   const hasActiveFilters = useMemo(() => {
