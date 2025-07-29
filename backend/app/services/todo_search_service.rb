@@ -5,16 +5,10 @@ class TodoSearchService
 
     def initialize(user, params = {})
       @user = user
-      @params = params.with_indifferent_access
+      @params = params.to_h.with_indifferent_access
     end
 
     def call
-      # Check cache first
-      cache_key = generate_cache_key
-      cached_result = Rails.cache.read(cache_key)
-      
-      return cached_result if cached_result.present? && !params[:skip_cache]
-
       # Build query
       scope = user.todos
       scope = apply_search(scope)
@@ -23,39 +17,10 @@ class TodoSearchService
       scope = apply_includes(scope)
       scope = apply_pagination(scope)
       
-      # Cache the result for 5 minutes
-      Rails.cache.write(cache_key, scope, expires_in: 5.minutes) if scope.count < 1000
-      
       scope
     end
 
     private
-
-    def generate_cache_key
-      # Generate a unique cache key based on user and search parameters
-      key_parts = ["todo_search", user.id]
-      
-      # Add search query
-      key_parts << "q:#{search_query}" if search_query.present?
-      
-      # Add filters
-      key_parts << "cat:#{params[:category_id]}" if params[:category_id].present?
-      key_parts << "status:#{Array(params[:status]).sort.join(',')}" if params[:status].present?
-      key_parts << "priority:#{Array(params[:priority]).sort.join(',')}" if params[:priority].present?
-      key_parts << "tags:#{Array(params[:tag_ids]).sort.join(',')}" if params[:tag_ids].present?
-      key_parts << "tag_mode:#{params[:tag_mode]}" if params[:tag_mode].present?
-      key_parts << "from:#{params[:due_date_from]}" if params[:due_date_from].present?
-      key_parts << "to:#{params[:due_date_to]}" if params[:due_date_to].present?
-      
-      # Add sorting
-      key_parts << "sort:#{params[:sort_by]}_#{params[:sort_order]}"
-      
-      # Add pagination
-      key_parts << "page:#{params[:page] || 1}"
-      key_parts << "per:#{params[:per_page] || 20}"
-      
-      key_parts.join("/")
-    end
 
     def apply_search(scope)
       return scope if search_query.blank?
@@ -101,7 +66,9 @@ class TodoSearchService
     def filter_by_status(scope)
       return scope unless params[:status].present?
 
-      statuses = Array(params[:status]).map(&:to_s).select { |s| Todo.statuses.key?(s) }
+      # Handle both single string and array of strings
+      status_values = params[:status].is_a?(Array) ? params[:status] : [params[:status]]
+      statuses = status_values.map(&:to_s).select { |s| Todo.statuses.key?(s) }
       return scope if statuses.empty?
 
       scope.where(status: statuses)
@@ -110,7 +77,9 @@ class TodoSearchService
     def filter_by_priority(scope)
       return scope unless params[:priority].present?
 
-      priorities = Array(params[:priority]).map(&:to_s).select { |p| Todo.priorities.key?(p) }
+      # Handle both single string and array of strings
+      priority_values = params[:priority].is_a?(Array) ? params[:priority] : [params[:priority]]
+      priorities = priority_values.map(&:to_s).select { |p| Todo.priorities.key?(p) }
       return scope if priorities.empty?
 
       scope.where(priority: priorities)

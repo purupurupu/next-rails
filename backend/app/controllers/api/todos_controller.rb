@@ -56,7 +56,7 @@ module Api
           @todo.files.attach(params[:todo][:files])
         end
         
-        render json: @todo, serializer: TodoSerializer, current_user: current_user, current_user: current_user, status: :created
+        render json: @todo, serializer: TodoSerializer, current_user: current_user, status: :created
       else
         render json: { errors: @todo.errors }, status: :unprocessable_entity
       end
@@ -77,7 +77,7 @@ module Api
       end
       
       if @todo.update(todo_params.except(:tag_ids, :files))
-        render json: @todo, serializer: TodoSerializer, current_user: current_user, current_user: current_user
+        render json: @todo, serializer: TodoSerializer, current_user: current_user
       else
         render json: { errors: @todo.errors }, status: :unprocessable_entity
       end
@@ -164,8 +164,8 @@ module Api
       filters = {}
       filters[:search] = search_params[:q] || search_params[:query] || search_params[:search] if search_params[:q] || search_params[:query] || search_params[:search]
       filters[:category_id] = search_params[:category_id] if search_params[:category_id].present?
-      filters[:status] = search_params[:status] if search_params[:status].present?
-      filters[:priority] = search_params[:priority] if search_params[:priority].present?
+      filters[:status] = Array(search_params[:status]) if search_params[:status].present?
+      filters[:priority] = Array(search_params[:priority]) if search_params[:priority].present?
       filters[:tag_ids] = search_params[:tag_ids] if search_params[:tag_ids].present?
       filters[:date_range] = {
         from: search_params[:due_date_from],
