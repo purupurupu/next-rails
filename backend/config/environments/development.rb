@@ -79,4 +79,10 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions
   config.action_controller.raise_on_missing_callback_actions = true
+  
+  # Enable request ID tracking
+  config.log_tags = [:request_id]
+  
+  # Configure logger to include request IDs
+  config.logger = ActiveSupport::TaggedLogging.new(Logger.new(STDOUT))
 end
