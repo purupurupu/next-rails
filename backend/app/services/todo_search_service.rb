@@ -138,7 +138,29 @@ module Services
     end
 
     def apply_sorting(scope)
-      scope.ordered
+      sort_by = params[:sort_by] || 'position'
+      sort_order = params[:sort_order]&.downcase == 'desc' ? 'DESC' : 'ASC'
+
+      case sort_by
+      when 'created_at'
+        scope.order(created_at: sort_order)
+      when 'updated_at'
+        scope.order(updated_at: sort_order)
+      when 'due_date'
+        scope.order(Arel.sql("due_date IS NULL, due_date #{sort_order}"))
+      when 'title'
+        scope.order(Arel.sql("LOWER(title) #{sort_order}"))
+      when 'priority'
+        # Sort by priority value (high=2, medium=1, low=0)
+        order_direction = sort_order == 'DESC' ? 'DESC' : 'ASC'
+        scope.order(priority: order_direction)
+      when 'status'
+        # Sort by status value (completed=2, in_progress=1, pending=0)
+        scope.order(status: sort_order)
+      else
+        # Default to position-based ordering
+        scope.ordered
+      end
     end
 
     def apply_includes(scope)
