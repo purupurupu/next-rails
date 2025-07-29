@@ -35,5 +35,8 @@ module App
     # Enable sessions for JWT authentication with Devise
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use ActionDispatch::Session::CookieStore
+    
+    # Ensure custom error classes are loaded
+    config.autoload_paths += %W(#{config.root}/app/errors)
   end
 end

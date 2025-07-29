@@ -128,8 +128,8 @@ export function TodoListWithSearch() {
 
         <AdvancedFilters
           searchParams={searchParams}
-          categories={categories}
-          tags={tags}
+          categories={categories || []}
+          tags={tags || []}
           onUpdateCategory={updateCategory}
           onUpdateStatus={updateStatus}
           onUpdatePriority={updatePriority}
@@ -141,8 +141,8 @@ export function TodoListWithSearch() {
         {hasActiveFilters && (
           <FilterBadges
             activeFilters={activeFilters}
-            categories={categories}
-            tags={tags}
+            categories={categories || []}
+            tags={tags || []}
             onRemoveFilter={clearSingleFilter}
             onClearAll={clearFilters}
           />

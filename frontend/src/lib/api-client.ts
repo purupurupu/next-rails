@@ -52,6 +52,18 @@ class HttpClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        
+        // Handle v1 API error format
+        if (errorData && typeof errorData === 'object' && 'error' in errorData) {
+          const error = errorData.error;
+          const message = error.message || `HTTP ${response.status}: ${response.statusText}`;
+          throw new ApiError(
+            message,
+            response.status,
+            error.details || error,
+          );
+        }
+        
         throw new ApiError(
           `HTTP ${response.status}: ${response.statusText}`,
           response.status,
@@ -64,7 +76,22 @@ class HttpClient {
         return null as T;
       }
 
-      return await response.json();
+      const json = await response.json();
+
+      // Handle v1 API response format
+      if (json && typeof json === 'object' && 'data' in json && 'status' in json) {
+        // For search endpoints, preserve meta and suggestions
+        if (json.meta || json.suggestions) {
+          return {
+            data: json.data,
+            meta: json.meta,
+            suggestions: json.suggestions
+          } as T;
+        }
+        return json.data as T;
+      }
+
+      return json as T;
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;
@@ -122,6 +149,18 @@ class HttpClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        
+        // Handle v1 API error format
+        if (errorData && typeof errorData === 'object' && 'error' in errorData) {
+          const error = errorData.error;
+          const message = error.message || `HTTP ${response.status}: ${response.statusText}`;
+          throw new ApiError(
+            message,
+            response.status,
+            error.details || error,
+          );
+        }
+        
         throw new ApiError(
           `HTTP ${response.status}: ${response.statusText}`,
           response.status,
@@ -129,7 +168,22 @@ class HttpClient {
         );
       }
 
-      return await response.json();
+      const json = await response.json();
+
+      // Handle v1 API response format
+      if (json && typeof json === 'object' && 'data' in json && 'status' in json) {
+        // For search endpoints, preserve meta and suggestions
+        if (json.meta || json.suggestions) {
+          return {
+            data: json.data,
+            meta: json.meta,
+            suggestions: json.suggestions
+          } as T;
+        }
+        return json.data as T;
+      }
+
+      return json as T;
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;

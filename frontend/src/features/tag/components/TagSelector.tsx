@@ -33,7 +33,7 @@ export function TagSelector({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const selectedTags = tags.filter((tag) => selectedTagIds.includes(tag.id));
+  const selectedTags = tags?.filter((tag) => selectedTagIds.includes(tag.id)) || [];
 
   const toggleTag = (tagId: number) => {
     if (selectedTagIds.includes(tagId)) {
@@ -75,9 +75,9 @@ export function TagSelector({
             />
             <div className="max-h-[300px] overflow-y-auto">
               {(() => {
-                const filteredTags = tags.filter((tag) =>
+                const filteredTags = tags?.filter((tag) =>
                   tag.name.toLowerCase().includes(search.toLowerCase()),
-                );
+                ) || [];
 
                 if (filteredTags.length === 0) {
                   return (

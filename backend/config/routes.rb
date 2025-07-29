@@ -17,9 +17,9 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
 
-  # TODO App
+  # API routes
   namespace :api do
-    # API v1ルート（将来的なバージョニングに対応）
+    # Explicit v1 namespace for URL-based versioning
     namespace :v1 do
       resources :todos do
         collection do
@@ -30,30 +30,13 @@ Rails.application.routes.draw do
           patch 'tags', to: 'todos#update_tags'
           delete 'files/:file_id', to: 'todos#destroy_file', as: 'destroy_file'
         end
-        # 学習ポイント：ネストされたリソースでポリモーフィックコメントを実装
         resources :comments, only: [:index, :create, :update, :destroy]
-        # 学習ポイント：変更履歴の参照（読み取り専用）
         resources :histories, only: [:index], controller: 'todo_histories'
       end
       resources :categories
       resources :tags
     end
     
-    # 後方互換性のため、v1なしのルートも維持
-    resources :todos do
-      collection do
-        patch 'update_order'
-        get 'search'
-      end
-      member do
-        patch 'tags', to: 'todos#update_tags'
-      end
-      member do
-        delete 'files/:file_id', to: 'todos#destroy_file', as: 'destroy_file'
-      end
-    end
-    resources :categories
-    resources :tags
   end
 
 end
