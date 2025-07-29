@@ -22,7 +22,18 @@ module Services
     private
 
     def apply_search(scope)
-      scope
+      return scope if search_query.blank?
+
+      search_term = "%#{search_query.downcase}%"
+      
+      scope.where(
+        "LOWER(todos.title) LIKE :query OR LOWER(todos.description) LIKE :query",
+        query: search_term
+      )
+    end
+
+    def search_query
+      params[:q] || params[:query] || params[:search]
     end
 
     def apply_filters(scope)
