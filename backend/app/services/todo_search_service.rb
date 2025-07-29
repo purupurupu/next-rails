@@ -37,7 +37,25 @@ module Services
     end
 
     def apply_filters(scope)
+      scope = filter_by_category(scope)
       scope
+    end
+
+    def filter_by_category(scope)
+      return scope unless params[:category_id].present?
+
+      category_ids = Array(params[:category_id]).map(&:to_i).reject(&:zero?)
+      
+      if category_ids.include?(-1) || params[:category_id] == 'null'
+        # Include todos without category
+        if category_ids.size > 1
+          scope.where(category_id: category_ids.reject { |id| id == -1 }).or(scope.where(category_id: nil))
+        else
+          scope.where(category_id: nil)
+        end
+      else
+        scope.where(category_id: category_ids)
+      end
     end
 
     def apply_sorting(scope)
