@@ -80,6 +80,14 @@ class HttpClient {
 
       // Handle v1 API response format
       if (json && typeof json === 'object' && 'data' in json && 'status' in json) {
+        // For search endpoints, preserve meta and suggestions
+        if (json.meta || json.suggestions) {
+          return {
+            data: json.data,
+            meta: json.meta,
+            suggestions: json.suggestions
+          } as T;
+        }
         return json.data as T;
       }
 
@@ -164,6 +172,14 @@ class HttpClient {
 
       // Handle v1 API response format
       if (json && typeof json === 'object' && 'data' in json && 'status' in json) {
+        // For search endpoints, preserve meta and suggestions
+        if (json.meta || json.suggestions) {
+          return {
+            data: json.data,
+            meta: json.meta,
+            suggestions: json.suggestions
+          } as T;
+        }
         return json.data as T;
       }
 

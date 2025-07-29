@@ -128,7 +128,7 @@ export function AdvancedFilters({
               <SelectContent>
                 <SelectItem value="all">すべて</SelectItem>
                 <SelectItem value="none">カテゴリーなし</SelectItem>
-                {categories.map((category) => (
+                {categories?.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     <div className="flex items-center gap-2">
                       <div

@@ -35,12 +35,64 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
       setError(null);
 
       const response = await todoApiClient.searchTodos(params);
-      setTodos(response.todos);
-      setSearchResponse(response);
+      console.log('Search response:', response); // Debug log
+      
+      // Handle v1 API response format
+      if (Array.isArray(response)) {
+        // Direct array response (fallback)
+        setTodos(response);
+        setSearchResponse({ 
+          todos: response, 
+          meta: { total: response.length, current_page: 1, total_pages: 1, per_page: response.length, search_query: params.q, filters_applied: {} },
+          suggestions: []
+        });
+      } else if (response && typeof response === 'object' && 'data' in response) {
+        // v1 API structured response with data, meta, suggestions
+        const todos = Array.isArray(response.data) ? response.data : [];
+        setTodos(todos);
+        
+        setSearchResponse({
+          todos: todos,
+          meta: response.meta || { 
+            total: todos.length, 
+            current_page: 1, 
+            total_pages: 1, 
+            per_page: todos.length, 
+            search_query: params.q, 
+            filters_applied: {} 
+          },
+          suggestions: response.suggestions || []
+        });
+      } else if (Array.isArray(response)) {
+        // Simple array response
+        setTodos(response);
+        setSearchResponse({
+          todos: response,
+          meta: { 
+            total: response.length, 
+            current_page: 1, 
+            total_pages: 1, 
+            per_page: response.length, 
+            search_query: params.q, 
+            filters_applied: {} 
+          },
+          suggestions: []
+        });
+      } else {
+        setTodos([]);
+        setSearchResponse(null);
+      }
 
       // Show suggestions if no results
-      if (response.todos.length === 0 && response.suggestions?.length) {
-        const mainSuggestion = response.suggestions.find((s) => s.type === "reduce_filters") || response.suggestions[0];
+      const todosArray = Array.isArray(response) 
+        ? response 
+        : (response?.data || []);
+      const suggestions = Array.isArray(response) 
+        ? [] 
+        : (response?.suggestions || []);
+      
+      if (todosArray.length === 0 && suggestions.length > 0) {
+        const mainSuggestion = suggestions.find((s) => s.type === "reduce_filters") || suggestions[0];
         if (mainSuggestion) {
           toast.info(mainSuggestion.message);
         }
