@@ -121,6 +121,7 @@ See [Database Architecture](./docs/architecture/database.md) for detailed schema
 **API Endpoints**:
 - Authentication: `/auth/*` (login, register, logout)
 - Todos: `/api/todos/*` (CRUD + bulk reorder + tag assignment)
+- Todo Search: `/api/todos/search` (advanced search and filtering)
 - Categories: `/api/categories/*` (CRUD operations)
 - Tags: `/api/tags/*` (CRUD operations)
 
@@ -141,7 +142,12 @@ The Rails backend provides:
 - Tag model attributes: `name`, `color`, `user_id`, `created_at`, `updated_at`
 - User model attributes: `email`, `name`, `created_at`
 
-Frontend should make API calls to `http://localhost:3001/api/todos`, `http://localhost:3001/api/categories`, `http://localhost:3001/api/tags`, and `http://localhost:3001/auth/*`.
+Frontend should make API calls to:
+- `http://localhost:3001/api/todos` - Basic todo operations
+- `http://localhost:3001/api/todos/search` - Search and filtering
+- `http://localhost:3001/api/categories` - Category management
+- `http://localhost:3001/api/tags` - Tag management
+- `http://localhost:3001/auth/*` - Authentication
 
 ## Key Implementation Details
 
@@ -187,13 +193,23 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 - Todo editing and deletion
 - Status completion toggle
 - Drag-and-drop reordering
-- Filtering (all, active, completed)
+- Basic filtering (all, active, completed)
 - Category assignment (one-to-many)
 - Tag assignment (many-to-many)
 - Optimistic updates for better UX
 - Error handling and validation
 - Responsive design with Tailwind CSS
 - shadcn/ui components for consistent UI
+
+**Search and Filtering Features**:
+- Full-text search in title and description
+- Advanced filtering by category, status, priority, tags
+- Date range filtering for due dates
+- Multi-criteria sorting (7+ fields)
+- Pagination with customizable page size
+- Search result highlighting
+- Empty state with helpful suggestions
+- Real-time search with debouncing
 
 ## Development Guidelines
 

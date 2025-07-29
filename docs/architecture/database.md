@@ -450,6 +450,15 @@ create_table :todo_histories do |t|
   t.timestamps
 end
 add_index :todo_histories, :action
+
+# 20250729121452_add_search_indexes_to_todos.rb
+add_index :todos, :title
+add_index :todos, :description
+add_index :todos, [:user_id, :status, :priority]
+add_index :todos, [:user_id, :category_id]
+add_index :todos, [:user_id, :due_date]
+add_index :todos, [:user_id, :created_at]
+add_index :todos, [:user_id, :updated_at]
 ```
 
 ## Data Integrity Rules
@@ -549,10 +558,17 @@ ORDER BY created_at;
 1. **N+1 Query Prevention**: 
    - **Counter cache** on categories eliminates N+1 queries for todo counts
    - Use `includes/eager` loading in Rails for associations
+   - Search endpoint uses `includes(:category, :tags)` to prevent N+1 queries
 2. **Bulk Operations**: 
    - `TodosController#update_order` uses transaction for efficient bulk position updates
-3. **Pagination**: Implement for large todo lists
-4. **Soft Deletes**: Not implemented, using hard deletes
+3. **Pagination**: 
+   - Implemented via Kaminari gem
+   - Search endpoint supports `page` and `per_page` parameters
+4. **Soft Deletes**: Not implemented for todos, using hard deletes
+5. **Search Performance**:
+   - Database indexes on searchable fields (title, description)
+   - Composite indexes for common filter combinations
+   - Index on foreign keys for efficient joins
 
 ### Counter Cache Implementation
 ```ruby
@@ -601,12 +617,64 @@ user = User.create!(
 end
 ```
 
+## Search and Filtering Implementation
+
+### Search Indexes
+The following indexes optimize search and filtering performance:
+
+1. **Text Search Indexes**:
+   - `index_todos_on_title` - Speeds up title searches
+   - `index_todos_on_description` - Speeds up description searches
+
+2. **Filter Combination Indexes**:
+   - `index_todos_on_user_id_and_status_and_priority` - Common filter combination
+   - `index_todos_on_user_id_and_category_id` - Category filtering
+   - `index_todos_on_user_id_and_due_date` - Date range queries
+
+3. **Sort Indexes**:
+   - `index_todos_on_user_id_and_created_at` - Sort by creation date
+   - `index_todos_on_user_id_and_updated_at` - Sort by update date
+
+### Search Query Patterns
+```sql
+-- Full-text search (case-insensitive)
+SELECT * FROM todos 
+WHERE user_id = ? 
+  AND (title ILIKE '%search_term%' OR description ILIKE '%search_term%')
+ORDER BY position;
+
+-- Multi-filter search with pagination
+SELECT * FROM todos 
+WHERE user_id = ?
+  AND status IN (0, 1)
+  AND priority = 2
+  AND category_id = ?
+  AND due_date BETWEEN ? AND ?
+ORDER BY due_date ASC
+LIMIT 20 OFFSET 0;
+
+-- Tag filtering with ALL logic
+SELECT DISTINCT t.* FROM todos t
+WHERE t.user_id = ?
+  AND t.id IN (
+    SELECT todo_id FROM todo_tags
+    WHERE tag_id IN (1, 2, 3)
+    GROUP BY todo_id
+    HAVING COUNT(DISTINCT tag_id) = 3
+  )
+ORDER BY t.position;
+```
+
 ## Future Considerations
 
 1. **Soft Deletes**: Add `deleted_at` for recoverable todos (already implemented for comments)
 2. **Audit Trail**: Track changes to todos (already implemented with todo_histories)
-3. **Full-Text Search**: PostgreSQL FTS for todo search
-4. **Archiving**: Move old completed todos to archive table
-5. **Multi-tenancy**: If scaling to organizations/teams
-6. **Real-time Updates**: WebSocket support for live comments and updates
-7. **File Storage**: Move from Active Storage to cloud storage for scalability
+3. **Full-Text Search**: Upgrade to PostgreSQL FTS for advanced search features:
+   - Stemming and language-specific search
+   - Ranking and relevance scores
+   - Search suggestions and autocomplete
+4. **Elasticsearch Integration**: For even more advanced search capabilities
+5. **Archiving**: Move old completed todos to archive table
+6. **Multi-tenancy**: If scaling to organizations/teams
+7. **Real-time Updates**: WebSocket support for live comments and updates
+8. **File Storage**: Move from Active Storage to cloud storage for scalability

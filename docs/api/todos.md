@@ -243,6 +243,126 @@ No response body
 }
 ```
 
+### Search Todos
+
+Search and filter todos with advanced filtering options.
+
+**Endpoint:** `GET /api/todos/search`
+
+**Query Parameters:**
+- `q` (optional): Search query for title and description
+- `category_id` (optional): Filter by category ID. Use `-1` for uncategorized todos
+- `status` (optional): Filter by status. Can be single value or array
+- `priority` (optional): Filter by priority. Can be single value or array
+- `tag_ids[]` (optional): Filter by tag IDs (array)
+- `tag_mode` (optional): Tag matching mode - `"any"` (default) or `"all"`
+- `due_date_from` (optional): Filter todos with due date from this date (YYYY-MM-DD)
+- `due_date_to` (optional): Filter todos with due date until this date (YYYY-MM-DD)
+- `sort_by` (optional): Sort field - `"position"` (default), `"created_at"`, `"updated_at"`, `"due_date"`, `"title"`, `"priority"`, `"status"`
+- `sort_order` (optional): Sort direction - `"asc"` (default) or `"desc"`
+- `page` (optional): Page number for pagination (default: 1)
+- `per_page` (optional): Items per page (default: 20, max: 100)
+
+**Example Request:**
+```
+GET /api/todos/search?q=documentation&status[]=pending&status[]=in_progress&priority=high&tag_ids[]=1&tag_ids[]=2&tag_mode=all&sort_by=due_date&sort_order=asc&page=1&per_page=20
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "todos": [
+    {
+      "id": 1,
+      "title": "Complete project documentation",
+      "completed": false,
+      "position": 0,
+      "priority": "high",
+      "status": "in_progress",
+      "description": "Write comprehensive API documentation with examples",
+      "due_date": "2024-12-31",
+      "category": {
+        "id": 1,
+        "name": "Work",
+        "color": "#3B82F6"
+      },
+      "tags": [
+        {
+          "id": 1,
+          "name": "urgent",
+          "color": "#EF4444"
+        }
+      ],
+      "files": [],
+      "comments_count": 2,
+      "latest_comments": [],
+      "history_count": 5,
+      "created_at": "2024-01-01T00:00:00.000Z",
+      "updated_at": "2024-01-01T00:00:00.000Z",
+      "highlights": {
+        "title": [
+          {
+            "start": 17,
+            "end": 30,
+            "matched_text": "documentation"
+          }
+        ],
+        "description": [
+          {
+            "start": 20,
+            "end": 33,
+            "matched_text": "documentation"
+          }
+        ]
+      }
+    }
+  ],
+  "meta": {
+    "total": 42,
+    "current_page": 1,
+    "total_pages": 3,
+    "per_page": 20,
+    "search_query": "documentation",
+    "filters_applied": {
+      "search": "documentation",
+      "status": ["pending", "in_progress"],
+      "priority": ["high"],
+      "tag_ids": [1, 2]
+    }
+  },
+  "suggestions": [
+    {
+      "type": "spelling",
+      "message": "検索キーワードのスペルを確認してください。"
+    },
+    {
+      "type": "reduce_filters",
+      "message": "フィルター条件を減らしてみてください。",
+      "current_filters": ["search", "status", "priority", "tag_ids"]
+    }
+  ]
+}
+```
+
+**Response Fields:**
+- `todos`: Array of todo items matching the search criteria
+- `highlights`: Contains match positions for search query in title and description
+- `meta`: Pagination and search metadata
+  - `total`: Total number of matching todos
+  - `current_page`: Current page number
+  - `total_pages`: Total number of pages
+  - `per_page`: Number of items per page
+  - `search_query`: The search query used
+  - `filters_applied`: Active filters summary
+- `suggestions`: Array of suggestions when no results found (optional)
+
+**Notes:**
+- Search is case-insensitive and matches partial words
+- Multiple status/priority values create an OR condition
+- Tag filtering supports both ANY (match any tag) and ALL (match all tags) modes
+- Results include highlight information for search query matches
+- Empty results include helpful suggestions
+
 ### Update Todo Order
 
 Bulk update todo positions for drag-and-drop reordering.
@@ -359,12 +479,27 @@ Todo changes are automatically tracked. See [Todo History API](./todo-histories.
 
 ## Filtering and Sorting
 
-Currently, todos are always returned ordered by position. Client-side filtering is recommended for:
+### Basic List (GET /api/todos)
+- Returns all todos ordered by position
+- No server-side filtering available
+- Suitable for small todo lists
+
+### Advanced Search (GET /api/todos/search)
+Use the search endpoint for:
+- **Full-text search**: Search in title and description
+- **Category filtering**: Filter by category or uncategorized todos
 - **Status filtering**: Filter by `"pending"`, `"in_progress"`, `"completed"`
 - **Priority filtering**: Filter by `"low"`, `"medium"`, `"high"`
-- **Completion status**: Active todos (`completed: false`) vs completed todos (`completed: true`)
-- **Due dates**: Overdue todos (`due_date < today`), due today, upcoming
-- **Search**: Filter by title or description content
+- **Tag filtering**: Filter by multiple tags with AND/OR logic
+- **Date range filtering**: Filter by due date range
+- **Custom sorting**: Sort by various fields in ascending/descending order
+- **Pagination**: Handle large result sets efficiently
+
+### Performance Tips
+- Use the search endpoint when you need filtering or custom sorting
+- The basic list endpoint is faster for displaying all todos without filters
+- Search results include highlight information for better UX
+- Implement debouncing for real-time search to reduce API calls
 
 ## Frontend Integration Example
 
@@ -416,4 +551,7 @@ class TodoApiClient {
 1. **Batch Operations**: Use `update_order` for bulk position updates
 2. **Caching**: Consider caching todo list on frontend
 3. **Optimistic Updates**: Update UI before API confirmation
-4. **Pagination**: Not implemented yet, but recommended for large lists
+4. **Pagination**: Use the search endpoint with `page` and `per_page` parameters
+5. **Search Debouncing**: Implement debouncing (300-500ms) for real-time search
+6. **Efficient Filtering**: Use server-side filtering via search endpoint for large datasets
+7. **Indexes**: The database has indexes on searchable fields for optimal performance

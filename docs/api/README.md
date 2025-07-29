@@ -106,7 +106,11 @@ X-Request-Id: <unique_request_id>
 - [Authentication API](./authentication.md) - User registration, login, and logout
 
 ### Resources
-- [Todos API](./todos.md) - Todo CRUD operations and batch updates
+- [Todos API](./todos.md) - Todo CRUD operations, search, and batch updates
+  - Basic CRUD operations (GET, POST, PUT, DELETE)
+  - Advanced search and filtering (GET /api/todos/search)
+  - Bulk position updates for drag-and-drop
+  - File attachments support
 - [Categories API](./categories.md) - Category CRUD operations
 - [Tags API](./tags.md) - Tag CRUD operations for flexible todo organization
 - [Comments API](./comments.md) - Comment functionality for todos
@@ -114,9 +118,26 @@ X-Request-Id: <unique_request_id>
 
 ## Pagination
 
-Currently not implemented. Future versions may include:
+Pagination is implemented for the search endpoint:
 ```
-GET /api/todos?page=1&per_page=20
+GET /api/todos/search?page=1&per_page=20
+```
+
+Pagination parameters:
+- `page` - Page number (default: 1)
+- `per_page` - Items per page (default: 20, max: 100)
+
+Pagination metadata is returned in the response:
+```json
+{
+  "todos": [...],
+  "meta": {
+    "total": 100,
+    "current_page": 1,
+    "total_pages": 5,
+    "per_page": 20
+  }
+}
 ```
 
 ## Rate Limiting
