@@ -164,8 +164,8 @@
   - Write tests for change tracking functionality
   - _Requirements: 5.3, 5.4_
 
-- [ ] 8. Implement background job system for notifications
-- [ ] 8.1 Set up Active Job with Sidekiq
+- [x] 8. Implement background job system for notifications
+- [x] 8.1 Set up Active Job with Sidekiq
 
   - Add Sidekiq gem and configure Redis connection
   - Set up job queues and worker configuration
@@ -173,7 +173,7 @@
   - Write tests for job execution and error scenarios
   - _Requirements: 6.3, 6.5_
 
-- [ ] 8.2 Create notification job system
+- [x] 8.2 Create notification job system
 
   - Implement NotificationJob for status change notifications
   - Create ReminderJob for due date notifications
