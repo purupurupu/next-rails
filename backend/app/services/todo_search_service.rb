@@ -38,6 +38,8 @@ module Services
 
     def apply_filters(scope)
       scope = filter_by_category(scope)
+      scope = filter_by_status(scope)
+      scope = filter_by_priority(scope)
       scope
     end
 
@@ -56,6 +58,24 @@ module Services
       else
         scope.where(category_id: category_ids)
       end
+    end
+
+    def filter_by_status(scope)
+      return scope unless params[:status].present?
+
+      statuses = Array(params[:status]).map(&:to_s).select { |s| Todo.statuses.key?(s) }
+      return scope if statuses.empty?
+
+      scope.where(status: statuses)
+    end
+
+    def filter_by_priority(scope)
+      return scope unless params[:priority].present?
+
+      priorities = Array(params[:priority]).map(&:to_s).select { |p| Todo.priorities.key?(p) }
+      return scope if priorities.empty?
+
+      scope.where(priority: priorities)
     end
 
     def apply_sorting(scope)
