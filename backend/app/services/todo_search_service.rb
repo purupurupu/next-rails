@@ -10,6 +10,13 @@ module Services
     end
 
     def call
+      # Check cache first
+      cache_key = generate_cache_key
+      cached_result = Rails.cache.read(cache_key)
+      
+      return cached_result if cached_result.present? && !params[:skip_cache]
+
+      # Build query
       scope = user.todos
       scope = apply_search(scope)
       scope = apply_filters(scope)
@@ -17,10 +24,39 @@ module Services
       scope = apply_includes(scope)
       scope = apply_pagination(scope)
       
+      # Cache the result for 5 minutes
+      Rails.cache.write(cache_key, scope, expires_in: 5.minutes) if scope.count < 1000
+      
       scope
     end
 
     private
+
+    def generate_cache_key
+      # Generate a unique cache key based on user and search parameters
+      key_parts = ["todo_search", user.id]
+      
+      # Add search query
+      key_parts << "q:#{search_query}" if search_query.present?
+      
+      # Add filters
+      key_parts << "cat:#{params[:category_id]}" if params[:category_id].present?
+      key_parts << "status:#{Array(params[:status]).sort.join(',')}" if params[:status].present?
+      key_parts << "priority:#{Array(params[:priority]).sort.join(',')}" if params[:priority].present?
+      key_parts << "tags:#{Array(params[:tag_ids]).sort.join(',')}" if params[:tag_ids].present?
+      key_parts << "tag_mode:#{params[:tag_mode]}" if params[:tag_mode].present?
+      key_parts << "from:#{params[:due_date_from]}" if params[:due_date_from].present?
+      key_parts << "to:#{params[:due_date_to]}" if params[:due_date_to].present?
+      
+      # Add sorting
+      key_parts << "sort:#{params[:sort_by]}_#{params[:sort_order]}"
+      
+      # Add pagination
+      key_parts << "page:#{params[:page] || 1}"
+      key_parts << "per:#{params[:per_page] || 20}"
+      
+      key_parts.join("/")
+    end
 
     def apply_search(scope)
       return scope if search_query.blank?
