@@ -36,11 +36,7 @@ module App
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use ActionDispatch::Session::CookieStore
     
-    # Add custom error handler middleware
-    config.middleware.use ErrorHandler
-    
     # Ensure custom error classes are loaded
-    config.eager_load_paths << Rails.root.join('app/errors')
-    config.eager_load_paths << Rails.root.join('app/middleware')
+    config.autoload_paths += %W(#{config.root}/app/errors)
   end
 end

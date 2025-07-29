@@ -1,6 +1,3 @@
-# Load custom API version constraint
-require 'api_version_constraint'
-
 Rails.application.routes.draw do
   devise_for :users, path: 'auth', path_names: {
     sign_in: 'sign_in',
