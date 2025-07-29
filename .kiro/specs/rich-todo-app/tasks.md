@@ -139,8 +139,8 @@
   - Write tests for file validation and cleanup
   - _Requirements: 4.2, 4.5_
 
-- [ ] 7. Create polymorphic comment system
-- [ ] 7.1 Create Comment model with polymorphic associations
+- [x] 7. Create polymorphic comment system
+- [x] 7.1 Create Comment model with polymorphic associations
 
   - Generate Comment model with polymorphic commentable association
   - Create migration with proper indexes for polymorphic queries
@@ -148,7 +148,7 @@
   - Write comprehensive tests for polymorphic associations
   - _Requirements: 5.1, 5.2_
 
-- [ ] 7.2 Implement comment API endpoints
+- [x] 7.2 Implement comment API endpoints
 
   - Create nested comment routes under todos
   - Implement comment CRUD operations with proper authorization
@@ -156,7 +156,7 @@
   - Write integration tests for comment operations
   - _Requirements: 5.1, 5.5_
 
-- [ ] 7.3 Create todo history tracking system
+- [x] 7.3 Create todo history tracking system
 
   - Generate TodoHistory model to track changes
   - Implement before_update callback in Todo model to record changes
