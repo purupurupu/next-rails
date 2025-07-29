@@ -147,17 +147,30 @@ module Api
     end
 
     def search_params
-      params.permit(
+      # Handle both single values and arrays for status and priority
+      permitted = params.permit(
         :q, :query, :search,
         :category_id,
         :due_date_from, :due_date_to,
         :sort_by, :sort_order,
         :tag_mode,
         :page, :per_page,
+        :status, :priority,  # Allow single values
         status: [],
         priority: [],
         tag_ids: []
       )
+      
+      # Convert single values to arrays if needed
+      if permitted[:status].present? && !permitted[:status].is_a?(Array)
+        permitted[:status] = [permitted[:status]]
+      end
+      
+      if permitted[:priority].present? && !permitted[:priority].is_a?(Array)
+        permitted[:priority] = [permitted[:priority]]
+      end
+      
+      permitted
     end
 
     def active_filters

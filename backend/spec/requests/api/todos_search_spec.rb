@@ -139,7 +139,6 @@ RSpec.describe 'Todo Search API', type: :request do
           get '/api/todos/search', params: { status: 'pending' }, headers: auth_headers
           
           json = JSON.parse(response.body)
-          puts "Status filter - Response: #{json.inspect}" # デバッグ
           expect(json['todos'].size).to eq(1)
           expect(json['todos'][0]['status']).to eq('pending')
         end
