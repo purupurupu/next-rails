@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface Highlight {
   start: number;
@@ -13,11 +13,11 @@ interface HighlightedTextProps {
   highlightClassName?: string;
 }
 
-export function HighlightedText({ 
-  text, 
-  highlights = [], 
+export function HighlightedText({
+  text,
+  highlights = [],
   className = "",
-  highlightClassName = "bg-yellow-200 dark:bg-yellow-900/50 font-medium"
+  highlightClassName = "bg-yellow-200 dark:bg-yellow-900/50 font-medium",
 }: HighlightedTextProps) {
   if (!highlights.length) {
     return <span className={className}>{text}</span>;
@@ -25,7 +25,7 @@ export function HighlightedText({
 
   // Sort highlights by start position
   const sortedHighlights = [...highlights].sort((a, b) => a.start - b.start);
-  
+
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
 
@@ -35,18 +35,18 @@ export function HighlightedText({
       parts.push(
         <span key={`text-${index}`}>
           {text.substring(lastIndex, highlight.start)}
-        </span>
+        </span>,
       );
     }
 
     // Add highlighted text
     parts.push(
-      <mark 
-        key={`highlight-${index}`} 
+      <mark
+        key={`highlight-${index}`}
         className={highlightClassName}
       >
         {text.substring(highlight.start, highlight.end)}
-      </mark>
+      </mark>,
     );
 
     lastIndex = highlight.end;
@@ -57,7 +57,7 @@ export function HighlightedText({
     parts.push(
       <span key="text-end">
         {text.substring(lastIndex)}
-      </span>
+      </span>,
     );
   }
 

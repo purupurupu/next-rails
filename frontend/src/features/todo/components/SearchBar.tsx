@@ -11,11 +11,11 @@ interface SearchBarProps {
   debounceDelay?: number;
 }
 
-export function SearchBar({ 
-  value, 
-  onChange, 
+export function SearchBar({
+  value,
+  onChange,
   placeholder = "タスクを検索...",
-  debounceDelay = 300
+  debounceDelay = 300,
 }: SearchBarProps) {
   const [localValue, setLocalValue] = useState(value);
   const debouncedValue = useDebounce(localValue, debounceDelay);

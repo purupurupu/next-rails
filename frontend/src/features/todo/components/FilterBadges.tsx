@@ -29,66 +29,66 @@ export function FilterBadges({
   // Search filter
   if (activeFilters.search) {
     filterBadges.push({
-      key: 'search',
-      label: '検索',
+      key: "search",
+      label: "検索",
       value: activeFilters.search,
     });
   }
 
   // Category filter
   if (activeFilters.category_id !== undefined) {
-    const category = categories.find(c => c.id === activeFilters.category_id);
+    const category = categories.find((c) => c.id === activeFilters.category_id);
     filterBadges.push({
-      key: 'category_id',
-      label: 'カテゴリー',
-      value: activeFilters.category_id === null ? 'カテゴリーなし' : category?.name || 'Unknown',
+      key: "category_id",
+      label: "カテゴリー",
+      value: activeFilters.category_id === null ? "カテゴリーなし" : category?.name || "Unknown",
     });
   }
 
   // Status filter
   if (activeFilters.status?.length) {
     const statusLabels = {
-      pending: '未着手',
-      in_progress: '進行中',
-      completed: '完了',
+      pending: "未着手",
+      in_progress: "進行中",
+      completed: "完了",
     };
     filterBadges.push({
-      key: 'status',
-      label: 'ステータス',
-      value: activeFilters.status.map(s => statusLabels[s]).join(', '),
+      key: "status",
+      label: "ステータス",
+      value: activeFilters.status.map((s) => statusLabels[s]).join(", "),
     });
   }
 
   // Priority filter
   if (activeFilters.priority?.length) {
     const priorityLabels = {
-      low: '低',
-      medium: '中',
-      high: '高',
+      low: "低",
+      medium: "中",
+      high: "高",
     };
     filterBadges.push({
-      key: 'priority',
-      label: '優先度',
-      value: activeFilters.priority.map(p => priorityLabels[p]).join(', '),
+      key: "priority",
+      label: "優先度",
+      value: activeFilters.priority.map((p) => priorityLabels[p]).join(", "),
     });
   }
 
   // Tag filter
   if (activeFilters.tag_ids?.length) {
-    const selectedTags = tags.filter(t => activeFilters.tag_ids?.includes(t.id));
+    const selectedTags = tags.filter((t) => activeFilters.tag_ids?.includes(t.id));
     filterBadges.push({
-      key: 'tag_ids',
-      label: 'タグ',
-      value: selectedTags.map(t => t.name).join(', '),
+      key: "tag_ids",
+      label: "タグ",
+      value: selectedTags.map((t) => t.name).join(", "),
     });
   }
 
   // Date range filter
   if (activeFilters.date_range?.from || activeFilters.date_range?.to) {
-    const from = activeFilters.date_range.from ? new Date(activeFilters.date_range.from).toLocaleDateString('ja-JP') : '';
-    const to = activeFilters.date_range.to ? new Date(activeFilters.date_range.to).toLocaleDateString('ja-JP') : '';
-    
-    let value = '';
+    const from = activeFilters.date_range.from ? new Date(activeFilters.date_range.from).toLocaleDateString("ja-JP") : "";
+    const to = activeFilters.date_range.to ? new Date(activeFilters.date_range.to).toLocaleDateString("ja-JP") : "";
+
+    let value = "";
     if (from && to) {
       value = `${from} - ${to}`;
     } else if (from) {
@@ -96,10 +96,10 @@ export function FilterBadges({
     } else if (to) {
       value = `${to} まで`;
     }
-    
+
     filterBadges.push({
-      key: 'date_range',
-      label: '期限',
+      key: "date_range",
+      label: "期限",
       value,
     });
   }
@@ -118,7 +118,9 @@ export function FilterBadges({
           className="gap-1 pr-1"
         >
           <span className="text-xs">
-            {badge.label}: {badge.value}
+            {badge.label}
+            :
+            {badge.value}
           </span>
           <Button
             variant="ghost"

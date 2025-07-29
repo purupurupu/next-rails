@@ -18,34 +18,34 @@ interface AdvancedFiltersProps {
   searchParams: TodoSearchParams;
   categories: Category[];
   tags: Tag[];
-  onUpdateCategory: (categoryId: number | null) => void;
+  onUpdateCategory: (categoryId: number | null | undefined) => void;
   onUpdateStatus: (status: TodoStatus[]) => void;
   onUpdatePriority: (priority: TodoPriority[]) => void;
-  onUpdateTags: (tagIds: number[], tagMode?: 'any' | 'all') => void;
+  onUpdateTags: (tagIds: number[], tagMode?: "any" | "all") => void;
   onUpdateDateRange: (from?: string, to?: string) => void;
-  onUpdateSort: (sortBy: TodoSearchParams['sort_by'], sortOrder?: TodoSearchParams['sort_order']) => void;
+  onUpdateSort: (sortBy: TodoSearchParams["sort_by"], sortOrder?: TodoSearchParams["sort_order"]) => void;
 }
 
 const statusOptions: Array<{ value: TodoStatus; label: string }> = [
-  { value: 'pending', label: '未着手' },
-  { value: 'in_progress', label: '進行中' },
-  { value: 'completed', label: '完了' },
+  { value: "pending", label: "未着手" },
+  { value: "in_progress", label: "進行中" },
+  { value: "completed", label: "完了" },
 ];
 
 const priorityOptions: Array<{ value: TodoPriority; label: string }> = [
-  { value: 'high', label: '高' },
-  { value: 'medium', label: '中' },
-  { value: 'low', label: '低' },
+  { value: "high", label: "高" },
+  { value: "medium", label: "中" },
+  { value: "low", label: "低" },
 ];
 
-const sortOptions: Array<{ value: TodoSearchParams['sort_by']; label: string }> = [
-  { value: 'position', label: '並び順' },
-  { value: 'created_at', label: '作成日' },
-  { value: 'updated_at', label: '更新日' },
-  { value: 'due_date', label: '期限' },
-  { value: 'title', label: 'タイトル' },
-  { value: 'priority', label: '優先度' },
-  { value: 'status', label: 'ステータス' },
+const sortOptions: Array<{ value: TodoSearchParams["sort_by"]; label: string }> = [
+  { value: "position", label: "並び順" },
+  { value: "created_at", label: "作成日" },
+  { value: "updated_at", label: "更新日" },
+  { value: "due_date", label: "期限" },
+  { value: "title", label: "タイトル" },
+  { value: "priority", label: "優先度" },
+  { value: "status", label: "ステータス" },
 ];
 
 export function AdvancedFilters({
@@ -65,42 +65,42 @@ export function AdvancedFilters({
   const currentStatus = Array.isArray(searchParams.status) ? searchParams.status : searchParams.status ? [searchParams.status] : [];
   const currentPriority = Array.isArray(searchParams.priority) ? searchParams.priority : searchParams.priority ? [searchParams.priority] : [];
   const currentTagIds = searchParams.tag_ids || [];
-  const currentTagMode = searchParams.tag_mode || 'any';
+  const currentTagMode = searchParams.tag_mode || "any";
 
   const handleStatusChange = (status: TodoStatus, checked: boolean) => {
     const newStatus = checked
       ? [...currentStatus, status]
-      : currentStatus.filter(s => s !== status);
+      : currentStatus.filter((s) => s !== status);
     onUpdateStatus(newStatus);
   };
 
   const handlePriorityChange = (priority: TodoPriority, checked: boolean) => {
     const newPriority = checked
       ? [...currentPriority, priority]
-      : currentPriority.filter(p => p !== priority);
+      : currentPriority.filter((p) => p !== priority);
     onUpdatePriority(newPriority);
   };
 
   const handleCategoryChange = (value: string) => {
-    if (value === 'all') {
+    if (value === "all") {
       onUpdateCategory(undefined); // Clear filter
-    } else if (value === 'none') {
-      onUpdateCategory(null); // Filter for null category
+    } else if (value === "none") {
+      onUpdateCategory(-1); // Backend expects -1 for uncategorized
     } else {
       onUpdateCategory(parseInt(value));
     }
   };
 
   const handleDateFromChange = (date: Date | undefined) => {
-    onUpdateDateRange(date?.toISOString().split('T')[0], searchParams.due_date_to);
+    onUpdateDateRange(date?.toISOString().split("T")[0], searchParams.due_date_to);
   };
 
   const handleDateToChange = (date: Date | undefined) => {
-    onUpdateDateRange(searchParams.due_date_from, date?.toISOString().split('T')[0]);
+    onUpdateDateRange(searchParams.due_date_from, date?.toISOString().split("T")[0]);
   };
 
   const handleSortChange = (value: string) => {
-    const [sortBy, sortOrder] = value.split('-') as [TodoSearchParams['sort_by'], TodoSearchParams['sort_order']];
+    const [sortBy, sortOrder] = value.split("-") as [TodoSearchParams["sort_by"], TodoSearchParams["sort_order"]];
     onUpdateSort(sortBy, sortOrder);
   };
 
@@ -118,8 +118,8 @@ export function AdvancedFilters({
           {/* Category Filter */}
           <div className="space-y-2">
             <Label>カテゴリー</Label>
-            <Select 
-              value={searchParams.category_id === null ? 'none' : searchParams.category_id?.toString() || 'all'} 
+            <Select
+              value={searchParams.category_id === -1 || searchParams.category_id === null ? "none" : searchParams.category_id?.toString() || "all"}
               onValueChange={handleCategoryChange}
             >
               <SelectTrigger>
@@ -198,7 +198,7 @@ export function AdvancedFilters({
             {currentTagIds.length > 0 && (
               <RadioGroup
                 value={currentTagMode}
-                onValueChange={(value: 'any' | 'all') => onUpdateTags(currentTagIds, value)}
+                onValueChange={(value: "any" | "all") => onUpdateTags(currentTagIds, value)}
                 className="flex gap-4 pt-2"
               >
                 <div className="flex items-center space-x-2">
@@ -249,12 +249,16 @@ export function AdvancedFilters({
               <SelectContent>
                 {sortOptions.map((option) => (
                   <SelectItem key={`${option.value}-asc`} value={`${option.value}-asc`}>
-                    {option.label} (昇順)
+                    {option.label}
+                    {" "}
+                    (昇順)
                   </SelectItem>
                 ))}
                 {sortOptions.map((option) => (
                   <SelectItem key={`${option.value}-desc`} value={`${option.value}-desc`}>
-                    {option.label} (降順)
+                    {option.label}
+                    {" "}
+                    (降順)
                   </SelectItem>
                 ))}
               </SelectContent>

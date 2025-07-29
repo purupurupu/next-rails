@@ -104,11 +104,11 @@ export interface TodoSearchParams {
   status?: TodoStatus | TodoStatus[];
   priority?: TodoPriority | TodoPriority[];
   tag_ids?: number[];
-  tag_mode?: 'any' | 'all'; // How to match tags
+  tag_mode?: "any" | "all"; // How to match tags
   due_date_from?: string;
   due_date_to?: string;
-  sort_by?: 'position' | 'created_at' | 'updated_at' | 'due_date' | 'title' | 'priority' | 'status';
-  sort_order?: 'asc' | 'desc';
+  sort_by?: "position" | "created_at" | "updated_at" | "due_date" | "title" | "priority" | "status";
+  sort_order?: "asc" | "desc";
   page?: number;
   per_page?: number;
 }
@@ -121,7 +121,7 @@ export interface TodoSearchResponse {
     total_pages: number;
     per_page: number;
     search_query?: string;
-    filters_applied: Record<string, any>;
+    filters_applied: Record<string, unknown>;
   };
   suggestions?: Array<{
     type: string;

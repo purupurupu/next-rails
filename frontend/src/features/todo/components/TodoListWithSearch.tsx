@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -121,7 +121,7 @@ export function TodoListWithSearch() {
       {/* Search and Filters */}
       <div className="space-y-4">
         <SearchBar
-          value={searchParams.q || ''}
+          value={searchParams.q || ""}
           onChange={updateSearchQuery}
           placeholder="タイトルや説明で検索..."
         />
@@ -155,7 +155,9 @@ export function TodoListWithSearch() {
       {searchResponse && (
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>
-            {searchResponse.meta.total} 件の結果
+            {searchResponse.meta.total}
+            {" "}
+            件の結果
             {searchResponse.meta.total_pages > 1 && ` (${searchResponse.meta.current_page}/${searchResponse.meta.total_pages} ページ)`}
           </span>
           {loading && <span>更新中...</span>}
@@ -164,41 +166,45 @@ export function TodoListWithSearch() {
 
       {/* Todo List */}
       <div className="space-y-3">
-        {todos.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            {hasActiveFilters ? (
-              <div className="space-y-4">
-                <p>条件に一致するタスクが見つかりませんでした</p>
-                {searchResponse?.suggestions && searchResponse.suggestions.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">提案:</p>
-                    {searchResponse.suggestions.slice(0, 3).map((suggestion, index) => (
-                      <p key={index} className="text-sm">{suggestion.message}</p>
-                    ))}
-                  </div>
-                )}
-                <Button variant="outline" size="sm" onClick={clearFilters}>
-                  フィルターをクリア
-                </Button>
+        {todos.length === 0
+          ? (
+              <div className="text-center py-12 text-muted-foreground">
+                {hasActiveFilters
+                  ? (
+                      <div className="space-y-4">
+                        <p>条件に一致するタスクが見つかりませんでした</p>
+                        {searchResponse?.suggestions && searchResponse.suggestions.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">提案:</p>
+                            {searchResponse.suggestions.slice(0, 3).map((suggestion, index) => (
+                              <p key={index} className="text-sm">{suggestion.message}</p>
+                            ))}
+                          </div>
+                        )}
+                        <Button variant="outline" size="sm" onClick={clearFilters}>
+                          フィルターをクリア
+                        </Button>
+                      </div>
+                    )
+                  : (
+                      <div className="space-y-2">
+                        <p>まだタスクがありません</p>
+                        <p className="text-sm">「タスクを追加」ボタンから新しいタスクを作成しましょう</p>
+                      </div>
+                    )}
               </div>
-            ) : (
-              <div className="space-y-2">
-                <p>まだタスクがありません</p>
-                <p className="text-sm">「タスクを追加」ボタンから新しいタスクを作成しましょう</p>
-              </div>
+            )
+          : (
+              todos.map((todo) => (
+                <TodoItem
+                  key={todo.id}
+                  todo={todo}
+                  onToggleComplete={handleToggleComplete}
+                  onEdit={setEditingTodo}
+                  onDelete={handleDeleteTodo}
+                />
+              ))
             )}
-          </div>
-        ) : (
-          todos.map((todo) => (
-            <TodoItem
-              key={todo.id}
-              todo={todo}
-              onToggleComplete={handleToggleComplete}
-              onEdit={setEditingTodo}
-              onDelete={handleDeleteTodo}
-            />
-          ))
-        )}
       </div>
 
       {/* Pagination */}
@@ -213,7 +219,10 @@ export function TodoListWithSearch() {
             前のページ
           </Button>
           <span className="flex items-center px-3 text-sm">
-            {searchResponse.meta.current_page} / {searchResponse.meta.total_pages}
+            {searchResponse.meta.current_page}
+            {" "}
+            /
+            {searchResponse.meta.total_pages}
           </span>
           <Button
             variant="outline"

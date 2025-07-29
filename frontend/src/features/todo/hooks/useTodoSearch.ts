@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { todoApiClient } from '../lib/api-client';
-import { useDebounce } from '@/hooks/useDebounce';
-import type { Todo, TodoSearchParams, TodoSearchResponse } from '../types/todo';
-import { toast } from 'sonner';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { todoApiClient } from "../lib/api-client";
+import { useDebounce } from "@/hooks/useDebounce";
+import type { Todo, TodoSearchParams, TodoSearchResponse } from "../types/todo";
+import { toast } from "sonner";
 
 interface UseTodoSearchReturn {
   todos: Todo[];
@@ -20,32 +20,32 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
   const [searchResponse, setSearchResponse] = useState<TodoSearchResponse | null>(null);
 
   // Debounce search query
-  const debouncedSearchQuery = useDebounce(searchParams.q || '', 300);
+  const debouncedSearchQuery = useDebounce(searchParams.q || "", 300);
 
   // Create debounced search params
-  const debouncedSearchParams = {
+  const debouncedSearchParams = useMemo(() => ({
     ...searchParams,
     q: debouncedSearchQuery,
-  };
+  }), [searchParams, debouncedSearchQuery]);
 
   const searchTodos = useCallback(async (params: TodoSearchParams) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await todoApiClient.searchTodos(params);
       setTodos(response.todos);
       setSearchResponse(response);
-      
+
       // Show suggestions if no results
       if (response.todos.length === 0 && response.suggestions?.length) {
-        const mainSuggestion = response.suggestions.find(s => s.type === 'reduce_filters') || response.suggestions[0];
+        const mainSuggestion = response.suggestions.find((s) => s.type === "reduce_filters") || response.suggestions[0];
         if (mainSuggestion) {
           toast.info(mainSuggestion.message);
         }
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to search todos';
+      const errorMessage = err instanceof Error ? err.message : "Failed to search todos";
       setError(errorMessage);
       toast.error(errorMessage);
       setTodos([]);
@@ -65,7 +65,7 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
     if (searchParams.q && searchParams.q !== debouncedSearchQuery) {
       return;
     }
-    
+
     searchTodos(debouncedSearchParams);
   }, [debouncedSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 

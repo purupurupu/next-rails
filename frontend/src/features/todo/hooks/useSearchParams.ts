@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
-import type { TodoSearchParams, TodoStatus, TodoPriority, ActiveFilters } from '../types/todo';
+import { useState, useCallback, useMemo } from "react";
+import type { TodoSearchParams, TodoStatus, TodoPriority, ActiveFilters } from "../types/todo";
 
 interface UseSearchParamsReturn {
   searchParams: TodoSearchParams;
@@ -9,17 +9,17 @@ interface UseSearchParamsReturn {
   updateCategory: (categoryId: number | null | undefined) => void;
   updateStatus: (status: TodoStatus[]) => void;
   updatePriority: (priority: TodoPriority[]) => void;
-  updateTags: (tagIds: number[], tagMode?: 'any' | 'all') => void;
+  updateTags: (tagIds: number[], tagMode?: "any" | "all") => void;
   updateDateRange: (from?: string, to?: string) => void;
-  updateSort: (sortBy: TodoSearchParams['sort_by'], sortOrder?: TodoSearchParams['sort_order']) => void;
+  updateSort: (sortBy: TodoSearchParams["sort_by"], sortOrder?: TodoSearchParams["sort_order"]) => void;
   updatePage: (page: number) => void;
   clearFilters: () => void;
   clearSingleFilter: (filterType: keyof ActiveFilters) => void;
 }
 
 const defaultParams: TodoSearchParams = {
-  sort_by: 'position',
-  sort_order: 'asc',
+  sort_by: "position",
+  sort_order: "asc",
   per_page: 50,
   page: 1,
 };
@@ -29,7 +29,7 @@ export function useSearchParams(): UseSearchParamsReturn {
 
   // Update search query
   const updateSearchQuery = useCallback((query: string) => {
-    setSearchParams(prev => ({
+    setSearchParams((prev) => ({
       ...prev,
       q: query || undefined,
       page: 1, // Reset to first page on new search
@@ -38,7 +38,7 @@ export function useSearchParams(): UseSearchParamsReturn {
 
   // Update category filter
   const updateCategory = useCallback((categoryId: number | null | undefined) => {
-    setSearchParams(prev => {
+    setSearchParams((prev) => {
       const newParams = { ...prev };
       if (categoryId === undefined) {
         delete newParams.category_id;
@@ -52,7 +52,7 @@ export function useSearchParams(): UseSearchParamsReturn {
 
   // Update status filter
   const updateStatus = useCallback((status: TodoStatus[]) => {
-    setSearchParams(prev => ({
+    setSearchParams((prev) => ({
       ...prev,
       status: status.length > 0 ? status : undefined,
       page: 1,
@@ -61,7 +61,7 @@ export function useSearchParams(): UseSearchParamsReturn {
 
   // Update priority filter
   const updatePriority = useCallback((priority: TodoPriority[]) => {
-    setSearchParams(prev => ({
+    setSearchParams((prev) => ({
       ...prev,
       priority: priority.length > 0 ? priority : undefined,
       page: 1,
@@ -69,8 +69,8 @@ export function useSearchParams(): UseSearchParamsReturn {
   }, []);
 
   // Update tag filter
-  const updateTags = useCallback((tagIds: number[], tagMode: 'any' | 'all' = 'any') => {
-    setSearchParams(prev => ({
+  const updateTags = useCallback((tagIds: number[], tagMode: "any" | "all" = "any") => {
+    setSearchParams((prev) => ({
       ...prev,
       tag_ids: tagIds.length > 0 ? tagIds : undefined,
       tag_mode: tagIds.length > 0 ? tagMode : undefined,
@@ -80,7 +80,7 @@ export function useSearchParams(): UseSearchParamsReturn {
 
   // Update date range filter
   const updateDateRange = useCallback((from?: string, to?: string) => {
-    setSearchParams(prev => ({
+    setSearchParams((prev) => ({
       ...prev,
       due_date_from: from || undefined,
       due_date_to: to || undefined,
@@ -89,8 +89,8 @@ export function useSearchParams(): UseSearchParamsReturn {
   }, []);
 
   // Update sort
-  const updateSort = useCallback((sortBy: TodoSearchParams['sort_by'], sortOrder?: TodoSearchParams['sort_order']) => {
-    setSearchParams(prev => ({
+  const updateSort = useCallback((sortBy: TodoSearchParams["sort_by"], sortOrder?: TodoSearchParams["sort_order"]) => {
+    setSearchParams((prev) => ({
       ...prev,
       sort_by: sortBy,
       sort_order: sortOrder || prev.sort_order,
@@ -99,7 +99,7 @@ export function useSearchParams(): UseSearchParamsReturn {
 
   // Update page
   const updatePage = useCallback((page: number) => {
-    setSearchParams(prev => ({
+    setSearchParams((prev) => ({
       ...prev,
       page,
     }));
@@ -112,32 +112,32 @@ export function useSearchParams(): UseSearchParamsReturn {
 
   // Clear single filter
   const clearSingleFilter = useCallback((filterType: keyof ActiveFilters) => {
-    setSearchParams(prev => {
+    setSearchParams((prev) => {
       const newParams = { ...prev };
-      
+
       switch (filterType) {
-        case 'search':
+        case "search":
           delete newParams.q;
           break;
-        case 'category_id':
+        case "category_id":
           delete newParams.category_id;
           break;
-        case 'status':
+        case "status":
           delete newParams.status;
           break;
-        case 'priority':
+        case "priority":
           delete newParams.priority;
           break;
-        case 'tag_ids':
+        case "tag_ids":
           delete newParams.tag_ids;
           delete newParams.tag_mode;
           break;
-        case 'date_range':
+        case "date_range":
           delete newParams.due_date_from;
           delete newParams.due_date_to;
           break;
       }
-      
+
       return { ...newParams, page: 1 };
     });
   }, []);
@@ -145,7 +145,7 @@ export function useSearchParams(): UseSearchParamsReturn {
   // Calculate active filters
   const activeFilters = useMemo<ActiveFilters>(() => {
     const filters: ActiveFilters = {};
-    
+
     if (searchParams.q) filters.search = searchParams.q;
     if (searchParams.category_id !== undefined) filters.category_id = searchParams.category_id as number | null;
     if (searchParams.status) filters.status = Array.isArray(searchParams.status) ? searchParams.status : [searchParams.status];
@@ -157,7 +157,7 @@ export function useSearchParams(): UseSearchParamsReturn {
         to: searchParams.due_date_to,
       };
     }
-    
+
     return filters;
   }, [searchParams]);
 

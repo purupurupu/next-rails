@@ -131,8 +131,8 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
                 todo.completed && "line-through text-muted-foreground",
               )}
               >
-                <HighlightedText 
-                  text={todo.title} 
+                <HighlightedText
+                  text={todo.title}
                   highlights={todo.highlights?.title}
                 />
               </h3>
@@ -231,8 +231,8 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
                 </Button>
                 {showDescription && (
                   <div className="mt-1 p-2 bg-muted/50 rounded text-xs text-muted-foreground whitespace-pre-wrap">
-                    <HighlightedText 
-                      text={todo.description} 
+                    <HighlightedText
+                      text={todo.description}
                       highlights={todo.highlights?.description}
                     />
                   </div>

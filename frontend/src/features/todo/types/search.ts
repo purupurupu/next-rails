@@ -21,7 +21,7 @@ export interface SearchMeta {
   total_pages: number;
   per_page: number;
   search_query?: string;
-  filters_applied: Record<string, any>;
+  filters_applied: Record<string, unknown>;
 }
 
 export interface SearchSuggestion {
@@ -36,15 +36,3 @@ export interface SearchResponse {
   suggestions?: SearchSuggestion[];
 }
 
-export interface SearchFilters {
-  search: string;
-  categoryId?: number | -1;
-  status: string[];
-  priority: string[];
-  tagIds: number[];
-  tagMode: "any" | "all";
-  dueDateFrom?: Date | null;
-  dueDateTo?: Date | null;
-  sortBy: SearchParams["sort_by"];
-  sortOrder: SearchParams["sort_order"];
-}
