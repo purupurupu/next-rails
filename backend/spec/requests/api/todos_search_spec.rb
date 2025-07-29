@@ -1,0 +1,346 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe 'Todo Search API', type: :request do
+  let(:user) { create(:user) }
+  let(:other_user) { create(:user) }
+  let(:auth_headers) { Devise::JWT::TestHelpers.auth_headers({}, user) }
+  
+  let(:category) { create(:category, user: user) }
+  let(:tag1) { create(:tag, user: user, name: 'urgent') }
+  let(:tag2) { create(:tag, user: user, name: 'work') }
+
+  before do
+    # Create test todos
+    create(:todo, 
+      user: user,
+      title: 'Buy milk and eggs',
+      description: 'Go to the grocery store',
+      status: 'pending',
+      priority: 'high',
+      category: category,
+      due_date: 1.day.from_now,
+      position: 1
+    ).tap { |t| t.tags << tag1 }
+
+    create(:todo,
+      user: user,
+      title: 'Complete project report',
+      description: 'Finish the quarterly report for management',
+      status: 'in_progress',
+      priority: 'medium',
+      due_date: 3.days.from_now,
+      position: 2
+    ).tap { |t| t.tags << [tag1, tag2] }
+
+    create(:todo,
+      user: user,
+      title: 'Read documentation',
+      description: 'Study the new API documentation',
+      status: 'completed',
+      priority: 'low',
+      due_date: 1.week.ago,
+      position: 3
+    )
+
+    # Other user's todo (should not appear in results)
+    create(:todo, user: other_user, title: 'Other user task')
+  end
+
+  describe 'GET /api/todos/search' do
+    context 'without authentication' do
+      it 'returns 401 unauthorized' do
+        get '/api/todos/search'
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'with authentication' do
+      context 'without any parameters' do
+        it 'returns all todos with pagination metadata' do
+          get '/api/todos/search', headers: auth_headers
+          
+          expect(response).to have_http_status(:success)
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(3)
+          expect(json['meta']).to include(
+            'total' => 3,
+            'current_page' => 1,
+            'total_pages' => 1,
+            'per_page' => 20
+          )
+        end
+      end
+
+      context 'with text search' do
+        it 'searches in title' do
+          get '/api/todos/search', params: { q: 'milk' }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(1)
+          expect(json['todos'][0]['title']).to include('milk')
+          expect(json['meta']['search_query']).to eq('milk')
+        end
+
+        it 'searches in description' do
+          get '/api/todos/search', params: { query: 'quarterly' }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(1)
+          expect(json['todos'][0]['description']).to include('quarterly')
+        end
+
+        it 'returns highlights for matches' do
+          get '/api/todos/search', params: { q: 'project' }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          todo = json['todos'][0]
+          expect(todo['highlights']).to be_present
+          expect(todo['highlights']['title']).to be_present
+          expect(todo['highlights']['title'][0]).to include(
+            'start' => 9,
+            'end' => 16,
+            'matched_text' => 'project'
+          )
+        end
+
+        it 'performs case-insensitive search' do
+          get '/api/todos/search', params: { q: 'PROJECT' }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(1)
+        end
+      end
+
+      context 'with category filter' do
+        it 'filters by category' do
+          get '/api/todos/search', params: { category_id: category.id }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(1)
+          expect(json['todos'][0]['category']['id']).to eq(category.id)
+        end
+
+        it 'filters uncategorized todos' do
+          get '/api/todos/search', params: { category_id: -1 }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(2)
+          expect(json['todos'].all? { |t| t['category'].nil? }).to be true
+        end
+      end
+
+      context 'with status filter' do
+        it 'filters by single status' do
+          get '/api/todos/search', params: { status: 'pending' }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(1)
+          expect(json['todos'][0]['status']).to eq('pending')
+        end
+
+        it 'filters by multiple statuses' do
+          get '/api/todos/search', params: { status: ['pending', 'in_progress'] }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(2)
+          expect(json['todos'].map { |t| t['status'] }).to contain_exactly('pending', 'in_progress')
+        end
+      end
+
+      context 'with priority filter' do
+        it 'filters by priority' do
+          get '/api/todos/search', params: { priority: 'high' }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(1)
+          expect(json['todos'][0]['priority']).to eq('high')
+        end
+      end
+
+      context 'with tag filter' do
+        it 'filters by tag (ANY mode)' do
+          get '/api/todos/search', params: { tag_ids: [tag2.id] }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(1)
+          expect(json['todos'][0]['tags'].map { |t| t['id'] }).to include(tag2.id)
+        end
+
+        it 'filters by multiple tags (ANY mode)' do
+          get '/api/todos/search', params: { tag_ids: [tag1.id, tag2.id], tag_mode: 'any' }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(2)
+        end
+
+        it 'filters by multiple tags (ALL mode)' do
+          get '/api/todos/search', params: { tag_ids: [tag1.id, tag2.id], tag_mode: 'all' }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(1)
+          expect(json['todos'][0]['tags'].size).to eq(2)
+        end
+      end
+
+      context 'with date range filter' do
+        it 'filters by due_date_from' do
+          get '/api/todos/search', params: { due_date_from: Date.today.to_s }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(2)
+          expect(json['todos'].all? { |t| Date.parse(t['due_date']) >= Date.today }).to be true
+        end
+
+        it 'filters by due_date_to' do
+          get '/api/todos/search', params: { due_date_to: 2.days.from_now.to_date.to_s }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(2)
+        end
+
+        it 'filters by date range' do
+          get '/api/todos/search', 
+              params: { 
+                due_date_from: Date.today.to_s,
+                due_date_to: 2.days.from_now.to_date.to_s 
+              }, 
+              headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(1)
+        end
+      end
+
+      context 'with combined filters' do
+        it 'applies all filters together' do
+          get '/api/todos/search',
+              params: {
+                q: 'project',
+                status: 'in_progress',
+                priority: 'medium',
+                tag_ids: [tag1.id]
+              },
+              headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(1)
+          expect(json['todos'][0]['title']).to include('project')
+          expect(json['todos'][0]['status']).to eq('in_progress')
+          expect(json['meta']['filters_applied']).to include('search', 'status', 'priority', 'tag_ids')
+        end
+      end
+
+      context 'with sorting' do
+        it 'sorts by created_at DESC' do
+          get '/api/todos/search', params: { sort_by: 'created_at', sort_order: 'desc' }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          created_dates = json['todos'].map { |t| t['created_at'] }
+          expect(created_dates).to eq(created_dates.sort.reverse)
+        end
+
+        it 'sorts by title ASC' do
+          get '/api/todos/search', params: { sort_by: 'title', sort_order: 'asc' }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          titles = json['todos'].map { |t| t['title'] }
+          expect(titles).to eq(['Buy milk and eggs', 'Complete project report', 'Read documentation'])
+        end
+
+        it 'sorts by priority DESC' do
+          get '/api/todos/search', params: { sort_by: 'priority', sort_order: 'desc' }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          priorities = json['todos'].map { |t| t['priority'] }
+          expect(priorities).to eq(['high', 'medium', 'low'])
+        end
+      end
+
+      context 'with pagination' do
+        before do
+          # Create more todos for pagination testing
+          10.times do |i|
+            create(:todo, user: user, title: "Task #{i + 4}", position: i + 4)
+          end
+        end
+
+        it 'paginates results' do
+          get '/api/todos/search', params: { page: 1, per_page: 5 }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(5)
+          expect(json['meta']['current_page']).to eq(1)
+          expect(json['meta']['total_pages']).to eq(3)
+          expect(json['meta']['per_page']).to eq(5)
+          expect(json['meta']['total']).to eq(13)
+        end
+
+        it 'returns correct page' do
+          get '/api/todos/search', params: { page: 2, per_page: 5 }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(5)
+          expect(json['meta']['current_page']).to eq(2)
+        end
+
+        it 'limits per_page to 100' do
+          get '/api/todos/search', params: { per_page: 200 }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['meta']['per_page']).to eq(100)
+        end
+      end
+
+      context 'with no results' do
+        it 'returns helpful suggestions' do
+          get '/api/todos/search', params: { q: 'nonexistent' }, headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          expect(json['todos']).to be_empty
+          expect(json['suggestions']).to be_present
+          
+          suggestion_types = json['suggestions'].map { |s| s['type'] }
+          expect(suggestion_types).to include('spelling', 'broader_search', 'clear_filters')
+        end
+
+        it 'suggests reducing filters when many are applied' do
+          get '/api/todos/search',
+              params: {
+                q: 'test',
+                status: 'pending',
+                priority: 'high',
+                category_id: category.id,
+                tag_ids: [tag1.id]
+              },
+              headers: auth_headers
+          
+          json = JSON.parse(response.body)
+          suggestions = json['suggestions'].find { |s| s['type'] == 'reduce_filters' }
+          expect(suggestions).to be_present
+          expect(suggestions['current_filters']).to include('search', 'status', 'priority', 'category_id', 'tag_ids')
+        end
+      end
+
+      context 'with invalid parameters' do
+        it 'ignores invalid status values' do
+          get '/api/todos/search', params: { status: 'invalid_status' }, headers: auth_headers
+          
+          expect(response).to have_http_status(:success)
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(3) # All todos returned
+        end
+
+        it 'handles invalid date formats gracefully' do
+          get '/api/todos/search', params: { due_date_from: 'invalid-date' }, headers: auth_headers
+          
+          expect(response).to have_http_status(:success)
+          json = JSON.parse(response.body)
+          expect(json['todos'].size).to eq(3) # All todos returned
+        end
+      end
+    end
+  end
+end
