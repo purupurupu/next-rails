@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await authClient.logout();
     } catch (error) {
-      console.error("Logout error:", error);
+      // Silently handle logout errors - we'll clear the local state anyway
     } finally {
       // Always clear local state regardless of server response
       setUser(null);

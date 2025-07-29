@@ -71,7 +71,6 @@ export function AttachmentList({
       toast.success(`Downloaded ${file.filename}`);
     } catch (error) {
       toast.error("Failed to download file");
-      console.error("Download error:", error);
     } finally {
       setDownloadingIds((prev) => {
         const newSet = new Set(prev);
@@ -91,7 +90,6 @@ export function AttachmentList({
       toast.success("File deleted");
     } catch (error) {
       toast.error("Failed to delete file");
-      console.error("Delete error:", error);
     } finally {
       setDeletingIds((prev) => {
         const newSet = new Set(prev);

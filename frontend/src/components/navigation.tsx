@@ -3,6 +3,7 @@
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export function Navigation() {
   const { user, isAuthenticated, logout, isLoading } = useAuth();
@@ -11,7 +12,7 @@ export function Navigation() {
     try {
       await logout();
     } catch (error) {
-      console.error("Logout failed:", error);
+      toast.error("ログアウトに失敗しました");
     }
   };
 
