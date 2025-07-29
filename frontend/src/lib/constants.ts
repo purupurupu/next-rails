@@ -5,6 +5,7 @@ export const API_BASE_URL = process.env.NODE_ENV === "production"
 export const API_ENDPOINTS = {
   TODOS: "/api/todos",
   TODO_BY_ID: (id: number) => `/api/todos/${id}`,
+  TODOS_SEARCH: "/api/todos/search",
   UPDATE_ORDER: "/api/todos/update_order",
   UPDATE_TODO_TAGS: (id: number) => `/api/todos/${id}/tags`,
   DELETE_TODO_FILE: (todoId: number, fileId: string | number) => `/api/todos/${todoId}/files/${fileId}`,

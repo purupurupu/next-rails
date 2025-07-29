@@ -92,3 +92,48 @@ export interface TodoError {
   due_date?: string[];
   base?: string[];
 }
+
+// Search and filter types
+export interface TodoSearchParams {
+  q?: string; // Search query
+  category_id?: number | number[] | null;
+  status?: TodoStatus | TodoStatus[];
+  priority?: TodoPriority | TodoPriority[];
+  tag_ids?: number[];
+  tag_mode?: 'any' | 'all'; // How to match tags
+  due_date_from?: string;
+  due_date_to?: string;
+  sort_by?: 'position' | 'created_at' | 'updated_at' | 'due_date' | 'title' | 'priority' | 'status';
+  sort_order?: 'asc' | 'desc';
+  page?: number;
+  per_page?: number;
+}
+
+export interface TodoSearchResponse {
+  todos: Todo[];
+  meta: {
+    total: number;
+    current_page: number;
+    total_pages: number;
+    per_page: number;
+    search_query?: string;
+    filters_applied: Record<string, any>;
+  };
+  suggestions?: Array<{
+    type: string;
+    message: string;
+    current_filters?: string[];
+  }>;
+}
+
+export interface ActiveFilters {
+  search?: string;
+  category_id?: number | null;
+  status?: TodoStatus[];
+  priority?: TodoPriority[];
+  tag_ids?: number[];
+  date_range?: {
+    from?: string;
+    to?: string;
+  };
+}

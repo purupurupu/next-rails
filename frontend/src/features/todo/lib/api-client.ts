@@ -5,6 +5,8 @@ import type {
   CreateTodoData,
   UpdateTodoData,
   UpdateOrderData,
+  TodoSearchParams,
+  TodoSearchResponse,
 } from "@/features/todo/types/todo";
 
 class TodoApiClient extends HttpClient {
@@ -14,6 +16,64 @@ class TodoApiClient extends HttpClient {
 
   async getTodoById(id: number): Promise<Todo> {
     return this.get<Todo>(API_ENDPOINTS.TODO_BY_ID(id));
+  }
+
+  async searchTodos(params: TodoSearchParams): Promise<TodoSearchResponse> {
+    // Build query string from params
+    const queryParams = new URLSearchParams();
+    
+    // Add search query
+    if (params.q) queryParams.append('q', params.q);
+    
+    // Add category filter
+    if (params.category_id !== undefined) {
+      if (Array.isArray(params.category_id)) {
+        params.category_id.forEach(id => queryParams.append('category_id[]', String(id)));
+      } else if (params.category_id === null) {
+        queryParams.append('category_id', '-1'); // Backend expects -1 for uncategorized
+      } else {
+        queryParams.append('category_id', String(params.category_id));
+      }
+    }
+    
+    // Add status filter
+    if (params.status) {
+      if (Array.isArray(params.status)) {
+        params.status.forEach(status => queryParams.append('status[]', status));
+      } else {
+        queryParams.append('status', params.status);
+      }
+    }
+    
+    // Add priority filter
+    if (params.priority) {
+      if (Array.isArray(params.priority)) {
+        params.priority.forEach(priority => queryParams.append('priority[]', priority));
+      } else {
+        queryParams.append('priority', params.priority);
+      }
+    }
+    
+    // Add tag filters
+    if (params.tag_ids?.length) {
+      params.tag_ids.forEach(id => queryParams.append('tag_ids[]', String(id)));
+    }
+    if (params.tag_mode) queryParams.append('tag_mode', params.tag_mode);
+    
+    // Add date range filters
+    if (params.due_date_from) queryParams.append('due_date_from', params.due_date_from);
+    if (params.due_date_to) queryParams.append('due_date_to', params.due_date_to);
+    
+    // Add sorting
+    if (params.sort_by) queryParams.append('sort_by', params.sort_by);
+    if (params.sort_order) queryParams.append('sort_order', params.sort_order);
+    
+    // Add pagination
+    if (params.page) queryParams.append('page', String(params.page));
+    if (params.per_page) queryParams.append('per_page', String(params.per_page));
+    
+    const url = queryParams.toString() ? `${API_ENDPOINTS.TODOS_SEARCH}?${queryParams}` : API_ENDPOINTS.TODOS_SEARCH;
+    return this.get<TodoSearchResponse>(url);
   }
 
   async createTodo(data: CreateTodoData, files?: File[]): Promise<Todo> {
@@ -66,6 +126,7 @@ class TodoApiClient extends HttpClient {
   async updateTodoTags(id: number, tagIds: number[]): Promise<Todo> {
     return this.patch<Todo>(API_ENDPOINTS.UPDATE_TODO_TAGS(id), { tag_ids: tagIds });
   }
+
 
   // File operations
   async deleteTodoFile(todoId: number, fileId: string | number): Promise<Todo> {

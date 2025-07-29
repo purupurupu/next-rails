@@ -1,4 +1,4 @@
-import { TodoList } from "@/features/todo/components/TodoList";
+import { TodoListWithSearch } from "@/features/todo/components/TodoListWithSearch";
 import { Navigation } from "@/components/navigation";
 import { ProtectedRoute } from "@/components/protected-route";
 
@@ -8,7 +8,7 @@ export default function Home() {
       <Navigation />
       <ProtectedRoute>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <TodoList />
+          <TodoListWithSearch />
         </div>
       </ProtectedRoute>
     </div>
