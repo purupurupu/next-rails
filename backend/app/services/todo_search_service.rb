@@ -40,6 +40,7 @@ module Services
       scope = filter_by_category(scope)
       scope = filter_by_status(scope)
       scope = filter_by_priority(scope)
+      scope = filter_by_tags(scope)
       scope
     end
 
@@ -76,6 +77,33 @@ module Services
       return scope if priorities.empty?
 
       scope.where(priority: priorities)
+    end
+
+    def filter_by_tags(scope)
+      return scope unless params[:tag_ids].present?
+
+      tag_ids = Array(params[:tag_ids]).map(&:to_i).reject(&:zero?)
+      return scope if tag_ids.empty?
+
+      # Validate tag IDs belong to current user
+      valid_tag_ids = user.tags.where(id: tag_ids).pluck(:id)
+      return scope if valid_tag_ids.empty?
+
+      # Filter by tag IDs with AND/OR logic
+      tag_mode = params[:tag_mode] || 'any' # 'any' for OR, 'all' for AND
+      
+      if tag_mode == 'all'
+        # Find todos that have ALL specified tags
+        todo_ids = user.todos.joins(:todo_tags)
+                            .where(todo_tags: { tag_id: valid_tag_ids })
+                            .group('todos.id')
+                            .having('COUNT(DISTINCT todo_tags.tag_id) = ?', valid_tag_ids.size)
+                            .pluck(:id)
+        scope.where(id: todo_ids)
+      else
+        # Find todos that have ANY of the specified tags (OR)
+        scope.joins(:todo_tags).where(todo_tags: { tag_id: valid_tag_ids }).distinct
+      end
     end
 
     def apply_sorting(scope)
