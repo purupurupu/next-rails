@@ -21,6 +21,15 @@ Rails.application.config.host_authorization = { exclude: ->(request) { true } }
 # Configure Active Job to use inline adapter for tests to avoid Redis dependency
 Rails.application.config.active_job.queue_adapter = :inline
 
+# Disable SQL logging in tests for cleaner output
+ActiveRecord::Base.logger.level = Logger::WARN if defined?(ActiveRecord::Base)
+Rails.logger.level = Logger::WARN
+ActiveJob::Base.logger = Logger.new(nil)
+ActiveStorage.logger = Logger.new(nil) if defined?(ActiveStorage)
+
+# Disable ActiveModelSerializers logging
+ActiveModelSerializers.logger.level = Logger::WARN if defined?(ActiveModelSerializers)
+
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
 # run as spec files by default. This means that files in spec/support that end

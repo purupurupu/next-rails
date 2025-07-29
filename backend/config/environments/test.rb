@@ -73,4 +73,7 @@ Rails.application.configure do
   
   # Enable request ID tracking for tests
   config.log_tags = [:request_id]
+  
+  # Set log level to WARN to reduce noise in test output
+  config.log_level = :warn
 end
