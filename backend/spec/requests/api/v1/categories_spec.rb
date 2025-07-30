@@ -7,7 +7,7 @@ RSpec.describe '/api/v1/categories', type: :request do
   let(:other_user) { create(:user, email: 'other@example.com') }
   let(:headers) { auth_headers_for(user) }
 
-  describe 'GET /api/categories' do
+  describe 'GET /api/v1/categories' do
     let!(:user_categories) { create_list(:category, 3, user: user) }
     let!(:other_user_category) { create(:category, user: other_user) }
 
@@ -17,8 +17,8 @@ RSpec.describe '/api/v1/categories', type: :request do
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
       
-      expect(json_response.size).to eq(3)
-      expect(json_response.map { |c| c['name'] }).to eq(user_categories.map(&:name).sort)
+      expect(json_response['data'].size).to eq(3)
+      expect(json_response['data'].map { |c| c['name'] }).to eq(user_categories.map(&:name).sort)
     end
 
     it 'includes todo_count in response' do
@@ -30,28 +30,28 @@ RSpec.describe '/api/v1/categories', type: :request do
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
       
-      category_response = json_response.find { |c| c['id'] == category.id }
+      category_response = json_response['data'].find { |c| c['id'] == category.id }
       expect(category_response['todo_count']).to eq(2)
     end
   end
 
-  describe 'GET /api/categories/:id' do
+  describe 'GET /api/v1/categories/:id' do
     let(:category) { create(:category, user: user) }
 
     it 'returns the category' do
-      get "/api/categories/#{category.id}", headers: headers
+      get "/api/v1/categories/#{category.id}", headers: headers
 
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
       
-      expect(json_response['id']).to eq(category.id)
-      expect(json_response['name']).to eq(category.name)
-      expect(json_response['color']).to eq(category.color)
+      expect(json_response['data']['id']).to eq(category.id)
+      expect(json_response['data']['name']).to eq(category.name)
+      expect(json_response['data']['color']).to eq(category.color)
     end
 
     context 'when category does not exist' do
       it 'returns not found' do
-        get '/api/categories/999', headers: headers
+        get '/api/v1/categories/999', headers: headers
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -60,13 +60,13 @@ RSpec.describe '/api/v1/categories', type: :request do
       let(:other_category) { create(:category, user: other_user) }
 
       it 'returns not found' do
-        get "/api/categories/#{other_category.id}", headers: headers
+        get "/api/v1/categories/#{other_category.id}", headers: headers
         expect(response).to have_http_status(:not_found)
       end
     end
   end
 
-  describe 'POST /api/categories' do
+  describe 'POST /api/v1/categories' do
     let(:valid_params) do
       {
         category: {
@@ -82,8 +82,8 @@ RSpec.describe '/api/v1/categories', type: :request do
       expect(response).to have_http_status(:created)
       json_response = JSON.parse(response.body)
       
-      expect(json_response['name']).to eq('New Category')
-      expect(json_response['color']).to eq('#FF5733')
+      expect(json_response['data']['name']).to eq('New Category')
+      expect(json_response['data']['color']).to eq('#FF5733')
     end
 
     context 'with invalid params' do
@@ -109,7 +109,7 @@ RSpec.describe '/api/v1/categories', type: :request do
     end
   end
 
-  describe 'PATCH /api/categories/:id' do
+  describe 'PATCH /api/v1/categories/:id' do
     let(:category) { create(:category, user: user, name: 'Old Name', color: '#000000') }
 
     let(:update_params) do
@@ -122,13 +122,13 @@ RSpec.describe '/api/v1/categories', type: :request do
     end
 
     it 'updates the category' do
-      patch "/api/categories/#{category.id}", params: update_params, headers: headers, as: :json
+      patch "/api/v1/categories/#{category.id}", params: update_params, headers: headers, as: :json
 
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
       
-      expect(json_response['name']).to eq('Updated Name')
-      expect(json_response['color']).to eq('#FFFFFF')
+      expect(json_response['data']['name']).to eq('Updated Name')
+      expect(json_response['data']['color']).to eq('#FFFFFF')
       
       category.reload
       expect(category.name).to eq('Updated Name')
@@ -136,13 +136,13 @@ RSpec.describe '/api/v1/categories', type: :request do
     end
   end
 
-  describe 'DELETE /api/categories/:id' do
+  describe 'DELETE /api/v1/categories/:id' do
     let!(:category) { create(:category, user: user) }
     let!(:todo_with_category) { create(:todo, user: user, category: category) }
 
     it 'deletes the category and nullifies todo categories' do
       expect {
-        delete "/api/categories/#{category.id}", headers: headers
+        delete "/api/v1/categories/#{category.id}", headers: headers
       }.to change(Category, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)

@@ -6,7 +6,7 @@ RSpec.describe 'Todo Files API', type: :request do
   let(:auth_headers) { auth_headers_for(user) }
   let(:todo) { create(:todo, user: user) }
   
-  describe 'POST /api/todos with files' do
+  describe 'POST /api/v1/todos with files' do
     let(:valid_attributes) do
       {
         todo: {
@@ -23,7 +23,7 @@ RSpec.describe 'Todo Files API', type: :request do
       let(:image_file) { fixture_file_upload('test_image.png', 'image/png') }
       
       it 'creates a todo with a single file' do
-        post api_todos_path,
+        post api_v1_todos_path,
              params: valid_attributes.merge(todo: valid_attributes[:todo].merge(files: [text_file])),
              headers: auth_headers
         
@@ -38,7 +38,7 @@ RSpec.describe 'Todo Files API', type: :request do
       end
       
       it 'creates a todo with multiple files' do
-        post api_todos_path,
+        post api_v1_todos_path,
              params: valid_attributes.merge(todo: valid_attributes[:todo].merge(files: [text_file, image_file])),
              headers: auth_headers
         
@@ -54,12 +54,12 @@ RSpec.describe 'Todo Files API', type: :request do
     end
   end
   
-  describe 'PATCH /api/todos/:id with files' do
+  describe 'PATCH /api/v1/todos/:id with files' do
     let(:text_file) { fixture_file_upload('test_file.txt', 'text/plain') }
     let(:image_file) { fixture_file_upload('test_image.png', 'image/png') }
     
     it 'adds files to existing todo' do
-      patch api_todo_path(todo),
+      patch api_v1_todo_path(todo),
             params: { todo: { files: [text_file] } },
             headers: auth_headers
       
@@ -73,14 +73,14 @@ RSpec.describe 'Todo Files API', type: :request do
     
     it 'preserves existing files when adding new ones' do
       # First add a file
-      patch api_todo_path(todo),
+      patch api_v1_todo_path(todo),
             params: { todo: { files: [text_file] } },
             headers: auth_headers
       
       expect(response).to have_http_status(:ok)
       
       # Then add another file
-      patch api_todo_path(todo),
+      patch api_v1_todo_path(todo),
             params: { todo: { files: [image_file] } },
             headers: auth_headers
       
@@ -95,13 +95,13 @@ RSpec.describe 'Todo Files API', type: :request do
     end
   end
   
-  describe 'DELETE /api/todos/:id/files/:file_id' do
+  describe 'DELETE /api/v1/todos/:id/files/:file_id' do
     let(:text_file) { fixture_file_upload('test_file.txt', 'text/plain') }
     let(:image_file) { fixture_file_upload('test_image.png', 'image/png') }
     
     before do
       # Add files to todo
-      patch api_todo_path(todo),
+      patch api_v1_todo_path(todo),
             params: { todo: { files: [text_file, image_file] } },
             headers: auth_headers
       
@@ -113,7 +113,7 @@ RSpec.describe 'Todo Files API', type: :request do
       
       file_to_delete = todo.files.first
       
-      delete "/api/todos/#{todo.id}/files/#{file_to_delete.id}",
+      delete "/api/v1/todos/#{todo.id}/files/#{file_to_delete.id}",
              headers: auth_headers
       
       expect(response).to have_http_status(:ok)
@@ -126,7 +126,7 @@ RSpec.describe 'Todo Files API', type: :request do
     end
     
     it 'returns 404 for non-existent file' do
-      delete "/api/todos/#{todo.id}/files/non-existent-id",
+      delete "/api/v1/todos/#{todo.id}/files/non-existent-id",
              headers: auth_headers
       
       expect(response).to have_http_status(:not_found)
@@ -134,13 +134,13 @@ RSpec.describe 'Todo Files API', type: :request do
     
     it 'returns 404 for file from another todo' do
       other_todo = create(:todo, user: user)
-      patch api_todo_path(other_todo),
+      patch api_v1_todo_path(other_todo),
             params: { todo: { files: [fixture_file_upload('test_file.txt', 'text/plain')] } },
             headers: auth_headers
       
       other_file = other_todo.files.first
       
-      delete "/api/todos/#{todo.id}/files/#{other_file.id}",
+      delete "/api/v1/todos/#{todo.id}/files/#{other_file.id}",
              headers: auth_headers
       
       expect(response).to have_http_status(:not_found)
@@ -152,14 +152,14 @@ RSpec.describe 'Todo Files API', type: :request do
       # First verify basic todo access control
       other_headers = auth_headers_for(other_user)
       
-      get api_todo_path(todo), headers: other_headers
+      get api_v1_todo_path(todo), headers: other_headers
       expect(response).to have_http_status(:not_found)
     end
     
     it 'prevents other users from deleting files' do
       # Add file to todo
       text_file = fixture_file_upload('test_file.txt', 'text/plain')
-      patch api_todo_path(todo),
+      patch api_v1_todo_path(todo),
             params: { todo: { files: [text_file] } },
             headers: auth_headers
       
@@ -179,7 +179,7 @@ RSpec.describe 'Todo Files API', type: :request do
       # Authenticate as other_user and attempt to delete the file
       other_headers = auth_headers_for(other_user)
       
-      delete "/api/todos/#{todo_id}/files/#{file_id}",
+      delete "/api/v1/todos/#{todo_id}/files/#{file_id}",
              headers: other_headers
       
       # Should get 404 because other_user cannot access user's todo

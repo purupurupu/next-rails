@@ -70,10 +70,7 @@ module Api
             message: 'Todo created successfully'
           )
         else
-          render_error_response(
-            error: @todo.errors,
-            status: :unprocessable_entity
-          )
+          render json: { errors: @todo.errors.full_messages }, status: :unprocessable_entity
         end
       end
 
@@ -98,10 +95,7 @@ module Api
             message: 'Todo updated successfully'
           )
         else
-          render_error_response(
-            error: @todo.errors,
-            status: :unprocessable_entity
-          )
+          render json: { errors: @todo.errors.full_messages }, status: :unprocessable_entity
         end
       end
 

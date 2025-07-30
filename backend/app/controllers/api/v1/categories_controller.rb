@@ -37,10 +37,7 @@ module Api
             message: 'Category created successfully'
           )
         else
-          render_error_response(
-            error: @category.errors,
-            status: :unprocessable_entity
-          )
+          render json: { errors: @category.errors }, status: :unprocessable_entity
         end
       end
 
@@ -53,10 +50,7 @@ module Api
             message: 'Category updated successfully'
           )
         else
-          render_error_response(
-            error: @category.errors,
-            status: :unprocessable_entity
-          )
+          render json: { errors: @category.errors }, status: :unprocessable_entity
         end
       end
 

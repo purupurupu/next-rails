@@ -64,7 +64,7 @@ RSpec.describe 'Todos API', type: :request do
     end
   end
 
-  describe 'POST /api/todos' do
+  describe 'POST /api/v1/todos' do
     let(:valid_attributes) do
       {
         title: 'New Todo',
@@ -114,12 +114,12 @@ RSpec.describe 'Todos API', type: :request do
 
         expect(response).to have_http_status(:unprocessable_entity)
         errors = JSON.parse(response.body)
-        expect(errors['errors']['title']).to include("can't be blank")
+        expect(errors['errors']).to include("Title can't be blank")
       end
     end
   end
 
-  describe 'PUT /api/todos/:id' do
+  describe 'PUT /api/v1/todos/:id' do
     let(:todo) { create(:todo, user: user) }
     let(:update_attributes) do
       {
@@ -152,7 +152,7 @@ RSpec.describe 'Todos API', type: :request do
     end
   end
 
-  describe 'DELETE /api/todos/:id' do
+  describe 'DELETE /api/v1/todos/:id' do
     let(:todo) { create(:todo, user: user) }
 
     context 'when authenticated' do
@@ -178,7 +178,7 @@ RSpec.describe 'Todos API', type: :request do
     end
   end
 
-  describe 'PATCH /api/todos/update_order' do
+  describe 'PATCH /api/v1/todos/update_order' do
     let!(:todo1) { create(:todo, user: user, position: 1) }
     let!(:todo2) { create(:todo, user: user, position: 2) }
     let!(:todo3) { create(:todo, user: user, position: 3) }
@@ -193,7 +193,7 @@ RSpec.describe 'Todos API', type: :request do
           ]
         }
 
-        patch '/api/todos/update_order', params: reorder_params, headers: headers, as: :json
+        patch '/api/v1/todos/update_order', params: reorder_params, headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
         
@@ -213,14 +213,14 @@ RSpec.describe 'Todos API', type: :request do
           todos: [{ id: other_todo.id, position: 5 }]
         }
 
-        patch '/api/todos/update_order', params: reorder_params, headers: headers, as: :json
+        patch '/api/v1/todos/update_order', params: reorder_params, headers: headers, as: :json
         
         expect(response).to have_http_status(:not_found)
       end
     end
   end
 
-  describe 'PATCH /api/todos/:id/tags' do
+  describe 'PATCH /api/v1/todos/:id/tags' do
     let(:todo) { create(:todo, user: user) }
     let(:tag1) { create(:tag, name: 'work', user: user) }
     let(:tag2) { create(:tag, name: 'urgent', user: user) }
