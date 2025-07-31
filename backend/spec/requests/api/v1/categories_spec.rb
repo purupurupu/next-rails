@@ -160,10 +160,10 @@ RSpec.describe '/api/v1/categories', type: :request do
       post '/api/v1/categories', params: { category: { name: 'Test', color: '#000000' } }, as: :json
       expect(response.status).to be_in([401, 403])
 
-      patch '/api/categories/1', params: { category: { name: 'Test' } }, as: :json
+      patch '/api/v1/categories/1', params: { category: { name: 'Test' } }, as: :json
       expect(response.status).to be_in([401, 403])
 
-      delete '/api/categories/1'
+      delete '/api/v1/categories/1'
       expect(response.status).to be_in([401, 403])
     end
   end

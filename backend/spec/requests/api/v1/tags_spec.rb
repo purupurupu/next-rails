@@ -6,7 +6,7 @@ RSpec.describe "Api::V1::Tags", type: :request do
   let(:valid_attributes) { { name: 'Work', color: '#FF0000' } }
   let(:invalid_attributes) { { name: '', color: 'invalid' } }
 
-  describe "GET /api/tags" do
+  describe "GET /api/v1/tags" do
     context "when authenticated" do
       before do
         create_list(:tag, 3, user: user)
@@ -38,14 +38,14 @@ RSpec.describe "Api::V1::Tags", type: :request do
     end
 
     context "when not authenticated" do
-      it "returns forbidden status" do
+      it "returns unauthorized status" do
         get '/api/v1/tags'
-        expect(response).to have_http_status(:forbidden)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
 
-  describe "GET /api/tags/:id" do
+  describe "GET /api/v1/tags/:id" do
     let(:tag) { create(:tag, user: user) }
 
     context "when authenticated" do
@@ -71,14 +71,14 @@ RSpec.describe "Api::V1::Tags", type: :request do
     end
 
     context "when not authenticated" do
-      it "returns forbidden status" do
+      it "returns unauthorized status" do
         get "/api/v1/tags/#{tag.id}"
-        expect(response).to have_http_status(:forbidden)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
 
-  describe "POST /api/tags" do
+  describe "POST /api/v1/tags" do
     context "when authenticated" do
       context "with valid parameters" do
         it "creates a new tag" do
@@ -137,9 +137,9 @@ RSpec.describe "Api::V1::Tags", type: :request do
     end
 
     context "when not authenticated" do
-      it "returns forbidden status" do
+      it "returns unauthorized status" do
         post '/api/v1/tags', params: { tag: valid_attributes }
-        expect(response).to have_http_status(:forbidden)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
@@ -190,9 +190,9 @@ RSpec.describe "Api::V1::Tags", type: :request do
     end
 
     context "when not authenticated" do
-      it "returns forbidden status" do
+      it "returns unauthorized status" do
         patch "/api/v1/tags/#{tag.id}", params: { tag: new_attributes }
-        expect(response).to have_http_status(:forbidden)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
@@ -234,9 +234,9 @@ RSpec.describe "Api::V1::Tags", type: :request do
     end
 
     context "when not authenticated" do
-      it "returns forbidden status" do
+      it "returns unauthorized status" do
         delete "/api/v1/tags/#{tag.id}"
-        expect(response).to have_http_status(:forbidden)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end

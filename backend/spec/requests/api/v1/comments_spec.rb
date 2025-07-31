@@ -69,10 +69,6 @@ RSpec.describe "Api::V1::Comments", type: :request do
         json = JSON.parse(response.body)
         expect(json['content']).to eq("This is a test comment")
         expect(json['user']['id']).to eq(user.id)
-      rescue => e
-        puts "Response status: #{response.status}"
-        puts "Response body: #{response.body}"
-        raise e
       end
     end
     
@@ -166,18 +162,18 @@ RSpec.describe "Api::V1::Comments", type: :request do
     # ヘッダーを送らないことで未認証状態をテスト
     
     it "requires authentication for all endpoints" do
-      # 学習ポイント：Deviseの挙動により、認証なしのアクセスは403(forbidden)を返す
+      # 学習ポイント：Devise JWTの挙動により、認証なしのアクセスは401(unauthorized)を返す
       get "/api/v1/todos/#{todo.id}/comments"
-      expect(response).to have_http_status(:forbidden)
+      expect(response).to have_http_status(:unauthorized)
       
       post "/api/v1/todos/#{todo.id}/comments", params: { comment: { content: "Test" } }.to_json
-      expect(response).to have_http_status(:forbidden)
+      expect(response).to have_http_status(:unauthorized)
       
       patch "/api/v1/todos/#{todo.id}/comments/1", params: { comment: { content: "Test" } }.to_json
-      expect(response).to have_http_status(:forbidden)
+      expect(response).to have_http_status(:unauthorized)
       
       delete "/api/v1/todos/#{todo.id}/comments/1"
-      expect(response).to have_http_status(:forbidden)
+      expect(response).to have_http_status(:unauthorized)
     end
   end
 end

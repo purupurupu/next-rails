@@ -30,11 +30,12 @@ RSpec.describe 'Todo Files API', type: :request do
         expect(response).to have_http_status(:created)
         
         json_response = JSON.parse(response.body)
-        expect(json_response['files']).to be_an(Array)
-        expect(json_response['files'].length).to eq(1)
-        expect(json_response['files'][0]['filename']).to eq('test_file.txt')
-        expect(json_response['files'][0]['content_type']).to eq('text/plain')
-        expect(json_response['files'][0]['url']).to be_present
+        todo_data = json_response['data']
+        expect(todo_data['files']).to be_an(Array)
+        expect(todo_data['files'].length).to eq(1)
+        expect(todo_data['files'][0]['filename']).to eq('test_file.txt')
+        expect(todo_data['files'][0]['content_type']).to eq('text/plain')
+        expect(todo_data['files'][0]['url']).to be_present
       end
       
       it 'creates a todo with multiple files' do
@@ -45,10 +46,11 @@ RSpec.describe 'Todo Files API', type: :request do
         expect(response).to have_http_status(:created)
         
         json_response = JSON.parse(response.body)
-        expect(json_response['files']).to be_an(Array)
-        expect(json_response['files'].length).to eq(2)
+        todo_data = json_response['data']
+        expect(todo_data['files']).to be_an(Array)
+        expect(todo_data['files'].length).to eq(2)
         
-        filenames = json_response['files'].map { |f| f['filename'] }
+        filenames = todo_data['files'].map { |f| f['filename'] }
         expect(filenames).to contain_exactly('test_file.txt', 'test_image.png')
       end
     end
@@ -66,9 +68,10 @@ RSpec.describe 'Todo Files API', type: :request do
       expect(response).to have_http_status(:ok)
       
       json_response = JSON.parse(response.body)
-      expect(json_response['files']).to be_an(Array)
-      expect(json_response['files'].length).to eq(1)
-      expect(json_response['files'][0]['filename']).to eq('test_file.txt')
+      todo_data = json_response['data']
+      expect(todo_data['files']).to be_an(Array)
+      expect(todo_data['files'].length).to eq(1)
+      expect(todo_data['files'][0]['filename']).to eq('test_file.txt')
     end
     
     it 'preserves existing files when adding new ones' do
@@ -87,10 +90,11 @@ RSpec.describe 'Todo Files API', type: :request do
       expect(response).to have_http_status(:ok)
       
       json_response = JSON.parse(response.body)
-      expect(json_response['files']).to be_an(Array)
-      expect(json_response['files'].length).to eq(2)
+      todo_data = json_response['data']
+      expect(todo_data['files']).to be_an(Array)
+      expect(todo_data['files'].length).to eq(2)
       
-      filenames = json_response['files'].map { |f| f['filename'] }
+      filenames = todo_data['files'].map { |f| f['filename'] }
       expect(filenames).to contain_exactly('test_file.txt', 'test_image.png')
     end
   end
@@ -119,7 +123,8 @@ RSpec.describe 'Todo Files API', type: :request do
       expect(response).to have_http_status(:ok)
       
       json_response = JSON.parse(response.body)
-      expect(json_response['files'].length).to eq(1)
+      todo_data = json_response['data']
+      expect(todo_data['files'].length).to eq(1)
       
       todo.reload
       expect(todo.files.count).to eq(1)
