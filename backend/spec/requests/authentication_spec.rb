@@ -206,8 +206,8 @@ RSpec.describe 'Authentication', type: :request do
       it 'returns unauthorized response' do
         delete '/auth/sign_out', headers: headers.merge({ 'Authorization' => 'Bearer invalid_token' }), as: :json
         
-        # Invalid JWT tokens cause 500 errors at the middleware level
-        expect(response).to have_http_status(:internal_server_error)
+        # Invalid JWT tokens are now properly handled and return 401
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end

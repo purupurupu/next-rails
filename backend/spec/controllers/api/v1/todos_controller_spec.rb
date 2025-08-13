@@ -502,8 +502,6 @@ RSpec.describe Api::V1::TodosController, type: :controller do
     before { sign_in user }
     
     it 'updates todo tags' do
-      skip "Controller bug: tag_ids from params (strings) are not converted to integers before comparison"
-      
       patch :update_tags, params: {
         id: todo.id,
         tag_ids: [tag1.id, tag2.id]
@@ -527,8 +525,6 @@ RSpec.describe Api::V1::TodosController, type: :controller do
     end
     
     it 'validates tags belong to current user' do
-      skip "Controller bug: tag_ids from params (strings) are not converted to integers before comparison"
-      
       other_tag = create(:tag, user: other_user)
       
       patch :update_tags, params: {
@@ -538,7 +534,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
       
       json = JSON.parse(response.body)
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(json['error']['details']['invalid_tags']).to include(other_tag.id.to_s)
+      expect(json['error']['details']['invalid_tags']).to include(other_tag.id)
     end
   end
   

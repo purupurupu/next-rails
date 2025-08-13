@@ -114,7 +114,7 @@ module Api
       end
 
       def update_tags
-        tag_ids = params[:tag_ids] || []
+        tag_ids = (params[:tag_ids] || []).map(&:to_i)
         
         # Validate that all tags belong to current user
         user_tag_ids = current_user.tags.where(id: tag_ids).pluck(:id)

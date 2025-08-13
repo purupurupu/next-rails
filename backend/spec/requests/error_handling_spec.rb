@@ -46,9 +46,13 @@ RSpec.describe 'Error Handling', type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
         
         json = JSON.parse(response.body)
-        # Current implementation returns simple errors array
-        expect(json).to have_key('errors')
-        expect(json['errors']).to include("Title can't be blank")
+        # Expect standardized error format
+        expect(json).to have_key('error')
+        expect(json['error']).to include(
+          'code' => 'VALIDATION_FAILED',
+          'message' => 'Validation failed. Please check your input.'
+        )
+        expect(json['error']['details']['validation_errors']['title']).to include("can't be blank")
       end
     end
     
