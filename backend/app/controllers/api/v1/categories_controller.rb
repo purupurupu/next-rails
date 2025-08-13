@@ -37,7 +37,10 @@ module Api
             message: 'Category created successfully'
           )
         else
-          render json: { errors: @category.errors }, status: :unprocessable_entity
+          render_error_response(
+            error: ::ValidationError.new(errors: @category.errors),
+            status: :unprocessable_entity
+          )
         end
       end
 
@@ -50,7 +53,10 @@ module Api
             message: 'Category updated successfully'
           )
         else
-          render json: { errors: @category.errors }, status: :unprocessable_entity
+          render_error_response(
+            error: ::ValidationError.new(errors: @category.errors),
+            status: :unprocessable_entity
+          )
         end
       end
 

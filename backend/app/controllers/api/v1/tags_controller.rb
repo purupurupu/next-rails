@@ -37,7 +37,10 @@ module Api
             message: 'Tag created successfully'
           )
         else
-          render json: { errors: @tag.errors.full_messages }, status: :unprocessable_entity
+          render_error_response(
+            error: ::ValidationError.new(errors: @tag.errors),
+            status: :unprocessable_entity
+          )
         end
       end
 
@@ -50,7 +53,10 @@ module Api
             message: 'Tag updated successfully'
           )
         else
-          render json: { errors: @tag.errors.full_messages }, status: :unprocessable_entity
+          render_error_response(
+            error: ::ValidationError.new(errors: @tag.errors),
+            status: :unprocessable_entity
+          )
         end
       end
 
