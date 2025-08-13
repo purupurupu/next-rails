@@ -71,7 +71,7 @@ module Api
           )
         else
           render_error_response(
-            error: @todo.errors,
+            error: ::ValidationError.new(errors: @todo.errors),
             status: :unprocessable_entity
           )
         end
@@ -99,7 +99,7 @@ module Api
           )
         else
           render_error_response(
-            error: @todo.errors,
+            error: ::ValidationError.new(errors: @todo.errors),
             status: :unprocessable_entity
           )
         end
@@ -114,7 +114,7 @@ module Api
       end
 
       def update_tags
-        tag_ids = params[:tag_ids] || []
+        tag_ids = (params[:tag_ids] || []).map(&:to_i)
         
         # Validate that all tags belong to current user
         user_tag_ids = current_user.tags.where(id: tag_ids).pluck(:id)
@@ -165,7 +165,7 @@ module Api
           message: 'Todo order updated successfully'
         )
       rescue => e
-        Rails.logger.error "Failed to update todo order: #{e.message}"
+        Rails.logger.error "Failed to update todo order: #{e.message}" unless Rails.env.test? || defined?(RSpec)
         render_error_response(
           error: 'Failed to update todo order',
           status: :unprocessable_entity,

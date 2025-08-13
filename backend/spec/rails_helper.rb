@@ -62,6 +62,11 @@ RSpec.configure do |config|
   # examples within a transaction, remove the following line or assign false
   # instead of true.
   config.use_transactional_fixtures = true
+  
+  # Set the host for request specs to avoid host authorization warnings
+  config.before(:each, type: :request) do
+    host! 'localhost:3001'
+  end
 
   # You can uncomment this line to turn off ActiveRecord support entirely.
   # config.use_active_record = false

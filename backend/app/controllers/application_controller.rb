@@ -117,6 +117,9 @@ class ApplicationController < ActionController::API
   end
 
   def log_error(exception, level = :error)
+    # Skip logging in test environment or when running specs
+    return if Rails.env.test? || ENV['RAILS_ENV'] == 'test' || defined?(RSpec)
+    
     Rails.logger.send(level) do
       {
         error_class: exception.class.name,

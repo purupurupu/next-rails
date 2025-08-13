@@ -135,6 +135,9 @@ class ErrorHandler
   end
   
   def log_error(error, request, level)
+    # Skip logging in test environment or when running specs
+    return if Rails.env.test? || ENV['RAILS_ENV'] == 'test' || defined?(RSpec)
+    
     Rails.logger.send(level) do
       {
         error_class: error.class.name,

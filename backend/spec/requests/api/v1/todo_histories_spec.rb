@@ -55,10 +55,10 @@ RSpec.describe "Api::V1::TodoHistories", type: :request do
     end
     
     context "without authentication" do
-      it "returns 403" do
+      it "returns 401" do
         get "/api/v1/todos/#{todo.id}/histories"
         
-        expect(response).to have_http_status(:forbidden)
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
@@ -69,7 +69,7 @@ RSpec.describe "Api::V1::TodoHistories", type: :request do
       
       expect {
         # 学習ポイント：current_userを設定するためのテスト
-        post "/api/todos", params: todo_params.to_json, headers: auth_headers
+        post "/api/v1/todos", params: todo_params.to_json, headers: auth_headers
       }.to change { TodoHistory.count }.by(1)
       
       history = TodoHistory.last
@@ -82,7 +82,7 @@ RSpec.describe "Api::V1::TodoHistories", type: :request do
       patch_params = { todo: { title: "Updated Title" } }
       
       expect {
-        patch "/api/todos/#{todo.id}", params: patch_params.to_json, headers: auth_headers
+        patch "/api/v1/todos/#{todo.id}", params: patch_params.to_json, headers: auth_headers
       }.to change { todo.todo_histories.count }.by(1)
       
       history = todo.todo_histories.last
@@ -95,7 +95,7 @@ RSpec.describe "Api::V1::TodoHistories", type: :request do
     it "records status change with special action" do
       patch_params = { todo: { status: 'in_progress' } }
       
-      patch "/api/todos/#{todo.id}", params: patch_params.to_json, headers: auth_headers
+      patch "/api/v1/todos/#{todo.id}", params: patch_params.to_json, headers: auth_headers
       
       history = todo.todo_histories.last
       expect(history.action).to eq('status_changed')
@@ -105,7 +105,7 @@ RSpec.describe "Api::V1::TodoHistories", type: :request do
     it "records priority change with special action" do
       patch_params = { todo: { priority: 'high' } }
       
-      patch "/api/todos/#{todo.id}", params: patch_params.to_json, headers: auth_headers
+      patch "/api/v1/todos/#{todo.id}", params: patch_params.to_json, headers: auth_headers
       
       history = todo.todo_histories.last
       expect(history.action).to eq('priority_changed')

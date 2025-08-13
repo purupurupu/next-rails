@@ -29,7 +29,7 @@ Rails.application.configure do
   config.cache_store = :null_store
 
   # Render exception templates for rescuable exceptions and raise for other exceptions.
-  config.action_dispatch.show_exceptions = :rescuable
+  config.action_dispatch.show_exceptions = :none
 
   # Disable request forgery protection in test environment.
   config.action_controller.allow_forgery_protection = false
@@ -76,4 +76,10 @@ Rails.application.configure do
   
   # Set log level to WARN to reduce noise in test output
   config.log_level = :warn
+  
+  # Suppress backtrace in test environment
+  Rails.backtrace_cleaner.remove_silencers! if ENV['FULL_BACKTRACE']
+  
+  # Disable verbose error reports in tests
+  config.action_dispatch.verbose_exceptions_log = false
 end
