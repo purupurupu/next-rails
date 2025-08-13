@@ -119,19 +119,25 @@ RSpec.describe "Api::V1::Tags", type: :request do
 
         it "returns validation errors" do
           post '/api/v1/tags', params: { tag: { name: '' } }, headers: headers, as: :json
-          expect(JSON.parse(response.body)['errors']).to include("Name can't be blank")
+          json = JSON.parse(response.body)
+          expect(json['error']['code']).to eq('VALIDATION_FAILED')
+          expect(json['error']['details']['validation_errors']['name']).to include("can't be blank")
         end
 
         it "returns error for duplicate name" do
           create(:tag, name: 'work', user: user)
           post '/api/v1/tags', params: { tag: { name: 'WORK' } }, headers: headers, as: :json
           expect(response).to have_http_status(:unprocessable_entity)
-          expect(JSON.parse(response.body)['errors']).to include("Name has already been taken")
+          json = JSON.parse(response.body)
+          expect(json['error']['code']).to eq('VALIDATION_FAILED')
+          expect(json['error']['details']['validation_errors']['name']).to include("has already been taken")
         end
 
         it "returns error for invalid color format" do
           post '/api/v1/tags', params: { tag: { name: 'test', color: 'red' } }, headers: headers, as: :json
-          expect(JSON.parse(response.body)['errors']).to include("Color must be a valid hex color")
+          json = JSON.parse(response.body)
+          expect(json['error']['code']).to eq('VALIDATION_FAILED')
+          expect(json['error']['details']['validation_errors']['color']).to include("must be a valid hex color")
         end
       end
     end
@@ -173,7 +179,9 @@ RSpec.describe "Api::V1::Tags", type: :request do
 
         it "returns validation errors" do
           patch "/api/v1/tags/#{tag.id}", params: { tag: { name: '' } }, headers: headers, as: :json
-          expect(JSON.parse(response.body)['errors']).to include("Name can't be blank")
+          json = JSON.parse(response.body)
+          expect(json['error']['code']).to eq('VALIDATION_FAILED')
+          expect(json['error']['details']['validation_errors']['name']).to include("can't be blank")
         end
       end
 

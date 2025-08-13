@@ -102,9 +102,10 @@ RSpec.describe '/api/v1/categories', type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         
-        expect(json_response['errors']).to be_present
-        expect(json_response['errors']['name']).to include("can't be blank")
-        expect(json_response['errors']['color']).to include('must be a valid hex color')
+        expect(json_response['error']).to be_present
+        expect(json_response['error']['code']).to eq('VALIDATION_FAILED')
+        expect(json_response['error']['details']['validation_errors']['name']).to include("can't be blank")
+        expect(json_response['error']['details']['validation_errors']['color']).to include('must be a valid hex color')
       end
     end
   end

@@ -114,7 +114,9 @@ RSpec.describe 'Todos API', type: :request do
 
         expect(response).to have_http_status(:unprocessable_entity)
         errors = JSON.parse(response.body)
-        expect(errors['errors']).to include("Title can't be blank")
+        expect(errors['error']).to be_present
+        expect(errors['error']['code']).to eq('VALIDATION_FAILED')
+        expect(errors['error']['details']['validation_errors']['title']).to include("can't be blank")
       end
     end
   end

@@ -20,29 +20,32 @@ RSpec.describe "Api::V1::Comments", type: :request do
     
     context "with valid todo_id" do
       it "returns comments in chronological order" do
-        get "/api/v1/todos/#{todo.id}/comments", headers: auth_headers, headers: auth_headers
+        get "/api/v1/todos/#{todo.id}/comments", headers: auth_headers
         
         expect(response).to have_http_status(:ok)
         json = JSON.parse(response.body)
-        expect(json.length).to eq(4)
+        expect(json['data']).to be_an(Array)
+        expect(json['data'].length).to eq(4)
         # 古いコメントが最初に来ることを確認
-        expect(json.first['id']).to eq(old_comment.id)
+        expect(json['data'].first['id']).to eq(old_comment.id)
       end
       
       it "includes user information" do
         get "/api/v1/todos/#{todo.id}/comments", headers: auth_headers
         
         json = JSON.parse(response.body)
-        expect(json.first['user']).to be_present
-        expect(json.first['user']['id']).to be_present
-        expect(json.first['user']['name']).to be_present
+        expect(json['data']).to be_an(Array)
+        expect(json['data'].first['user']).to be_present
+        expect(json['data'].first['user']['id']).to be_present
+        expect(json['data'].first['user']['name']).to be_present
       end
       
       it "includes editable flag" do
         get "/api/v1/todos/#{todo.id}/comments", headers: auth_headers
         
         json = JSON.parse(response.body)
-        expect(json.first).to have_key('editable')
+        expect(json['data']).to be_an(Array)
+        expect(json['data'].first).to have_key('editable')
       end
     end
     
@@ -67,8 +70,9 @@ RSpec.describe "Api::V1::Comments", type: :request do
         
         expect(response).to have_http_status(:created)
         json = JSON.parse(response.body)
-        expect(json['content']).to eq("This is a test comment")
-        expect(json['user']['id']).to eq(user.id)
+        expect(json['data']).to be_present
+        expect(json['data']['content']).to eq("This is a test comment")
+        expect(json['data']['user']['id']).to eq(user.id)
       end
     end
     
@@ -78,7 +82,8 @@ RSpec.describe "Api::V1::Comments", type: :request do
         
         expect(response).to have_http_status(:unprocessable_entity)
         json = JSON.parse(response.body)
-        expect(json['errors']).to be_present
+        expect(json['error']).to be_present
+        expect(json['error']['code']).to eq('VALIDATION_FAILED')
       end
     end
     
@@ -103,7 +108,8 @@ RSpec.describe "Api::V1::Comments", type: :request do
           
           expect(response).to have_http_status(:ok)
           json = JSON.parse(response.body)
-          expect(json['content']).to eq("Updated comment")
+          expect(json['data']).to be_present
+          expect(json['data']['content']).to eq("Updated comment")
         end
       end
       
@@ -115,7 +121,7 @@ RSpec.describe "Api::V1::Comments", type: :request do
           
           expect(response).to have_http_status(:unprocessable_entity)
           json = JSON.parse(response.body)
-          expect(json['error']).to include('編集可能時間')
+          expect(json['error']['message']).to include('編集可能時間')
         end
       end
     end
@@ -126,7 +132,7 @@ RSpec.describe "Api::V1::Comments", type: :request do
         
         expect(response).to have_http_status(:forbidden)
         json = JSON.parse(response.body)
-        expect(json['error']).to include('編集権限')
+        expect(json['error']['message']).to include('編集権限')
       end
     end
   end
@@ -152,7 +158,7 @@ RSpec.describe "Api::V1::Comments", type: :request do
         
         expect(response).to have_http_status(:forbidden)
         json = JSON.parse(response.body)
-        expect(json['error']).to include('削除権限')
+        expect(json['error']['message']).to include('削除権限')
       end
     end
   end
