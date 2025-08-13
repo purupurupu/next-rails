@@ -165,7 +165,7 @@ module Api
           message: 'Todo order updated successfully'
         )
       rescue => e
-        Rails.logger.error "Failed to update todo order: #{e.message}"
+        Rails.logger.error "Failed to update todo order: #{e.message}" unless Rails.env.test? || defined?(RSpec)
         render_error_response(
           error: 'Failed to update todo order',
           status: :unprocessable_entity,
