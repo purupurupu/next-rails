@@ -75,20 +75,20 @@ docker compose exec frontend pnpm run typecheck:full  # Full TypeScript check
 
 ### Backend Development
 ```bash
-# Run tests with RSpec
-docker compose exec backend bundle exec rspec
+# Run tests with RSpec (recommended for clean output)
+docker compose exec backend env RAILS_ENV=test bundle exec rspec
 
 # Run specific test file
-docker compose exec backend bundle exec rspec spec/models/todo_spec.rb
+docker compose exec backend env RAILS_ENV=test bundle exec rspec spec/models/todo_spec.rb
 
-# Run tests with coverage
-docker compose exec backend bundle exec rspec --format documentation
+# Run tests with documentation format
+docker compose exec backend env RAILS_ENV=test bundle exec rspec --format documentation
 
-# Run tests using dedicated test service
+# Run tests using dedicated test service (RAILS_ENV=test is pre-configured)
 docker compose --profile test run backend-test
 
 # Run authentication tests
-docker compose exec backend bundle exec rspec spec/requests/authentication_spec.rb
+docker compose exec backend env RAILS_ENV=test bundle exec rspec spec/requests/authentication_spec.rb
 
 # Generate new resources
 docker compose exec backend rails generate model ModelName
