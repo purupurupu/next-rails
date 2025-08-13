@@ -156,7 +156,6 @@ RSpec.describe Api::V1::TagsController, type: :controller do
     
     context 'with invalid params' do
       it 'returns error when name is missing' do
-        skip "Controller bug: render_error_response doesn't handle ActiveModel::Errors objects"
         
         expect {
           post :create, params: { tag: { color: '#FF5733' } }
@@ -166,7 +165,6 @@ RSpec.describe Api::V1::TagsController, type: :controller do
       end
       
       it 'returns error when name is duplicate for same user' do
-        skip "Controller bug: render_error_response doesn't handle ActiveModel::Errors objects"
         
         existing_tag = create(:tag, user: user, name: 'Existing')
         
@@ -228,7 +226,6 @@ RSpec.describe Api::V1::TagsController, type: :controller do
     
     context 'with invalid params' do
       it 'returns error for invalid data' do
-        skip "Controller bug: render_error_response doesn't handle ActiveModel::Errors objects"
         
         original_name = tag.name
         
@@ -242,7 +239,6 @@ RSpec.describe Api::V1::TagsController, type: :controller do
       end
       
       it 'returns error when updating to duplicate name' do
-        skip "Controller bug: render_error_response doesn't handle ActiveModel::Errors objects"
         
         other_tag = create(:tag, user: user, name: 'Taken')
         original_name = tag.name
