@@ -4,8 +4,7 @@ require 'simplecov-json'
 
 SimpleCov.start 'rails' do
   # Set minimum coverage percentage
-  # TODO: Increase to 80% after improving test coverage
-  minimum_coverage 70
+  minimum_coverage 90
   
   # Add custom filters
   add_filter '/spec/'
