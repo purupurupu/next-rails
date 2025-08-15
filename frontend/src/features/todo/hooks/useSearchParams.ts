@@ -142,8 +142,7 @@ export function useSearchParams(): UseSearchParamsReturn {
     });
   }, []);
 
-  // Calculate active filters with stable dependency
-  const searchParamsKey = JSON.stringify(searchParams);
+  // Calculate active filters
   const activeFilters = useMemo<ActiveFilters>(() => {
     const filters: ActiveFilters = {};
 
@@ -160,7 +159,7 @@ export function useSearchParams(): UseSearchParamsReturn {
     }
 
     return filters;
-  }, [searchParamsKey]);
+  }, [searchParams.q, searchParams.category_id, searchParams.status, searchParams.priority, searchParams.tag_ids, searchParams.due_date_from, searchParams.due_date_to]);
 
   // Check if any filters are active
   const hasActiveFilters = useMemo(() => {
