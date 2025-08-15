@@ -42,6 +42,7 @@ jobs:
           RAILS_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/todo_app_test
           RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+          SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE || 'test_secret_key_base_for_ci_environment_only_not_for_production' }}
         run: |
           cd backend
           bundle exec rails db:create
@@ -80,31 +81,6 @@ jobs:
           else
             echo "::notice::Coverage ($coverage%) meets minimum threshold ($MIN_COVERAGE%)"
           fi
-
-      - name: Coverage Report Comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const coverage = JSON.parse(fs.readFileSync('backend/coverage/.last_run.json', 'utf8'));
-            const coveragePercent = coverage.result.line.toFixed(2);
-            
-            const comment = `## Test Coverage Report 📊
-            
-            **Coverage:** ${coveragePercent}% ${coveragePercent >= 90 ? '✅' : '❌'}
-            **Minimum Required:** 90%
-            
-            ${coveragePercent >= 90 ? '🎉 Great job! Coverage threshold met.' : '⚠️ Coverage is below the minimum threshold.'}
-            
-            View detailed coverage report in the [artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
 
   frontend-tests:
     name: Frontend Tests
