@@ -96,6 +96,16 @@ docker compose --profile test run backend-test
 # Run authentication tests
 docker compose exec backend env RAILS_ENV=test bundle exec rspec spec/requests/authentication_spec.rb
 
+# Run tests with coverage
+docker compose exec backend env COVERAGE=true RAILS_ENV=test bundle exec rspec
+docker compose exec backend bundle exec rake coverage
+
+# View coverage report (macOS)
+open backend/coverage/index.html
+
+# Quick coverage check
+cat backend/coverage/.last_run.json
+
 # Generate new resources
 docker compose exec backend rails generate model ModelName
 docker compose exec backend rails generate controller ControllerName
