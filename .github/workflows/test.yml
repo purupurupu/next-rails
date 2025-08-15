@@ -56,14 +56,8 @@ jobs:
           CI: true
         run: |
           cd backend
-          bundle exec rspec --format progress --format RspecJunitFormatter --out rspec-results.xml
+          bundle exec rspec --format progress
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: rspec-results
-          path: backend/rspec-results.xml
 
       - name: Upload coverage reports
         if: always()

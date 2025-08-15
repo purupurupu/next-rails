@@ -85,10 +85,8 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
       // Show suggestions if no results
       const todosArray = Array.isArray(response)
         ? response
-        : (response?.data || []);
-      const suggestions = Array.isArray(response)
-        ? []
-        : (response?.suggestions || []);
+        : (searchResponse?.todos || []);
+      const suggestions = searchResponse?.suggestions || [];
 
       if (todosArray.length === 0 && suggestions.length > 0) {
         const mainSuggestion = suggestions.find((s) => s.type === "reduce_filters") || suggestions[0];
