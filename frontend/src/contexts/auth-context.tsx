@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await authClient.logout();
-    } catch (error) {
+    } catch {
       // Silently handle logout errors - we'll clear the local state anyway
     } finally {
       // Always clear local state regardless of server response

@@ -65,6 +65,10 @@ group :test do
   # Additional testing gems
   gem 'shoulda-matchers'
   gem 'database_cleaner-active_record'
+  
+  # Code coverage
+  gem 'simplecov', require: false
+  gem 'simplecov-json', require: false
 end
 
 group :development do

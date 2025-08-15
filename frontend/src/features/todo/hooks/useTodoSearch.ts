@@ -23,11 +23,10 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
   const debouncedSearchQuery = useDebounce(searchParams.q || "", 300);
 
   // Create debounced search params with stable reference
-  const searchParamsKey = JSON.stringify(searchParams);
   const debouncedSearchParams = useMemo(() => ({
     ...searchParams,
     q: debouncedSearchQuery,
-  }), [searchParamsKey, debouncedSearchQuery]);
+  }), [searchParams, debouncedSearchQuery]);
 
   const searchTodos = useCallback(async (params: TodoSearchParams) => {
     try {
@@ -35,48 +34,48 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
       setError(null);
 
       const response = await todoApiClient.searchTodos(params);
-      console.log('Search response:', response); // Debug log
-      
+      console.log("Search response:", response); // Debug log
+
       // Handle v1 API response format
       if (Array.isArray(response)) {
         // Direct array response (fallback)
         setTodos(response);
-        setSearchResponse({ 
-          todos: response, 
+        setSearchResponse({
+          todos: response,
           meta: { total: response.length, current_page: 1, total_pages: 1, per_page: response.length, search_query: params.q, filters_applied: {} },
-          suggestions: []
+          suggestions: [],
         });
-      } else if (response && typeof response === 'object' && 'data' in response) {
+      } else if (response && typeof response === "object" && "data" in response) {
         // v1 API structured response with data, meta, suggestions
         const todos = Array.isArray(response.data) ? response.data : [];
         setTodos(todos);
-        
+
         setSearchResponse({
           todos: todos,
-          meta: response.meta || { 
-            total: todos.length, 
-            current_page: 1, 
-            total_pages: 1, 
-            per_page: todos.length, 
-            search_query: params.q, 
-            filters_applied: {} 
+          meta: response.meta || {
+            total: todos.length,
+            current_page: 1,
+            total_pages: 1,
+            per_page: todos.length,
+            search_query: params.q,
+            filters_applied: {},
           },
-          suggestions: response.suggestions || []
+          suggestions: response.suggestions || [],
         });
       } else if (Array.isArray(response)) {
         // Simple array response
         setTodos(response);
         setSearchResponse({
           todos: response,
-          meta: { 
-            total: response.length, 
-            current_page: 1, 
-            total_pages: 1, 
-            per_page: response.length, 
-            search_query: params.q, 
-            filters_applied: {} 
+          meta: {
+            total: response.length,
+            current_page: 1,
+            total_pages: 1,
+            per_page: response.length,
+            search_query: params.q,
+            filters_applied: {},
           },
-          suggestions: []
+          suggestions: [],
         });
       } else {
         setTodos([]);
@@ -84,13 +83,11 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
       }
 
       // Show suggestions if no results
-      const todosArray = Array.isArray(response) 
-        ? response 
-        : (response?.data || []);
-      const suggestions = Array.isArray(response) 
-        ? [] 
-        : (response?.suggestions || []);
-      
+      const todosArray = Array.isArray(response)
+        ? response
+        : (searchResponse?.todos || []);
+      const suggestions = searchResponse?.suggestions || [];
+
       if (todosArray.length === 0 && suggestions.length > 0) {
         const mainSuggestion = suggestions.find((s) => s.type === "reduce_filters") || suggestions[0];
         if (mainSuggestion) {

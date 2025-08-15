@@ -11,7 +11,7 @@ export function Navigation() {
   const handleLogout = async () => {
     try {
       await logout();
-    } catch (error) {
+    } catch {
       toast.error("ログアウトに失敗しました");
     }
   };

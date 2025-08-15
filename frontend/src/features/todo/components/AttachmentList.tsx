@@ -69,7 +69,7 @@ export function AttachmentList({
       document.body.removeChild(a);
 
       toast.success(`Downloaded ${file.filename}`);
-    } catch (error) {
+    } catch {
       toast.error("Failed to download file");
     } finally {
       setDownloadingIds((prev) => {
@@ -88,7 +88,7 @@ export function AttachmentList({
       await todoApiClient.deleteTodoFile(todoId, fileId);
       onDelete(fileId);
       toast.success("File deleted");
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete file");
     } finally {
       setDeletingIds((prev) => {
