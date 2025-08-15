@@ -87,30 +87,23 @@ jobs:
             echo "::notice::Coverage ($coverage%) meets minimum threshold ($MIN_COVERAGE%)"
           fi
 
-      - name: Coverage Report Comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const coverage = JSON.parse(fs.readFileSync('backend/coverage/.last_run.json', 'utf8'));
-            const coveragePercent = coverage.result.line.toFixed(2);
-            
-            const comment = `## Test Coverage Report 📊
-            
-            **Coverage:** ${coveragePercent}% ${coveragePercent >= 90 ? '✅' : '❌'}
-            **Minimum Required:** 90%
-            
-            ${coveragePercent >= 90 ? '🎉 Great job! Coverage threshold met.' : '⚠️ Coverage is below the minimum threshold.'}
-            
-            View detailed coverage report in the [artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+      - name: Report Coverage
+        if: github.event_name == 'pull_request' && always()
+        run: |
+          cd backend
+          if [ -f "coverage/.last_run.json" ]; then
+            coverage=$(ruby -rjson -e "puts JSON.parse(File.read('coverage/.last_run.json'))['result']['line']")
+            echo "### Test Coverage Report 📊" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Coverage:** ${coverage}%" >> $GITHUB_STEP_SUMMARY
+            echo "**Minimum Required:** 90%" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            if (( $(echo "$coverage >= 90" | bc -l) )); then
+              echo "✅ Coverage threshold met!" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ Coverage is below the minimum threshold." >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
 
   frontend-tests:
     name: Frontend Tests
