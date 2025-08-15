@@ -84,6 +84,12 @@ docker compose exec backend env RAILS_ENV=test bundle exec rspec spec/models/tod
 # Run tests with documentation format
 docker compose exec backend env RAILS_ENV=test bundle exec rspec --format documentation
 
+# Run tests with code coverage
+docker compose exec backend env COVERAGE=true RAILS_ENV=test bundle exec rspec
+
+# Run tests with coverage using rake task
+docker compose exec backend bundle exec rake coverage
+
 # Run tests using dedicated test service (RAILS_ENV=test is pre-configured)
 docker compose --profile test run backend-test
 
