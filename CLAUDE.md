@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+日本語で回答してください。
+
 ## Architecture Overview
 
 This is a full-stack Todo application with user authentication using:
