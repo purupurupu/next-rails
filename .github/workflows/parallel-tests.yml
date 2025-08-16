@@ -49,10 +49,10 @@ jobs:
       env:
         DATABASE_URL: postgres://postgres:password@localhost:5432/todo_app_test
         RAILS_ENV: test
+        RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
       run: |
         cd backend
-        bundle exec rails db:create || true
-        bundle exec rails db:migrate
+        bundle exec rails db:schema:load || bundle exec rails db:migrate
     
     - name: Run parallel tests
       env:
