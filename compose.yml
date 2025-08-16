@@ -24,6 +24,7 @@ services:
       - RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
       - SECRET_KEY_BASE=${SECRET_KEY_BASE}
       - REDIS_URL=redis://redis:6379/0
+      - RAILS_MAX_THREADS=5
     command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
 
   # Test service for running tests in Docker
@@ -39,9 +40,29 @@ services:
       - RAILS_ENV=test
       - RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
       - REDIS_URL=redis://redis:6379/1
+      - RAILS_MAX_THREADS=5
     command: bash -c "bundle exec rails db:test:prepare && bundle exec rspec"
     profiles:
       - test
+  
+  # Parallel test service for running tests in parallel
+  backend-parallel-test:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgres://postgres:password@db:5432/todo_app_test
+      - RAILS_ENV=test
+      - RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
+      - REDIS_URL=redis://redis:6379/1
+      - RAILS_MAX_THREADS=10
+      - PARALLEL_WORKERS=${PARALLEL_WORKERS:-4}
+    command: bash -c "bundle exec rake parallel:setup && bundle exec rake parallel:spec_with_coverage"
+    profiles:
+      - parallel-test
 
   db:
     image: postgres:15
@@ -53,6 +74,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    command: postgres -c max_connections=200
 
   redis:
     image: redis:7-alpine
