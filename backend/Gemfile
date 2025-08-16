@@ -69,6 +69,9 @@ group :test do
   # Code coverage
   gem 'simplecov', require: false
   gem 'simplecov-json', require: false
+  
+  # Parallel test execution
+  gem 'parallel_tests'
 end
 
 group :development do
