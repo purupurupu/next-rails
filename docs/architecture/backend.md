@@ -44,8 +44,12 @@ backend/
 ├── app/
 │   ├── controllers/
 │   │   ├── api/
-│   │   │   ├── todos_controller.rb     # Todo CRUD endpoints
-│   │   │   └── categories_controller.rb # Category CRUD endpoints
+│   │   │   └── v1/
+│   │   │       ├── todos_controller.rb     # Todo CRUD endpoints + search
+│   │   │       ├── categories_controller.rb # Category CRUD endpoints
+│   │   │       ├── tags_controller.rb      # Tag CRUD endpoints
+│   │   │       ├── comments_controller.rb  # Comment CRUD endpoints
+│   │   │       └── todo_histories_controller.rb # History viewing
 │   │   ├── users/
 │   │   │   ├── sessions_controller.rb  # Login/logout
 │   │   │   └── registrations_controller.rb # Signup
@@ -54,14 +58,22 @@ backend/
 │   │   └── application_controller.rb   # Base controller with unified error handling
 │   ├── models/
 │   │   ├── user.rb                     # User model with Devise
-│   │   ├── todo.rb                     # Todo model with Category association
+│   │   ├── todo.rb                     # Todo model with associations & file attachments
 │   │   ├── category.rb                 # Category model with counter_cache
+│   │   ├── tag.rb                      # Tag model for flexible labeling
+│   │   ├── todo_tag.rb                 # Junction table for todo-tag relationship
+│   │   ├── comment.rb                  # Polymorphic comments with soft delete
+│   │   ├── todo_history.rb             # Audit trail for todo changes
 │   │   └── jwt_denylist.rb             # JWT revocation
 │   ├── serializers/
 │   │   ├── user_serializer.rb          # User JSON serialization
 │   │   ├── todo_serializer.rb          # Todo JSON serialization
-│   │   └── category_serializer.rb      # Category JSON serialization
+│   │   ├── category_serializer.rb      # Category JSON serialization
+│   │   ├── tag_serializer.rb           # Tag JSON serialization
+│   │   ├── comment_serializer.rb       # Comment JSON serialization
+│   │   └── todo_history_serializer.rb  # History JSON serialization
 │   └── services/                       # Business logic services
+│       └── todo_search_service.rb      # Advanced search implementation
 ├── config/
 │   ├── routes.rb                       # API routes
 │   ├── initializers/
@@ -110,23 +122,41 @@ backend/
 ```ruby
 # config/routes.rb
 namespace :api do
-  resources :todos do
-    collection do
-      patch 'update_order'  # Bulk position update
+  namespace :v1 do
+    resources :todos do
+      collection do
+        patch 'update_order'  # Bulk position update
+        get 'search'          # Advanced search with filtering
+      end
+      member do
+        patch 'tags'          # Update todo tags
+        delete 'files/:file_id', to: 'todos#destroy_file' # Delete file attachment
+      end
+      resources :comments, only: [:index, :create, :update, :destroy]
+      resources :histories, controller: 'todo_histories', only: [:index]
     end
+    resources :categories
+    resources :tags
   end
 end
 ```
 
 ### Controller Pattern
 ```ruby
-class Api::TodosController < ApplicationController
+class Api::V1::TodosController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_todo, only: [:show, :update, :destroy]
+  before_action :set_todo, only: [:show, :update, :destroy, :tags, :destroy_file]
 
   def index
-    @todos = current_user.todos.order(:position)
+    @todos = current_user.todos
+                        .includes(:category, :tags, files_attachments: :blob)
+                        .order(:position)
     render json: @todos
+  end
+
+  def search
+    result = TodoSearchService.new(current_user, search_params).call
+    render json: result
   end
 
   private
@@ -136,7 +166,15 @@ class Api::TodosController < ApplicationController
   end
 
   def todo_params
-    params.require(:todo).permit(:title, :completed, :due_date)
+    params.require(:todo).permit(:title, :completed, :due_date, :priority, 
+                                  :status, :description, :category_id, 
+                                  tag_ids: [], files: [])
+  end
+
+  def search_params
+    params.permit(:q, :category_id, :sort_by, :sort_order, :page, :per_page,
+                  :due_date_from, :due_date_to, :tag_mode,
+                  status: [], priority: [], tag_ids: [])
   end
 end
 ```
@@ -160,12 +198,25 @@ end
 ```ruby
 class Todo < ApplicationRecord
   belongs_to :user
+  belongs_to :category, optional: true, counter_cache: true
+  has_many :todo_tags, dependent: :destroy
+  has_many :tags, through: :todo_tags
+  has_many :comments, as: :commentable, dependent: :destroy
+  has_many :todo_histories, dependent: :destroy
+  has_many_attached :files
+  
+  enum priority: { low: 0, medium: 1, high: 2 }
+  enum status: { pending: 0, in_progress: 1, completed: 2 }
   
   validates :title, presence: true
   validates :due_date, comparison: { greater_than: Date.today }, 
             allow_nil: true, on: :create
+  validates :priority, inclusion: { in: priorities.keys }
+  validates :status, inclusion: { in: statuses.keys }
   
   before_create :set_position
+  after_create :track_creation
+  after_update :track_update
   
   scope :ordered, -> { order(:position) }
   scope :active, -> { where(completed: false) }
@@ -270,14 +321,20 @@ end
 
 1. **Database Indexes**
    - User email (unique)
-   - Todo position, user_id, category_id (foreign keys)
-   - Category user_id (foreign key)
+   - Todo position, user_id, category_id, priority, status (for filtering)
+   - Category user_id with unique constraint on (user_id, name)
+   - Tag user_id with unique constraint on (user_id, name)
+   - TodoTag todo_id, tag_id with unique constraint
+   - Comment (commentable_type, commentable_id) for polymorphic queries
+   - TodoHistory todo_id, user_id, action for audit queries
    - JWT jti (denylist lookup)
+   - Full-text search indexes on todo title and description
 
 2. **Query Optimization**
    - **Counter Cache**: `todos_count` on categories eliminates N+1 queries
    - **Bulk Updates**: `Todo.update_order` for efficient position updates
-   - Eager loading associations with `includes`
+   - **Search Service**: Advanced filtering with optimized queries
+   - Eager loading associations with `includes(:category, :tags, files_attachments: :blob)`
    - Scoped queries for filtering
    - Ordered by position for consistency
 
@@ -289,6 +346,10 @@ end
    
    # Migration adds todos_count column
    add_column :categories, :todos_count, :integer, default: 0, null: false
+   ```
+   - Eager loading in search:
+   ```ruby
+   todos.includes(:category, :tags, :user)
    ```
 
 4. **Bulk Operations**
@@ -307,6 +368,13 @@ end
    - Redis for future caching needs
    - HTTP caching headers
    - Counter cache for aggregate queries
+   - Active Storage blob caching for file attachments
+
+6. **Search Performance**
+   - TodoSearchService with optimized queries
+   - Database indexes for common filter combinations
+   - Pagination to limit result set size
+   - Search result highlighting for better UX
 
 ## Testing Strategy
 

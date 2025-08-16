@@ -128,20 +128,24 @@ docker compose exec backend bundle exec rails db:reset  # drop + create + migrat
 
 **Core Models**:
 - **User**: Authentication with email/password
-- **Todo**: User's tasks with title, completion status, position, priority (low/medium/high), status (pending/in_progress/completed), optional description, due date, category association, and tag associations
+- **Todo**: User's tasks with title, completion status, position, priority (low/medium/high), status (pending/in_progress/completed), optional description, due date, category association, tag associations, file attachments, comments, and history tracking
 - **Category**: User-scoped organization categories with name and color for grouping todos
 - **Tag**: User-scoped flexible tags with name and color for labeling todos (many-to-many relationship)
 - **TodoTag**: Junction table for the many-to-many relationship between todos and tags
+- **Comment**: Polymorphic comments on todos with soft delete and edit time limits
+- **TodoHistory**: Automatic audit trail for all todo changes
 - **JwtDenylist**: Revoked tokens for secure logout
 
 See [Database Architecture](./docs/architecture/database.md) for detailed schema.
 
 **API Endpoints**:
 - Authentication: `/auth/*` (login, register, logout)
-- Todos: `/api/todos/*` (CRUD + bulk reorder + tag assignment)
-- Todo Search: `/api/todos/search` (advanced search and filtering)
-- Categories: `/api/categories/*` (CRUD operations)
-- Tags: `/api/tags/*` (CRUD operations)
+- Todos: `/api/v1/todos/*` (CRUD + bulk reorder + tag assignment + file attachments)
+- Todo Search: `/api/v1/todos/search` (advanced search and filtering)
+- Categories: `/api/v1/categories/*` (CRUD operations)
+- Tags: `/api/v1/tags/*` (CRUD operations)
+- Comments: `/api/v1/todos/:todo_id/comments/*` (CRUD with soft delete)
+- History: `/api/v1/todos/:todo_id/histories` (view todo change history)
 
 See [API Documentation](./docs/api/) for details.
 
@@ -149,22 +153,28 @@ See [API Documentation](./docs/api/) for details.
 
 The Rails backend provides:
 - **Authentication API** at `/auth/*` with user registration, login, and logout
-- **Todo API** at `/api/todos` with user-scoped CRUD operations
-- **Category API** at `/api/categories` with user-scoped CRUD operations
-- **Tag API** at `/api/tags` with user-scoped CRUD operations
+- **Todo API** at `/api/v1/todos` with user-scoped CRUD operations
+- **Category API** at `/api/v1/categories` with user-scoped CRUD operations
+- **Tag API** at `/api/v1/tags` with user-scoped CRUD operations
+- **Comment API** at `/api/v1/todos/:todo_id/comments` for todo discussions
+- **History API** at `/api/v1/todos/:todo_id/histories` for audit trail
 - **JWT Authentication** for API access with token-based authentication
 - Standard CRUD endpoints (GET, POST, PUT, DELETE)
-- Bulk update endpoint: `PATCH /api/todos/update_order` for drag-and-drop reordering
-- Todo model attributes: `title`, `completed`, `position`, `priority`, `status`, `description`, `due_date`, `category_id`, `tag_ids`, `user_id`
-- Category model attributes: `name`, `color`, `user_id`, `created_at`, `updated_at`
+- Bulk update endpoint: `PATCH /api/v1/todos/update_order` for drag-and-drop reordering
+- Todo model attributes: `title`, `completed`, `position`, `priority`, `status`, `description`, `due_date`, `category_id`, `tag_ids`, `user_id`, `files` (attachments)
+- Category model attributes: `name`, `color`, `user_id`, `todos_count` (counter cache), `created_at`, `updated_at`
 - Tag model attributes: `name`, `color`, `user_id`, `created_at`, `updated_at`
+- Comment model attributes: `content`, `user_id`, `commentable_type`, `commentable_id`, `deleted_at`, `created_at`, `updated_at`
+- TodoHistory model attributes: `todo_id`, `user_id`, `action`, `changes` (JSONB), `created_at`
 - User model attributes: `email`, `name`, `created_at`
 
 Frontend should make API calls to:
-- `http://localhost:3001/api/todos` - Basic todo operations
-- `http://localhost:3001/api/todos/search` - Search and filtering
-- `http://localhost:3001/api/categories` - Category management
-- `http://localhost:3001/api/tags` - Tag management
+- `http://localhost:3001/api/v1/todos` - Basic todo operations
+- `http://localhost:3001/api/v1/todos/search` - Search and filtering
+- `http://localhost:3001/api/v1/categories` - Category management
+- `http://localhost:3001/api/v1/tags` - Tag management
+- `http://localhost:3001/api/v1/todos/:id/comments` - Comment management
+- `http://localhost:3001/api/v1/todos/:id/histories` - View history
 - `http://localhost:3001/auth/*` - Authentication
 
 ## Key Implementation Details
@@ -210,10 +220,13 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 - Todo creation with due dates
 - Todo editing and deletion
 - Status completion toggle
-- Drag-and-drop reordering
+- Drag-and-drop reordering (API ready, UI pending)
 - Basic filtering (all, active, completed)
 - Category assignment (one-to-many)
 - Tag assignment (many-to-many)
+- File attachments with Active Storage
+- Comments with soft delete and 15-minute edit window
+- Complete audit history tracking
 - Optimistic updates for better UX
 - Error handling and validation
 - Responsive design with Tailwind CSS
@@ -228,6 +241,13 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 - Search result highlighting
 - Empty state with helpful suggestions
 - Real-time search with debouncing
+
+**Additional Features**:
+- **Comments**: Add discussions to todos with soft delete and edit time limits
+- **File Attachments**: Upload multiple files per todo (10MB limit per file)
+- **History Tracking**: Complete audit trail of all todo changes
+- **Counter Cache**: Efficient todo counting for categories
+- **Performance**: Optimized queries with proper indexing
 
 ## Development Guidelines
 

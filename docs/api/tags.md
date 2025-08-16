@@ -4,7 +4,7 @@ The Tags API allows users to create and manage tags for organizing their todos. 
 
 ## Overview
 
-- **Base URL**: `/api/tags`
+- **Base URL**: `/api/v1/tags`
 - **Authentication**: Required (JWT token in Authorization header)
 - **Content-Type**: `application/json`
 - **User Scope**: All tag operations are scoped to the authenticated user
@@ -40,7 +40,7 @@ The Tags API allows users to create and manage tags for organizing their todos. 
 Get all tags for the authenticated user.
 
 ```
-GET /api/tags
+GET /api/v1/tags
 ```
 
 #### Response
@@ -75,7 +75,7 @@ GET /api/tags
 Get a specific tag by ID.
 
 ```
-GET /api/tags/:id
+GET /api/v1/tags/:id
 ```
 
 #### Parameters
@@ -107,7 +107,7 @@ GET /api/tags/:id
 Create a new tag.
 
 ```
-POST /api/tags
+POST /api/v1/tags
 ```
 
 #### Request Body
@@ -165,8 +165,8 @@ POST /api/tags
 Update an existing tag.
 
 ```
-PATCH /api/tags/:id
-PUT /api/tags/:id
+PATCH /api/v1/tags/:id
+PUT /api/v1/tags/:id
 ```
 
 #### Parameters
@@ -210,7 +210,7 @@ PUT /api/tags/:id
 Delete a tag. This will also remove the tag from all associated todos.
 
 ```
-DELETE /api/tags/:id
+DELETE /api/v1/tags/:id
 ```
 
 #### Parameters
@@ -238,7 +238,7 @@ DELETE /api/tags/:id
 Search for tags by name (useful for autocomplete).
 
 ```
-GET /api/tags?search=work
+GET /api/v1/tags?search=work
 ```
 
 #### Query Parameters
@@ -269,7 +269,7 @@ When creating or updating todos, include tag IDs:
 ### Filtering Todos by Tag
 
 ```
-GET /api/todos?tag_id=1
+GET /api/v1/todos?tag_id=1
 ```
 
 Returns all todos that have the specified tag.

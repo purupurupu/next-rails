@@ -11,13 +11,20 @@ All todo endpoints require a valid JWT token in the Authorization header:
 Authorization: Bearer <jwt_token>
 ```
 
+## Base URL
+
+All endpoints are prefixed with `/api/v1`:
+```
+http://localhost:3001/api/v1/todos
+```
+
 ## Endpoints
 
 ### List Todos
 
 Get all todos for the authenticated user.
 
-**Endpoint:** `GET /api/todos`
+**Endpoint:** `GET /api/v1/todos`
 
 **Query Parameters:** None
 
@@ -92,7 +99,7 @@ Get all todos for the authenticated user.
 
 Get a specific todo by ID.
 
-**Endpoint:** `GET /api/todos/:id`
+**Endpoint:** `GET /api/v1/todos/:id`
 
 **URL Parameters:**
 - `id` (required): Todo ID
@@ -124,7 +131,7 @@ Get a specific todo by ID.
 
 Create a new todo item.
 
-**Endpoint:** `POST /api/todos`
+**Endpoint:** `POST /api/v1/todos`
 
 **Request Body:**
 ```json
@@ -135,7 +142,9 @@ Create a new todo item.
     "status": "pending",
     "description": "Detailed task description",
     "due_date": "2024-12-31",
-    "category_id": 2
+    "category_id": 2,
+    "tag_ids": [1, 3],
+    "files": [/* File objects from multipart form-data */]
   }
 }
 ```
@@ -147,6 +156,8 @@ Create a new todo item.
 - `description` (optional): Detailed description of the task
 - `due_date` (optional): Due date in YYYY-MM-DD format
 - `category_id` (optional): ID of the category to assign this todo to
+- `tag_ids` (optional): Array of tag IDs to assign to this todo
+- `files` (optional): File attachments (use multipart/form-data for file uploads)
 - `completed` (optional): Defaults to `false`
 
 **Success Response (201 Created):**
@@ -181,7 +192,7 @@ Create a new todo item.
 
 Update an existing todo.
 
-**Endpoint:** `PUT /api/todos/:id` or `PATCH /api/todos/:id`
+**Endpoint:** `PUT /api/v1/todos/:id` or `PATCH /api/v1/todos/:id`
 
 **URL Parameters:**
 - `id` (required): Todo ID
@@ -195,7 +206,9 @@ Update an existing todo.
     "priority": "low",
     "status": "completed",
     "description": "Updated description",
-    "due_date": "2024-12-31"
+    "due_date": "2024-12-31",
+    "category_id": 3,
+    "tag_ids": [2, 4]
   }
 }
 ```
@@ -207,6 +220,9 @@ Update an existing todo.
 - `status` (optional): Task status - `"pending"`, `"in_progress"`, `"completed"`
 - `description` (optional): Updated description
 - `due_date` (optional): New due date
+- `category_id` (optional): ID of the category to assign (use null to remove category)
+- `tag_ids` (optional): Array of tag IDs to assign (empty array to remove all tags)
+- `files` (optional): New file attachments (use multipart/form-data)
 
 **Success Response (200 OK):**
 ```json
@@ -228,7 +244,7 @@ Update an existing todo.
 
 Delete a todo item.
 
-**Endpoint:** `DELETE /api/todos/:id`
+**Endpoint:** `DELETE /api/v1/todos/:id`
 
 **URL Parameters:**
 - `id` (required): Todo ID
@@ -247,7 +263,7 @@ No response body
 
 Search and filter todos with advanced filtering options.
 
-**Endpoint:** `GET /api/todos/search`
+**Endpoint:** `GET /api/v1/todos/search`
 
 **Query Parameters:**
 - `q` (optional): Search query for title and description
@@ -265,7 +281,7 @@ Search and filter todos with advanced filtering options.
 
 **Example Request:**
 ```
-GET /api/todos/search?q=documentation&status[]=pending&status[]=in_progress&priority=high&tag_ids[]=1&tag_ids[]=2&tag_mode=all&sort_by=due_date&sort_order=asc&page=1&per_page=20
+GET /api/v1/todos/search?q=documentation&status[]=pending&status[]=in_progress&priority=high&tag_ids[]=1&tag_ids[]=2&tag_mode=all&sort_by=due_date&sort_order=asc&page=1&per_page=20
 ```
 
 **Success Response (200 OK):**
@@ -367,7 +383,7 @@ GET /api/todos/search?q=documentation&status[]=pending&status[]=in_progress&prio
 
 Bulk update todo positions for drag-and-drop reordering.
 
-**Endpoint:** `PATCH /api/todos/update_order`
+**Endpoint:** `PATCH /api/v1/todos/update_order`
 
 **Request Body:**
 ```json
@@ -398,12 +414,41 @@ Bulk update todo positions for drag-and-drop reordering.
 - All todos must belong to the authenticated user
 - Invalid IDs will cause the entire operation to fail
 - Positions should be sequential starting from 0
+- Updates are performed in a transaction for data consistency
+
+### Update Todo Tags
+
+Update tags for a specific todo.
+
+**Endpoint:** `PATCH /api/v1/todos/:id/tags`
+
+**Request Body:**
+```json
+{
+  "tag_ids": [1, 2, 3]
+}
+```
+
+**Success Response (200 OK):**
+Returns the updated todo with new tags.
+
+**Error Response (422 Unprocessable Entity):**
+```json
+{
+  "error": "Invalid tag IDs"
+}
+```
+
+**Notes:**
+- All tags must belong to the authenticated user
+- Empty array removes all tags from the todo
+- Invalid tag IDs will cause the operation to fail
 
 ### File Attachments
 
 Todos support multiple file attachments. See [Todo File Uploads API](./todos-file-uploads.md) for detailed documentation.
 
-**Delete File Attachment:** `DELETE /api/todos/:todo_id/files/:file_id`
+**Delete File Attachment:** `DELETE /api/v1/todos/:todo_id/files/:file_id`
 
 Removes a specific file from a todo.
 
@@ -422,17 +467,17 @@ Returns the updated todo without the deleted file.
 Todos support commenting functionality. See [Comments API](./comments.md) for detailed documentation.
 
 **Endpoints:**
-- `GET /api/todos/:todo_id/comments` - List all comments for a todo
-- `POST /api/todos/:todo_id/comments` - Create a new comment
-- `PUT /api/todos/:todo_id/comments/:id` - Update a comment
-- `DELETE /api/todos/:todo_id/comments/:id` - Soft delete a comment
+- `GET /api/v1/todos/:todo_id/comments` - List all comments for a todo
+- `POST /api/v1/todos/:todo_id/comments` - Create a new comment
+- `PUT /api/v1/todos/:todo_id/comments/:id` - Update a comment
+- `DELETE /api/v1/todos/:todo_id/comments/:id` - Soft delete a comment
 
 ### History
 
 Todo changes are automatically tracked. See [Todo History API](./todo-histories.md) for detailed documentation.
 
 **Endpoints:**
-- `GET /api/todos/:todo_id/histories` - List all history entries for a todo
+- `GET /api/v1/todos/:todo_id/histories` - List all history entries for a todo
 
 **Tracked Actions:**
 - Todo creation
@@ -479,12 +524,12 @@ Todo changes are automatically tracked. See [Todo History API](./todo-histories.
 
 ## Filtering and Sorting
 
-### Basic List (GET /api/todos)
+### Basic List (GET /api/v1/todos)
 - Returns all todos ordered by position
 - No server-side filtering available
 - Suitable for small todo lists
 
-### Advanced Search (GET /api/todos/search)
+### Advanced Search (GET /api/v1/todos/search)
 Use the search endpoint for:
 - **Full-text search**: Search in title and description
 - **Category filtering**: Filter by category or uncategorized todos
@@ -507,7 +552,7 @@ Use the search endpoint for:
 class TodoApiClient {
   constructor(token) {
     this.token = token;
-    this.baseURL = '/api/todos';
+    this.baseURL = '/api/v1/todos';
   }
 
   async getAll() {

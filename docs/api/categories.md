@@ -4,13 +4,20 @@
 
 Categories provide a way for users to organize their todos. Each category has a name and color for visual organization, and todos can optionally be assigned to categories.
 
+## Base URL
+
+All endpoints are prefixed with `/api/v1`:
+```
+http://localhost:3001/api/v1/categories
+```
+
 ## Endpoints
 
 ### Get Categories
 
 Retrieve all categories for the authenticated user.
 
-**Endpoint:** `GET /api/categories`
+**Endpoint:** `GET /api/v1/categories`
 
 **Headers:**
 ```
@@ -45,7 +52,7 @@ Authorization: Bearer <jwt_token>
 
 Retrieve a specific category.
 
-**Endpoint:** `GET /api/categories/:id`
+**Endpoint:** `GET /api/v1/categories/:id`
 
 **Headers:**
 ```
@@ -76,7 +83,7 @@ Authorization: Bearer <jwt_token>
 
 Create a new category for the authenticated user.
 
-**Endpoint:** `POST /api/categories`
+**Endpoint:** `POST /api/v1/categories`
 
 **Headers:**
 ```
@@ -124,7 +131,7 @@ Content-Type: application/json
 
 Update an existing category.
 
-**Endpoint:** `PUT /api/categories/:id` or `PATCH /api/categories/:id`
+**Endpoint:** `PUT /api/v1/categories/:id` or `PATCH /api/v1/categories/:id`
 
 **Headers:**
 ```
@@ -179,7 +186,7 @@ Content-Type: application/json
 
 Delete a category. All todos assigned to this category will have their category_id set to null.
 
-**Endpoint:** `DELETE /api/categories/:id`
+**Endpoint:** `DELETE /api/v1/categories/:id`
 
 **Headers:**
 ```
@@ -240,14 +247,14 @@ Authorization: Bearer <jwt_token>
 // Category API Client
 class CategoryApiClient {
   async getCategories() {
-    const response = await fetch('/api/categories', {
+    const response = await fetch('/api/v1/categories', {
       headers: { 'Authorization': `Bearer ${this.getToken()}` }
     });
     return response.json();
   }
   
   async createCategory(categoryData) {
-    const response = await fetch('/api/categories', {
+    const response = await fetch('/api/v1/categories', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.getToken()}`,
@@ -261,7 +268,7 @@ class CategoryApiClient {
   }
   
   async updateCategory(id, categoryData) {
-    const response = await fetch(`/api/categories/${id}`, {
+    const response = await fetch(`/api/v1/categories/${id}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${this.getToken()}`,
@@ -275,7 +282,7 @@ class CategoryApiClient {
   }
   
   async deleteCategory(id) {
-    const response = await fetch(`/api/categories/${id}`, {
+    const response = await fetch(`/api/v1/categories/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${this.getToken()}` }
     });
