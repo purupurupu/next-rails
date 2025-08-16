@@ -19,6 +19,8 @@ See the main project README and CLAUDE.md for detailed setup instructions.
 
 ## Running Tests
 
+### Sequential Tests (Traditional)
+
 ```bash
 # Run all tests
 docker compose exec backend env RAILS_ENV=test bundle exec rspec
@@ -28,6 +30,25 @@ docker compose exec backend env RAILS_ENV=test bundle exec rspec spec/models/tod
 
 # Run tests with documentation format
 docker compose exec backend env RAILS_ENV=test bundle exec rspec --format documentation
+```
+
+### Parallel Tests (Faster)
+
+```bash
+# Setup parallel test databases (first time only)
+docker compose exec backend bundle exec rake parallel:setup
+
+# Run all tests in parallel
+docker compose exec backend bundle exec rake parallel:spec
+
+# Run tests excluding performance tests
+docker compose exec backend bin/parallel_test non-performance
+
+# Run with specific number of workers
+docker compose exec backend bin/parallel_test workers 8
+
+# Using Docker Compose profile
+docker compose --profile parallel-test run backend-parallel-test
 ```
 
 ## Code Coverage
