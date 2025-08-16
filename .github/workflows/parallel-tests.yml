@@ -51,8 +51,8 @@ jobs:
         RAILS_ENV: test
       run: |
         cd backend
-        bundle exec rails db:create
-        bundle exec rake parallel:setup
+        bundle exec rails db:create || true
+        bundle exec rails db:migrate
     
     - name: Run parallel tests
       env:

@@ -94,7 +94,7 @@ RSpec.describe 'ApplicationController', type: :request do
         # Create expired token using Rails secret key base
         expired_token = JWT.encode(
           { sub: user.id, exp: 1.hour.ago.to_i },
-          Rails.application.credentials.secret_key_base || Rails.application.secrets.secret_key_base,
+          Rails.application.credentials.secret_key_base || Rails.application.secret_key_base,
           'HS256'
         )
         

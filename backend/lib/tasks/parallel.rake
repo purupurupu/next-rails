@@ -1,7 +1,12 @@
 namespace :parallel do
   desc "Setup test databases for parallel tests"
   task :setup => :environment do
-    system("RAILS_ENV=test bundle exec parallel_test -e 'bundle exec rails db:drop db:create db:migrate'")
+    # In CI environment, we only need to prepare the databases, not recreate them
+    if ENV['CI']
+      system("RAILS_ENV=test bundle exec parallel_test -e 'bundle exec rails db:migrate'")
+    else
+      system("RAILS_ENV=test bundle exec parallel_test -e 'bundle exec rails db:drop db:create db:migrate'")
+    end
   end
   
   desc "Run RSpec tests in parallel"
