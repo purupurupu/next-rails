@@ -102,6 +102,11 @@ docker compose exec backend env RAILS_ENV=test bundle exec rspec spec/requests/a
 docker compose exec backend env COVERAGE=true RAILS_ENV=test bundle exec rspec
 docker compose exec backend bundle exec rake coverage
 
+# Run tests in parallel (faster for large test suites)
+docker compose exec backend env RAILS_ENV=test bundle exec parallel_rspec spec/ -n 4
+docker compose exec backend bin/parallel_test non-performance  # Exclude performance tests
+docker compose exec backend bundle exec rake parallel:spec_with_coverage
+
 # View coverage report (macOS)
 open backend/coverage/index.html
 

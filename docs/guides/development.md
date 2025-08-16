@@ -220,6 +220,23 @@ RSpec.describe "Todos API", type: :request do
 end
 ```
 
+#### Running Tests
+```bash
+# Sequential execution
+docker compose exec backend env RAILS_ENV=test bundle exec rspec
+
+# Parallel execution (faster for large test suites)
+docker compose exec backend env RAILS_ENV=test bundle exec parallel_rspec spec/ -n 4
+
+# Exclude performance tests
+docker compose exec backend bin/parallel_test non-performance
+
+# With coverage
+docker compose exec backend bundle exec rake parallel:spec_with_coverage
+```
+
+See [Parallel Testing Documentation](../backend/docs/parallel-testing.md) for details.
+
 ## Debugging Tips
 
 ### Frontend Debugging
