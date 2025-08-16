@@ -1,0 +1,78 @@
+#!/usr/bin/env ruby
+require "bundler/setup"
+
+# Script to run parallel tests with various options
+
+def print_usage
+  puts <<~USAGE
+    Usage: bin/parallel_test [options]
+    
+    Options:
+      all                 Run all tests in parallel (default)
+      setup               Setup parallel test databases
+      single FILE         Run a single test file in parallel
+      performance         Run only performance tests
+      non-performance     Run all tests except performance tests
+      coverage            Generate coverage report from existing results
+      workers N           Run with N parallel workers (default: 4)
+      help                Show this help message
+    
+    Examples:
+      bin/parallel_test                           # Run all tests
+      bin/parallel_test non-performance           # Run all except performance tests
+      bin/parallel_test single spec/models/todo_spec.rb
+      bin/parallel_test workers 8                 # Run with 8 workers
+  USAGE
+end
+
+def run_command(cmd)
+  puts "Running: #{cmd}"
+  system(cmd)
+end
+
+# Parse arguments
+args = ARGV
+command = args[0] || "all"
+
+case command
+when "help", "-h", "--help"
+  print_usage
+when "setup"
+  run_command("bundle exec parallel_test -e 'bundle exec rails db:drop db:create db:migrate'")
+when "single"
+  file = args[1]
+  if file
+    ENV['COVERAGE'] = 'true'
+    run_command("bundle exec parallel_rspec #{file}")
+  else
+    puts "Error: Please specify a test file"
+    print_usage
+    exit 1
+  end
+when "performance"
+  ENV['COVERAGE'] = 'true'
+  run_command("bundle exec parallel_rspec spec/services/todo_search_service_performance_spec.rb")
+when "non-performance"
+  ENV['COVERAGE'] = 'true'
+  run_command("bundle exec parallel_rspec spec/ --exclude-pattern 'spec/**/*_performance_spec.rb'")
+when "coverage"
+  run_command("bundle exec rake parallel:coverage")
+when "workers"
+  workers = args[1]
+  if workers
+    ENV['PARALLEL_WORKERS'] = workers
+    ENV['COVERAGE'] = 'true'
+    run_command("bundle exec parallel_rspec spec/ -n #{workers}")
+  else
+    puts "Error: Please specify number of workers"
+    print_usage
+    exit 1
+  end
+when "all"
+  ENV['COVERAGE'] = 'true'
+  run_command("bundle exec parallel_rspec spec/")
+else
+  puts "Unknown command: #{command}"
+  print_usage
+  exit 1
+end
