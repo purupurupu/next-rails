@@ -1,0 +1,91 @@
+name: Parallel Tests
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  parallel-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: todo_app_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2.5'
+        bundler-cache: true
+        working-directory: backend
+    
+    - name: Setup test database
+      env:
+        DATABASE_URL: postgres://postgres:password@localhost:5432/todo_app_test
+        RAILS_ENV: test
+      run: |
+        cd backend
+        bundle exec rails db:create
+        bundle exec rake parallel:setup
+    
+    - name: Run parallel tests
+      env:
+        DATABASE_URL: postgres://postgres:password@localhost:5432/todo_app_test
+        RAILS_ENV: test
+        RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+        REDIS_URL: redis://localhost:6379/1
+        COVERAGE: true
+        CI: true
+        PARALLEL_WORKERS: 4
+      run: |
+        cd backend
+        bundle exec rake parallel:spec
+    
+    - name: Generate coverage report
+      if: always()
+      run: |
+        cd backend
+        bundle exec rake parallel:coverage
+    
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-report
+        path: backend/coverage/
+    
+    - name: Check coverage threshold
+      run: |
+        cd backend
+        coverage=$(cat coverage/.last_run.json | jq '.result.line')
+        echo "Coverage: ${coverage}%"
+        if (( $(echo "$coverage < 90" | bc -l) )); then
+          echo "Coverage ${coverage}% is below 90% threshold"
+          exit 1
+        fi
