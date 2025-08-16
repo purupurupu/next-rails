@@ -74,3 +74,6 @@ yarn.lock
 .env
 .env.*
 !.env.example
+
+# Ignore Coding Agent Files
+PLAN.md
