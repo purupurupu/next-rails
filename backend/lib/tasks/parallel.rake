@@ -1,7 +1,7 @@
 namespace :parallel do
   desc "Setup test databases for parallel tests"
   task :setup => :environment do
-    system("bundle exec parallel_test -e 'bundle exec rails db:drop db:create db:migrate'")
+    system("RAILS_ENV=test bundle exec parallel_test -e 'bundle exec rails db:drop db:create db:migrate'")
   end
   
   desc "Run RSpec tests in parallel"
