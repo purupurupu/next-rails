@@ -16,7 +16,7 @@ RSpec.describe 'Todos API', type: :request do
         get '/api/v1/todos', headers: headers
 
         expect(response).to have_http_status(:ok)
-        body = JSON.parse(response.body)
+        body = response.parsed_body
         todos = body['data']
         expect(todos.length).to eq(3)
         todos.each do |todo|
@@ -36,7 +36,7 @@ RSpec.describe 'Todos API', type: :request do
         get '/api/v1/todos', headers: headers
 
         expect(response).to have_http_status(:ok)
-        body = JSON.parse(response.body)
+        body = response.parsed_body
         todos = body['data']
         todo_response = todos.find { |t| t['id'] == todo.id }
 
@@ -81,7 +81,7 @@ RSpec.describe 'Todos API', type: :request do
         post '/api/v1/todos', params: simple_params, headers: headers, as: :json
 
         expect(response).to have_http_status(:created)
-        body = JSON.parse(response.body)
+        body = response.parsed_body
         todo = body['data']
         expect(todo['title']).to eq('Simple Todo')
       end
@@ -101,7 +101,7 @@ RSpec.describe 'Todos API', type: :request do
         post '/api/v1/todos', params: { todo: minimal_attributes }, headers: headers, as: :json
 
         expect(response).to have_http_status(:created)
-        body = JSON.parse(response.body)
+        body = response.parsed_body
         todo = body['data']
         expect(todo['priority']).to eq('medium')
         expect(todo['status']).to eq('pending')
@@ -112,7 +112,7 @@ RSpec.describe 'Todos API', type: :request do
         post '/api/v1/todos', params: { todo: { title: '' } }, headers: headers, as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)
-        errors = JSON.parse(response.body)
+        errors = response.parsed_body
         expect(errors['error']).to be_present
         expect(errors['error']['code']).to eq('VALIDATION_FAILED')
         expect(errors['error']['details']['validation_errors']['title']).to include("can't be blank")
@@ -244,7 +244,7 @@ RSpec.describe 'Todos API', type: :request do
               headers: headers,
               as: :json
 
-        body = JSON.parse(response.body)
+        body = response.parsed_body
         todo_data = body['data']
         expect(todo_data['tags']).to be_an(Array)
         expect(todo_data['tags'].first['id']).to eq(tag1.id)
@@ -283,7 +283,7 @@ RSpec.describe 'Todos API', type: :request do
               as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['error']['message']).to eq('Invalid tag IDs')
         expect(todo.reload.tags).to be_empty
       end
@@ -306,7 +306,7 @@ RSpec.describe 'Todos API', type: :request do
               as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['error']['message']).to eq('Invalid tag IDs')
       end
     end
@@ -336,7 +336,7 @@ RSpec.describe 'Todos API', type: :request do
         post '/api/v1/todos', params: { todo: todo_params }, headers: headers, as: :json
 
         expect(response).to have_http_status(:created)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         created_todo = Todo.find(json['data']['id'])
         expect(created_todo.tag_ids).to contain_exactly(tag1.id, tag2.id)
       end
@@ -349,7 +349,7 @@ RSpec.describe 'Todos API', type: :request do
 
         post '/api/v1/todos', params: { todo: todo_params }, headers: headers, as: :json
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['data']['tags']).to be_an(Array)
         expect(json['data']['tags'].length).to eq(1)
         expect(json['data']['tags'].first['id']).to eq(tag1.id)
@@ -366,7 +366,7 @@ RSpec.describe 'Todos API', type: :request do
 
         # The todo should be created but without invalid tags
         expect(response).to have_http_status(:created)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         created_todo = Todo.find(json['data']['id'])
         expect(created_todo.tags).to be_empty
       end

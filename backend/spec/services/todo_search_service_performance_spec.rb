@@ -44,7 +44,7 @@ RSpec.describe 'TodoSearchService Performance' do
                                          status: %w[pending in_progress],
                                          priority: 'high',
                                          tag_ids: user.tags.limit(3).pluck(:id),
-                                         due_date_from: Date.today.to_s,
+                                         due_date_from: Time.zone.today.to_s,
                                          due_date_to: 1.week.from_now.to_date.to_s,
                                          sort_by: 'priority',
                                          sort_order: 'desc'
@@ -59,7 +59,7 @@ RSpec.describe 'TodoSearchService Performance' do
       params = { q: 'project', status: 'pending' }
 
       # Run multiple searches and ensure performance is consistent
-      times = 3.times.map do
+      times = Array.new(3) do
         Benchmark.realtime do
           TodoSearchService.new(user, params).call.to_a
         end

@@ -15,10 +15,10 @@ RSpec.describe '/api/v1/categories', type: :request do
       get '/api/v1/categories', headers: headers
 
       expect(response).to have_http_status(:ok)
-      json_response = JSON.parse(response.body)
+      json_response = response.parsed_body
 
       expect(json_response['data'].size).to eq(3)
-      expect(json_response['data'].map { |c| c['name'] }).to eq(user_categories.map(&:name).sort)
+      expect(json_response['data'].pluck('name')).to eq(user_categories.map(&:name).sort)
     end
 
     it 'includes todo_count in response' do
@@ -28,7 +28,7 @@ RSpec.describe '/api/v1/categories', type: :request do
       get '/api/v1/categories', headers: headers
 
       expect(response).to have_http_status(:ok)
-      json_response = JSON.parse(response.body)
+      json_response = response.parsed_body
 
       category_response = json_response['data'].find { |c| c['id'] == category.id }
       expect(category_response['todo_count']).to eq(2)
@@ -42,7 +42,7 @@ RSpec.describe '/api/v1/categories', type: :request do
       get "/api/v1/categories/#{category.id}", headers: headers
 
       expect(response).to have_http_status(:ok)
-      json_response = JSON.parse(response.body)
+      json_response = response.parsed_body
 
       expect(json_response['data']['id']).to eq(category.id)
       expect(json_response['data']['name']).to eq(category.name)
@@ -80,7 +80,7 @@ RSpec.describe '/api/v1/categories', type: :request do
       post '/api/v1/categories', params: valid_params, headers: headers, as: :json
 
       expect(response).to have_http_status(:created)
-      json_response = JSON.parse(response.body)
+      json_response = response.parsed_body
 
       expect(json_response['data']['name']).to eq('New Category')
       expect(json_response['data']['color']).to eq('#FF5733')
@@ -100,7 +100,7 @@ RSpec.describe '/api/v1/categories', type: :request do
         post '/api/v1/categories', params: invalid_params, headers: headers, as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
 
         expect(json_response['error']).to be_present
         expect(json_response['error']['code']).to eq('VALIDATION_FAILED')
@@ -126,7 +126,7 @@ RSpec.describe '/api/v1/categories', type: :request do
       patch "/api/v1/categories/#{category.id}", params: update_params, headers: headers, as: :json
 
       expect(response).to have_http_status(:ok)
-      json_response = JSON.parse(response.body)
+      json_response = response.parsed_body
 
       expect(json_response['data']['name']).to eq('Updated Name')
       expect(json_response['data']['color']).to eq('#FFFFFF')

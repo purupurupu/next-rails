@@ -11,7 +11,7 @@ module AuthenticationHelpers
   def sign_in_user(user)
     unless defined?(sign_in)
       raise 'sign_in method not available. Make sure Devise test helpers are included for controller specs.'
-    end # Devise controller test helpers available
+    end
 
     sign_in user
   end
@@ -59,16 +59,16 @@ module AuthenticationHelpers
 
   # Debug helper to inspect authentication state
   def debug_auth_for(user)
-    puts "=== Auth Debug for #{user.email} ==="
-    puts "User ID: #{user.id}"
-    puts "User valid: #{user.valid?}"
-    puts "User errors: #{user.errors.full_messages}" unless user.valid?
+    Rails.logger.debug { "=== Auth Debug for #{user.email} ===" }
+    Rails.logger.debug { "User ID: #{user.id}" }
+    Rails.logger.debug { "User valid: #{user.valid?}" }
+    Rails.logger.debug { "User errors: #{user.errors.full_messages}" } unless user.valid?
 
     if jwt_tokens[user.id]
-      puts "Cached token exists: #{jwt_tokens[user.id][0..20]}..."
+      Rails.logger.debug { "Cached token exists: #{jwt_tokens[user.id][0..20]}..." }
     else
-      puts 'No cached token'
+      Rails.logger.debug 'No cached token'
     end
-    puts '=================================='
+    Rails.logger.debug '=================================='
   end
 end

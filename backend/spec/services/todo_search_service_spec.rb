@@ -212,7 +212,7 @@ RSpec.describe TodoSearchService do
 
     describe 'date range filtering' do
       context 'filtering by due_date_from' do
-        let(:params) { { due_date_from: Date.today.to_s } }
+        let(:params) { { due_date_from: Time.zone.today.to_s } }
 
         it 'returns todos with due date on or after the specified date' do
           expect(search_results).to contain_exactly(todo1, todo2)
@@ -230,7 +230,7 @@ RSpec.describe TodoSearchService do
       context 'filtering by date range' do
         let(:params) do
           {
-            due_date_from: Date.today.to_s,
+            due_date_from: Time.zone.today.to_s,
             due_date_to: 2.days.from_now.to_date.to_s
           }
         end
@@ -270,7 +270,7 @@ RSpec.describe TodoSearchService do
             q: 'e',
             status: %w[pending in_progress],
             tag_ids: [tag1.id],
-            due_date_from: Date.today.to_s
+            due_date_from: Time.zone.today.to_s
           }
         end
 

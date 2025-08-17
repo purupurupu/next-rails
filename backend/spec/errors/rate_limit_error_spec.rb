@@ -69,7 +69,7 @@ RSpec.describe RateLimitError do
     context 'with reset_at as Time object' do
       subject(:error) { described_class.new(reset_at: reset_time) }
 
-      let(:reset_time) { Time.now + 1.hour }
+      let(:reset_time) { 1.hour.from_now }
 
       it 'converts reset_at to ISO8601 format' do
         expect(error.details[:reset_at]).to eq(reset_time.iso8601)

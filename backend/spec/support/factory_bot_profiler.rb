@@ -43,46 +43,46 @@ module FactoryBotProfiler
     end
 
     def report
-      return puts 'FactoryBot profiling is disabled. Enable it with FactoryBotProfiler.enable!' unless results.any?
+      return Rails.logger.debug 'FactoryBot profiling is disabled. Enable it with FactoryBotProfiler.enable!' unless results.any?
 
-      puts "\n" + ('=' * 80)
-      puts 'FactoryBot Performance Report'
-      puts '=' * 80
+      Rails.logger.debug { "\n#{'=' * 80}" }
+      Rails.logger.debug 'FactoryBot Performance Report'
+      Rails.logger.debug '=' * 80
 
       sorted_results = results.values.sort_by { |r| -r[:total_time] }
 
-      puts format('%-30s %-10s %10s %15s %15s', 'Factory', 'Strategy', 'Count', 'Total (ms)', 'Avg (ms)')
-      puts '-' * 80
+      Rails.logger.debug 'Factory                        Strategy        Count      Total (ms)        Avg (ms)'
+      Rails.logger.debug '-' * 80
 
       sorted_results.each do |result|
         avg_time = result[:total_time] / result[:count]
-        puts format('%-30s %-10s %10d %15.2f %15.2f',
-                    result[:factory],
-                    result[:strategy],
-                    result[:count],
-                    result[:total_time],
-                    avg_time)
+        Rails.logger.debug format('%-30s %-10s %10d %15.2f %15.2f',
+                                  result[:factory],
+                                  result[:strategy],
+                                  result[:count],
+                                  result[:total_time],
+                                  avg_time)
       end
 
       total_time = sorted_results.sum { |r| r[:total_time] }
       total_count = sorted_results.sum { |r| r[:count] }
 
-      puts '-' * 80
-      puts format('%-30s %-10s %10d %15.2f', 'TOTAL', '', total_count, total_time)
-      puts '=' * 80
+      Rails.logger.debug '-' * 80
+      Rails.logger.debug format('%-30s %-10s %10d %15.2f', 'TOTAL', '', total_count, total_time)
+      Rails.logger.debug '=' * 80
 
       # Identify problematic factories
       slow_factories = sorted_results.select { |r| r[:total_time] / r[:count] > 50 } # > 50ms average
 
       if slow_factories.any?
-        puts "\nWARNING: The following factories are slow (>50ms average):"
+        Rails.logger.debug "\nWARNING: The following factories are slow (>50ms average):"
         slow_factories.each do |result|
           avg_time = result[:total_time] / result[:count]
-          puts "  - #{result[:factory]} (#{result[:strategy]}): #{avg_time.round(2)}ms average"
+          Rails.logger.debug { "  - #{result[:factory]} (#{result[:strategy]}): #{avg_time.round(2)}ms average" }
         end
       end
 
-      puts "\n"
+      Rails.logger.debug "\n"
     end
   end
 
@@ -130,7 +130,7 @@ if defined?(RSpec)
     config.before(:suite) do
       if ENV['PROFILE_FACTORIES']
         FactoryBotProfiler.enable!
-        puts 'FactoryBot profiling enabled'
+        Rails.logger.debug 'FactoryBot profiling enabled'
       end
     end
 

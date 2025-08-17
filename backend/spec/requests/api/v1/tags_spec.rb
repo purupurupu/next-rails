@@ -16,7 +16,7 @@ RSpec.describe 'Api::V1::Tags', type: :request do
       it 'returns all tags for the current user' do
         get '/api/v1/tags', headers: headers
         expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body)['data'].size).to eq(3)
+        expect(response.parsed_body['data'].size).to eq(3)
       end
 
       it 'returns tags ordered by name' do
@@ -25,13 +25,13 @@ RSpec.describe 'Api::V1::Tags', type: :request do
         create(:tag, name: 'Beta', user: user)
 
         get '/api/v1/tags', headers: headers
-        names = JSON.parse(response.body)['data'].map { |tag| tag['name'] }
+        names = response.parsed_body['data'].pluck('name')
         expect(names).to eq(names.sort)
       end
 
       it "does not return other users' tags" do
         get '/api/v1/tags', headers: headers
-        returned_tags = JSON.parse(response.body)['data']
+        returned_tags = response.parsed_body['data']
         # Since user_id is not in the serializer, we need to verify by checking the count
         expect(returned_tags.size).to eq(3) # Only the user's 3 tags
       end
@@ -52,15 +52,15 @@ RSpec.describe 'Api::V1::Tags', type: :request do
       it 'returns the tag' do
         get "/api/v1/tags/#{tag.id}", headers: headers
         expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body)['data']['id']).to eq(tag.id)
-        expect(JSON.parse(response.body)['data']['name']).to eq(tag.name)
-        expect(JSON.parse(response.body)['data']['color']).to eq(tag.color)
+        expect(response.parsed_body['data']['id']).to eq(tag.id)
+        expect(response.parsed_body['data']['name']).to eq(tag.name)
+        expect(response.parsed_body['data']['color']).to eq(tag.color)
       end
 
       it 'returns 404 for non-existent tag' do
         get '/api/v1/tags/999999', headers: headers
         expect(response).to have_http_status(:not_found)
-        expect(JSON.parse(response.body)['error']['message']).to eq('Tag not found')
+        expect(response.parsed_body['error']['message']).to eq('Tag not found')
       end
 
       it "returns 404 for another user's tag" do
@@ -90,18 +90,18 @@ RSpec.describe 'Api::V1::Tags', type: :request do
         it 'returns the created tag' do
           post '/api/v1/tags', params: { tag: valid_attributes }, headers: headers, as: :json
           expect(response).to have_http_status(:created)
-          expect(JSON.parse(response.body)['data']['name']).to eq('work') # normalized
-          expect(JSON.parse(response.body)['data']['color']).to eq('#FF0000')
+          expect(response.parsed_body['data']['name']).to eq('work') # normalized
+          expect(response.parsed_body['data']['color']).to eq('#FF0000')
         end
 
         it 'normalizes the tag name' do
           post '/api/v1/tags', params: { tag: { name: '  WORK  ' } }, headers: headers, as: :json
-          expect(JSON.parse(response.body)['data']['name']).to eq('work')
+          expect(response.parsed_body['data']['name']).to eq('work')
         end
 
         it 'normalizes the color' do
           post '/api/v1/tags', params: { tag: { name: 'test', color: '#ff0000' } }, headers: headers, as: :json
-          expect(JSON.parse(response.body)['data']['color']).to eq('#FF0000')
+          expect(response.parsed_body['data']['color']).to eq('#FF0000')
         end
       end
 
@@ -119,7 +119,7 @@ RSpec.describe 'Api::V1::Tags', type: :request do
 
         it 'returns validation errors' do
           post '/api/v1/tags', params: { tag: { name: '' } }, headers: headers, as: :json
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['error']['code']).to eq('VALIDATION_FAILED')
           expect(json['error']['details']['validation_errors']['name']).to include("can't be blank")
         end
@@ -128,14 +128,14 @@ RSpec.describe 'Api::V1::Tags', type: :request do
           create(:tag, name: 'work', user: user)
           post '/api/v1/tags', params: { tag: { name: 'WORK' } }, headers: headers, as: :json
           expect(response).to have_http_status(:unprocessable_entity)
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['error']['code']).to eq('VALIDATION_FAILED')
           expect(json['error']['details']['validation_errors']['name']).to include('has already been taken')
         end
 
         it 'returns error for invalid color format' do
           post '/api/v1/tags', params: { tag: { name: 'test', color: 'red' } }, headers: headers, as: :json
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['error']['code']).to eq('VALIDATION_FAILED')
           expect(json['error']['details']['validation_errors']['color']).to include('must be a valid hex color')
         end
@@ -166,8 +166,8 @@ RSpec.describe 'Api::V1::Tags', type: :request do
         it 'returns the updated tag' do
           patch "/api/v1/tags/#{tag.id}", params: { tag: new_attributes }, headers: headers, as: :json
           expect(response).to have_http_status(:ok)
-          expect(JSON.parse(response.body)['data']['name']).to eq('new-name')
-          expect(JSON.parse(response.body)['data']['color']).to eq('#FFFFFF')
+          expect(response.parsed_body['data']['name']).to eq('new-name')
+          expect(response.parsed_body['data']['color']).to eq('#FFFFFF')
         end
       end
 
@@ -179,7 +179,7 @@ RSpec.describe 'Api::V1::Tags', type: :request do
 
         it 'returns validation errors' do
           patch "/api/v1/tags/#{tag.id}", params: { tag: { name: '' } }, headers: headers, as: :json
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['error']['code']).to eq('VALIDATION_FAILED')
           expect(json['error']['details']['validation_errors']['name']).to include("can't be blank")
         end

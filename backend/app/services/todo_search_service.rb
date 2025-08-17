@@ -44,7 +44,7 @@ class TodoSearchService
   end
 
   def filter_by_category(scope)
-    return scope unless params[:category_id].present?
+    return scope if params[:category_id].blank?
 
     category_ids = Array(params[:category_id]).map(&:to_i).reject(&:zero?)
 
@@ -61,7 +61,7 @@ class TodoSearchService
   end
 
   def filter_by_status(scope)
-    return scope unless params[:status].present?
+    return scope if params[:status].blank?
 
     # Handle both single string and array of strings
     status_values = params[:status].is_a?(Array) ? params[:status] : [params[:status]]
@@ -72,7 +72,7 @@ class TodoSearchService
   end
 
   def filter_by_priority(scope)
-    return scope unless params[:priority].present?
+    return scope if params[:priority].blank?
 
     # Handle both single string and array of strings
     priority_values = params[:priority].is_a?(Array) ? params[:priority] : [params[:priority]]
@@ -83,7 +83,7 @@ class TodoSearchService
   end
 
   def filter_by_tags(scope)
-    return scope unless params[:tag_ids].present?
+    return scope if params[:tag_ids].blank?
 
     tag_ids = Array(params[:tag_ids]).map(&:to_i).reject(&:zero?)
     return scope if tag_ids.empty?
@@ -118,11 +118,11 @@ class TodoSearchService
   end
 
   def filter_by_due_date_from(scope)
-    return scope unless params[:due_date_from].present?
+    return scope if params[:due_date_from].blank?
 
     begin
       date_from = Date.parse(params[:due_date_from])
-      scope.where('due_date >= ?', date_from)
+      scope.where(due_date: date_from..)
     rescue ArgumentError
       # Invalid date format, skip filter
       scope
@@ -130,11 +130,11 @@ class TodoSearchService
   end
 
   def filter_by_due_date_to(scope)
-    return scope unless params[:due_date_to].present?
+    return scope if params[:due_date_to].blank?
 
     begin
       date_to = Date.parse(params[:due_date_to])
-      scope.where('due_date <= ?', date_to)
+      scope.where(due_date: ..date_to)
     rescue ArgumentError
       # Invalid date format, skip filter
       scope

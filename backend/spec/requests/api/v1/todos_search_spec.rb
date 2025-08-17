@@ -61,7 +61,7 @@ RSpec.describe 'Todo Search API', type: :request do
 
           expect(response).to have_http_status(:success)
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(3)
           expect(json['meta']).to include(
             'total' => 3,
@@ -78,7 +78,7 @@ RSpec.describe 'Todo Search API', type: :request do
 
           expect(response).to have_http_status(:success)
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(1)
           expect(json['data'][0]['title']).to include('milk')
           expect(json['meta']['search_query']).to eq('milk')
@@ -87,7 +87,7 @@ RSpec.describe 'Todo Search API', type: :request do
         it 'searches in description' do
           get '/api/v1/todos/search', params: { query: 'quarterly' }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(1)
           expect(json['data'][0]['description']).to include('quarterly')
         end
@@ -95,7 +95,7 @@ RSpec.describe 'Todo Search API', type: :request do
         it 'returns highlights for matches' do
           get '/api/v1/todos/search', params: { q: 'project' }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           todo = json['data'][0]
           expect(todo['highlights']).to be_present
           expect(todo['highlights']['title']).to be_present
@@ -109,7 +109,7 @@ RSpec.describe 'Todo Search API', type: :request do
         it 'performs case-insensitive search' do
           get '/api/v1/todos/search', params: { q: 'PROJECT' }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(1)
         end
       end
@@ -118,7 +118,7 @@ RSpec.describe 'Todo Search API', type: :request do
         it 'filters by category' do
           get '/api/v1/todos/search', params: { category_id: category.id }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(1)
           expect(json['data'][0]['category']['id']).to eq(category.id)
         end
@@ -126,7 +126,7 @@ RSpec.describe 'Todo Search API', type: :request do
         it 'filters uncategorized todos' do
           get '/api/v1/todos/search', params: { category_id: -1 }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(2)
           expect(json['data'].all? { |t| t['category'].nil? }).to be true
         end
@@ -136,7 +136,7 @@ RSpec.describe 'Todo Search API', type: :request do
         it 'filters by single status' do
           get '/api/v1/todos/search', params: { status: 'pending' }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(1)
           expect(json['data'][0]['status']).to eq('pending')
         end
@@ -144,9 +144,9 @@ RSpec.describe 'Todo Search API', type: :request do
         it 'filters by multiple statuses' do
           get '/api/v1/todos/search', params: { status: %w[pending in_progress] }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(2)
-          expect(json['data'].map { |t| t['status'] }).to contain_exactly('pending', 'in_progress')
+          expect(json['data'].pluck('status')).to contain_exactly('pending', 'in_progress')
         end
       end
 
@@ -154,7 +154,7 @@ RSpec.describe 'Todo Search API', type: :request do
         it 'filters by priority' do
           get '/api/v1/todos/search', params: { priority: 'high' }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(1)
           expect(json['data'][0]['priority']).to eq('high')
         end
@@ -164,22 +164,22 @@ RSpec.describe 'Todo Search API', type: :request do
         it 'filters by tag (ANY mode)' do
           get '/api/v1/todos/search', params: { tag_ids: [tag2.id] }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(1)
-          expect(json['data'][0]['tags'].map { |t| t['id'] }).to include(tag2.id)
+          expect(json['data'][0]['tags'].pluck('id')).to include(tag2.id)
         end
 
         it 'filters by multiple tags (ANY mode)' do
           get '/api/v1/todos/search', params: { tag_ids: [tag1.id, tag2.id], tag_mode: 'any' }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(2)
         end
 
         it 'filters by multiple tags (ALL mode)' do
           get '/api/v1/todos/search', params: { tag_ids: [tag1.id, tag2.id], tag_mode: 'all' }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(1)
           expect(json['data'][0]['tags'].size).to eq(2)
         end
@@ -187,29 +187,29 @@ RSpec.describe 'Todo Search API', type: :request do
 
       context 'with date range filter' do
         it 'filters by due_date_from' do
-          get '/api/v1/todos/search', params: { due_date_from: Date.today.to_s }, headers: auth_headers
+          get '/api/v1/todos/search', params: { due_date_from: Time.zone.today.to_s }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(2)
-          expect(json['data'].all? { |t| t['due_date'].nil? || Date.parse(t['due_date']) >= Date.today }).to be true
+          expect(json['data'].all? { |t| t['due_date'].nil? || Date.parse(t['due_date']) >= Time.zone.today }).to be true
         end
 
         it 'filters by due_date_to' do
           get '/api/v1/todos/search', params: { due_date_to: 2.days.from_now.to_date.to_s }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(1) # todo3 has nil due_date
         end
 
         it 'filters by date range' do
           get '/api/v1/todos/search',
               params: {
-                due_date_from: Date.today.to_s,
+                due_date_from: Time.zone.today.to_s,
                 due_date_to: 2.days.from_now.to_date.to_s
               },
               headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(1)
         end
       end
@@ -225,7 +225,7 @@ RSpec.describe 'Todo Search API', type: :request do
               },
               headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(1)
           expect(json['data'][0]['title']).to include('project')
           expect(json['data'][0]['status']).to eq('in_progress')
@@ -237,24 +237,24 @@ RSpec.describe 'Todo Search API', type: :request do
         it 'sorts by created_at DESC' do
           get '/api/v1/todos/search', params: { sort_by: 'created_at', sort_order: 'desc' }, headers: auth_headers
 
-          json = JSON.parse(response.body)
-          created_dates = json['data'].map { |t| t['created_at'] }
+          json = response.parsed_body
+          created_dates = json['data'].pluck('created_at')
           expect(created_dates).to eq(created_dates.sort.reverse)
         end
 
         it 'sorts by title ASC' do
           get '/api/v1/todos/search', params: { sort_by: 'title', sort_order: 'asc' }, headers: auth_headers
 
-          json = JSON.parse(response.body)
-          titles = json['data'].map { |t| t['title'] }
+          json = response.parsed_body
+          titles = json['data'].pluck('title')
           expect(titles).to eq(['Buy milk and eggs', 'Complete project report', 'Read documentation'])
         end
 
         it 'sorts by priority DESC' do
           get '/api/v1/todos/search', params: { sort_by: 'priority', sort_order: 'desc' }, headers: auth_headers
 
-          json = JSON.parse(response.body)
-          priorities = json['data'].map { |t| t['priority'] }
+          json = response.parsed_body
+          priorities = json['data'].pluck('priority')
           expect(priorities).to eq(%w[high medium low])
         end
       end
@@ -270,7 +270,7 @@ RSpec.describe 'Todo Search API', type: :request do
         it 'paginates results' do
           get '/api/v1/todos/search', params: { page: 1, per_page: 5 }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(5)
           expect(json['meta']['current_page']).to eq(1)
           expect(json['meta']['total_pages']).to eq(3)
@@ -281,7 +281,7 @@ RSpec.describe 'Todo Search API', type: :request do
         it 'returns correct page' do
           get '/api/v1/todos/search', params: { page: 2, per_page: 5 }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(5)
           expect(json['meta']['current_page']).to eq(2)
         end
@@ -289,7 +289,7 @@ RSpec.describe 'Todo Search API', type: :request do
         it 'limits per_page to 100' do
           get '/api/v1/todos/search', params: { per_page: 200 }, headers: auth_headers
 
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['meta']['per_page']).to eq(100)
         end
       end
@@ -299,16 +299,16 @@ RSpec.describe 'Todo Search API', type: :request do
           get '/api/v1/todos/search', params: { q: 'nonexistent' }, headers: auth_headers
 
           expect(response).to have_http_status(:success)
-          json = JSON.parse(response.body)
+          json = response.parsed_body
 
           # The search controller should return data even when empty
           # If data key is missing, check if it's a different response structure
-          expect(json['data']).to eq([]) if json.has_key?('data')
+          expect(json['data']).to eq([]) if json.key?('data')
 
           expect(json).to have_key('meta')
           expect(json['meta']['suggestions']).to be_present
 
-          suggestion_types = json['meta']['suggestions'].map { |s| s['type'] }
+          suggestion_types = json['meta']['suggestions'].pluck('type')
           expect(suggestion_types).to include('spelling', 'broader_search', 'clear_filters')
         end
 
@@ -324,10 +324,10 @@ RSpec.describe 'Todo Search API', type: :request do
               headers: auth_headers
 
           expect(response).to have_http_status(:success)
-          json = JSON.parse(response.body)
+          json = response.parsed_body
 
           # This should return 0 results, triggering suggestions
-          expect(json['data']).to eq([]) if json.has_key?('data')
+          expect(json['data']).to eq([]) if json.key?('data')
 
           expect(json).to have_key('meta')
           expect(json['meta']['suggestions']).to be_present
@@ -343,7 +343,7 @@ RSpec.describe 'Todo Search API', type: :request do
           get '/api/v1/todos/search', params: { status: 'invalid_status' }, headers: auth_headers
 
           expect(response).to have_http_status(:success)
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(3) # All todos returned
         end
 
@@ -351,7 +351,7 @@ RSpec.describe 'Todo Search API', type: :request do
           get '/api/v1/todos/search', params: { due_date_from: 'invalid-date' }, headers: auth_headers
 
           expect(response).to have_http_status(:success)
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data'].size).to eq(3) # All todos returned
         end
       end

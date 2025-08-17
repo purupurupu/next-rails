@@ -22,15 +22,15 @@ RSpec.describe Comment, type: :model do
     describe '.active' do
       it 'returns only non-deleted comments' do
         # デフォルトスコープを無視するためにunscoped
-        expect(Comment.unscoped.active).to include(active_comment)
-        expect(Comment.unscoped.active).not_to include(deleted_comment)
+        expect(described_class.unscoped.active).to include(active_comment)
+        expect(described_class.unscoped.active).not_to include(deleted_comment)
       end
     end
 
     describe '.deleted' do
       it 'returns only deleted comments' do
-        expect(Comment.unscoped.deleted).to include(deleted_comment)
-        expect(Comment.unscoped.deleted).not_to include(active_comment)
+        expect(described_class.unscoped.deleted).to include(deleted_comment)
+        expect(described_class.unscoped.deleted).not_to include(active_comment)
       end
     end
 
@@ -39,7 +39,7 @@ RSpec.describe Comment, type: :model do
       let!(:new_comment) { create(:comment, created_at: 1.day.ago) }
 
       it 'orders comments by created_at ascending' do
-        result = Comment.chronological
+        result = described_class.chronological
         expect(result.first.created_at).to be < result.last.created_at
         expect(result).to include(old_comment, new_comment)
       end
@@ -50,7 +50,7 @@ RSpec.describe Comment, type: :model do
       let!(:new_comment) { create(:comment, created_at: 1.day.ago) }
 
       it 'orders comments by created_at descending' do
-        result = Comment.recent
+        result = described_class.recent
         expect(result.first.created_at).to be > result.last.created_at
         expect(result).to include(old_comment, new_comment)
       end
@@ -62,8 +62,8 @@ RSpec.describe Comment, type: :model do
     let!(:deleted_comment) { create(:comment, :deleted) }
 
     it 'excludes deleted comments by default' do
-      expect(Comment.all).to include(active_comment)
-      expect(Comment.all).not_to include(deleted_comment)
+      expect(described_class.all).to include(active_comment)
+      expect(described_class.all).not_to include(deleted_comment)
     end
   end
 
@@ -71,12 +71,12 @@ RSpec.describe Comment, type: :model do
     let(:comment) { create(:comment) }
 
     it 'sets deleted_at timestamp' do
-      expect { comment.soft_delete! }.to change { comment.deleted_at }.from(nil)
+      expect { comment.soft_delete! }.to change(comment, :deleted_at).from(nil)
     end
 
     it 'does not destroy the record' do
       comment.soft_delete!
-      expect(Comment.unscoped.find(comment.id)).to be_present
+      expect(described_class.unscoped.find(comment.id)).to be_present
     end
   end
 
@@ -84,7 +84,7 @@ RSpec.describe Comment, type: :model do
     let(:comment) { create(:comment, :deleted) }
 
     it 'clears deleted_at timestamp' do
-      expect { comment.restore! }.to change { comment.deleted_at }.to(nil)
+      expect { comment.restore! }.to change(comment, :deleted_at).to(nil)
     end
   end
 

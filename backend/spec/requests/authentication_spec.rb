@@ -39,7 +39,7 @@ RSpec.describe 'Authentication', type: :request do
         expect(response).to have_http_status(:created)
         expect(response.content_type).to include('application/json')
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['status']['code']).to eq(201)
         expect(json_response['status']['message']).to eq('Signed up successfully.')
         expect(json_response['data']['email']).to eq('test@example.com')
@@ -67,7 +67,7 @@ RSpec.describe 'Authentication', type: :request do
 
         expect(response).to have_http_status(:unprocessable_entity)
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['error']['code']).to eq('VALIDATION_FAILED')
         expect(json_response['error']['message']).to include("User couldn't be created successfully")
       end
@@ -83,7 +83,7 @@ RSpec.describe 'Authentication', type: :request do
 
         expect(response).to have_http_status(:unprocessable_entity)
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['error']['code']).to eq('VALIDATION_FAILED')
         expect(json_response['error']['details']['validation_errors']).to have_key('email')
       end
@@ -118,7 +118,7 @@ RSpec.describe 'Authentication', type: :request do
         expect(response).to have_http_status(:ok)
         expect(response.content_type).to include('application/json')
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['status']['code']).to eq(200)
         expect(json_response['status']['message']).to eq('Logged in successfully.')
         expect(json_response['data']['email']).to eq('test@example.com')
@@ -139,7 +139,7 @@ RSpec.describe 'Authentication', type: :request do
 
         expect(response).to have_http_status(:unauthorized)
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         expect(json_response['error']).to eq('Invalid Email or password.')
       end
     end

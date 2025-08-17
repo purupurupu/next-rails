@@ -23,7 +23,7 @@ RSpec.describe 'Api::V1::Comments', type: :request do
         get "/api/v1/todos/#{todo.id}/comments", headers: auth_headers
 
         expect(response).to have_http_status(:ok)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['data']).to be_an(Array)
         expect(json['data'].length).to eq(4)
         # 古いコメントが最初に来ることを確認
@@ -33,7 +33,7 @@ RSpec.describe 'Api::V1::Comments', type: :request do
       it 'includes user information' do
         get "/api/v1/todos/#{todo.id}/comments", headers: auth_headers
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['data']).to be_an(Array)
         expect(json['data'].first['user']).to be_present
         expect(json['data'].first['user']['id']).to be_present
@@ -43,7 +43,7 @@ RSpec.describe 'Api::V1::Comments', type: :request do
       it 'includes editable flag' do
         get "/api/v1/todos/#{todo.id}/comments", headers: auth_headers
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['data']).to be_an(Array)
         expect(json['data'].first).to have_key('editable')
       end
@@ -69,7 +69,7 @@ RSpec.describe 'Api::V1::Comments', type: :request do
         end.to change { todo.comments.count }.by(1)
 
         expect(response).to have_http_status(:created)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['data']).to be_present
         expect(json['data']['content']).to eq('This is a test comment')
         expect(json['data']['user']['id']).to eq(user.id)
@@ -81,7 +81,7 @@ RSpec.describe 'Api::V1::Comments', type: :request do
         post "/api/v1/todos/#{todo.id}/comments", params: invalid_params.to_json, headers: auth_headers
 
         expect(response).to have_http_status(:unprocessable_entity)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['error']).to be_present
         expect(json['error']['code']).to eq('VALIDATION_FAILED')
       end
@@ -107,7 +107,7 @@ RSpec.describe 'Api::V1::Comments', type: :request do
           patch "/api/v1/todos/#{todo.id}/comments/#{comment.id}", params: update_params.to_json, headers: auth_headers
 
           expect(response).to have_http_status(:ok)
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['data']).to be_present
           expect(json['data']['content']).to eq('Updated comment')
         end
@@ -120,7 +120,7 @@ RSpec.describe 'Api::V1::Comments', type: :request do
           patch "/api/v1/todos/#{todo.id}/comments/#{comment.id}", params: update_params.to_json, headers: auth_headers
 
           expect(response).to have_http_status(:unprocessable_entity)
-          json = JSON.parse(response.body)
+          json = response.parsed_body
           expect(json['error']['message']).to include('編集可能時間')
         end
       end
@@ -131,7 +131,7 @@ RSpec.describe 'Api::V1::Comments', type: :request do
         patch "/api/v1/todos/#{todo.id}/comments/#{other_comment.id}", params: update_params.to_json, headers: auth_headers
 
         expect(response).to have_http_status(:forbidden)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['error']['message']).to include('編集権限')
       end
     end
@@ -157,7 +157,7 @@ RSpec.describe 'Api::V1::Comments', type: :request do
         delete "/api/v1/todos/#{todo.id}/comments/#{other_comment.id}", headers: auth_headers
 
         expect(response).to have_http_status(:forbidden)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['error']['message']).to include('削除権限')
       end
     end

@@ -52,7 +52,7 @@ RSpec.describe 'ApplicationController', type: :request do
         get '/api/v1/todos/99999', headers: auth_headers
 
         expect(response).to have_http_status(:not_found)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         # The actual response uses 'ERROR' code for not found
         expect(json['error']).not_to be_nil
         expect(json['error']['message']).to include('not found')
@@ -64,7 +64,7 @@ RSpec.describe 'ApplicationController', type: :request do
         post '/api/v1/todos', params: { todo: { title: '' } }, headers: auth_headers
 
         expect(response).to have_http_status(:unprocessable_entity)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['error']['code']).to eq('VALIDATION_FAILED')
         expect(json['error']['details']['validation_errors']).not_to be_empty
       end
@@ -75,7 +75,7 @@ RSpec.describe 'ApplicationController', type: :request do
         post '/api/v1/todos', params: {}, headers: auth_headers
 
         expect(response).to have_http_status(:bad_request)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['error']['code']).to eq('ERROR')
         expect(json['error']['message']).to include('Required parameter missing')
       end

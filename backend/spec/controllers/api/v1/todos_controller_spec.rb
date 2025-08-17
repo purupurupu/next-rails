@@ -39,10 +39,10 @@ RSpec.describe Api::V1::TodosController, type: :controller do
 
       get :index
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(response).to have_http_status(:ok)
-      expect(json['data'].map { |t| t['id'] }).to contain_exactly(todo.id, todo1.id, todo2.id)
-      expect(json['data'].map { |t| t['id'] }).not_to include(other_todo.id)
+      expect(json['data'].pluck('id')).to contain_exactly(todo.id, todo1.id, todo2.id)
+      expect(json['data'].pluck('id')).not_to include(other_todo.id)
     end
 
     it 'includes associations efficiently' do
@@ -51,7 +51,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
 
       get :index
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       todo_data = json['data'].find { |t| t['id'] == todo_with_associations.id }
 
       expect(todo_data['category']).to be_present
@@ -75,8 +75,8 @@ RSpec.describe Api::V1::TodosController, type: :controller do
 
       get :index
 
-      json = JSON.parse(response.body)
-      todo_ids = json['data'].map { |t| t['id'] }
+      json = response.parsed_body
+      todo_ids = json['data'].pluck('id')
 
       # Todos should be ordered by position (ascending)
       expect(todo_ids).to eq([todo2.id, todo3.id, todo1.id])
@@ -103,7 +103,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
       it 'searches by title' do
         get :search, params: { q: 'groceries' }
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(response).to have_http_status(:ok)
         expect(json['data'].size).to eq(1)
         expect(json['data'][0]['id']).to eq(todo1.id)
@@ -112,7 +112,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
       it 'searches in description' do
         get :search, params: { query: 'quarterly' }
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['data'].size).to eq(1)
         expect(json['data'][0]['id']).to eq(todo3.id)
       end
@@ -122,14 +122,14 @@ RSpec.describe Api::V1::TodosController, type: :controller do
       it 'filters by status' do
         get :search, params: { status: %w[pending in_progress] }
 
-        json = JSON.parse(response.body)
-        expect(json['data'].map { |t| t['id'] }).to contain_exactly(todo1.id, todo3.id)
+        json = response.parsed_body
+        expect(json['data'].pluck('id')).to contain_exactly(todo1.id, todo3.id)
       end
 
       it 'filters by priority' do
         get :search, params: { priority: 'high' }
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['data'].size).to eq(1)
         expect(json['data'][0]['id']).to eq(todo1.id)
       end
@@ -144,7 +144,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
 
         get :search, params: { category_id: category.id }
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['data'].size).to eq(1)
         expect(json['data'][0]['id']).to eq(todo_with_category.id)
       end
@@ -154,8 +154,8 @@ RSpec.describe Api::V1::TodosController, type: :controller do
 
         get :search, params: { tag_ids: [tag1.id], tag_mode: 'any' }
 
-        json = JSON.parse(response.body)
-        expect(json['data'].map { |t| t['id'] }).to include(todo_with_tags.id)
+        json = response.parsed_body
+        expect(json['data'].pluck('id')).to include(todo_with_tags.id)
       end
 
       it 'filters by date range' do
@@ -163,13 +163,13 @@ RSpec.describe Api::V1::TodosController, type: :controller do
         todo_due_later = create(:todo, user: user, due_date: 10.days.from_now)
 
         get :search, params: {
-          due_date_from: Date.today,
+          due_date_from: Time.zone.today,
           due_date_to: 5.days.from_now
         }
 
-        json = JSON.parse(response.body)
-        expect(json['data'].map { |t| t['id'] }).to include(todo_due_soon.id)
-        expect(json['data'].map { |t| t['id'] }).not_to include(todo_due_later.id)
+        json = response.parsed_body
+        expect(json['data'].pluck('id')).to include(todo_due_soon.id)
+        expect(json['data'].pluck('id')).not_to include(todo_due_later.id)
       end
     end
 
@@ -187,8 +187,8 @@ RSpec.describe Api::V1::TodosController, type: :controller do
 
         get :search, params: { sort_by: 'created_at', sort_order: 'desc' }
 
-        json = JSON.parse(response.body)
-        todo_ids = json['data'].map { |t| t['id'] }
+        json = response.parsed_body
+        todo_ids = json['data'].pluck('id')
 
         # Check that new_todo comes before old_todo in the results
         new_todo_index = todo_ids.index(new_todo.id)
@@ -206,7 +206,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
       it 'paginates results' do
         get :search, params: { page: 1, per_page: 10 }
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['data'].size).to eq(10)
         # Count actual todos for the user
         total_todos = user.todos.count
@@ -223,7 +223,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
 
         get :search, params: { q: 'nonexistent' }
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['data'] || []).to be_empty
         expect(json['meta']['suggestions']).to be_present
         expect(json['meta']['suggestions']).to include(
@@ -238,7 +238,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
       it 'includes search metadata' do
         get :search, params: { q: 'test', status: 'pending' }
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['meta']).to include(
           'search_query' => 'test',
           'filters_applied' => hash_including(
@@ -256,7 +256,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
     it 'returns todo when it belongs to current user' do
       get :show, params: { id: todo.id }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(response).to have_http_status(:ok)
       expect(json['data']['id']).to eq(todo.id)
       expect(json['data']['title']).to eq(todo.title)
@@ -300,7 +300,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
           post :create, params: valid_params
         end.to change(Todo, :count).by(1)
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(response).to have_http_status(:created)
         expect(json['data']['title']).to eq('New Todo')
         expect(json['data']['category']['id']).to eq(category.id)
@@ -399,7 +399,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
           }
         }
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(response).to have_http_status(:ok)
         expect(json['data']['title']).to eq('Updated Title')
         expect(json['data']['completed']).to be true
@@ -508,8 +508,8 @@ RSpec.describe Api::V1::TodosController, type: :controller do
       }
 
       expect(response).to have_http_status(:ok)
-      json = JSON.parse(response.body)
-      expect(json['data']['tags'].map { |t| t['id'] }).to contain_exactly(tag1.id, tag2.id)
+      json = response.parsed_body
+      expect(json['data']['tags'].pluck('id')).to contain_exactly(tag1.id, tag2.id)
     end
 
     it 'clears tags when empty array provided' do
@@ -532,7 +532,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
         tag_ids: [tag1.id, other_tag.id]
       }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(response).to have_http_status(:unprocessable_entity)
       expect(json['error']['details']['invalid_tags']).to include(other_tag.id)
     end
@@ -571,7 +571,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
         ]
       }, as: :json
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(response).to have_http_status(:not_found)
       # Controller returns string IDs in error details
       expect(json['error']['details']['missing_todos'].map(&:to_i)).to include(other_todo.id)
@@ -589,7 +589,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
       }
 
       expect(response).to have_http_status(:unprocessable_entity)
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['error']['message']).to eq('Failed to update todo order')
     end
   end
@@ -609,7 +609,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
         delete :destroy_file, params: { id: todo.id, file_id: file_id }
       end.to change { todo.reload.files.count }.by(-1)
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(response).to have_http_status(:ok)
       expect(json['status']['message']).to eq('File deleted successfully')
     end
@@ -645,7 +645,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
     it 'follows v1 response structure for success' do
       get :show, params: { id: todo.id }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json).to have_key('status')
       expect(json['status']).to include('code' => 200, 'message' => 'Todo retrieved successfully')
       expect(json).to have_key('data')
@@ -654,7 +654,7 @@ RSpec.describe Api::V1::TodosController, type: :controller do
     it 'follows v1 response structure for errors' do
       get :show, params: { id: 999_999 }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json).to have_key('error')
       expect(json['error']).to include(
         'code' => 'ERROR',

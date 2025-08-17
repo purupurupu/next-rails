@@ -36,10 +36,10 @@ RSpec.describe Api::V1::TagsController, type: :controller do
 
       get :index
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(response).to have_http_status(:ok)
-      expect(json['data'].map { |t| t['id'] }).to contain_exactly(tag.id, tag1.id, tag2.id)
-      expect(json['data'].map { |t| t['id'] }).not_to include(other_tag.id)
+      expect(json['data'].pluck('id')).to contain_exactly(tag.id, tag1.id, tag2.id)
+      expect(json['data'].pluck('id')).not_to include(other_tag.id)
     end
 
     it 'returns tags in ordered scope' do
@@ -50,16 +50,16 @@ RSpec.describe Api::V1::TagsController, type: :controller do
 
       get :index
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       # Verify tags are returned in some consistent order
-      tag_ids = json['data'].map { |t| t['id'] }
+      tag_ids = json['data'].pluck('id')
       expect(tag_ids).to eq(tag_ids.sort) # Assuming ordered by id or created_at
     end
 
     it 'includes proper serialized data' do
       get :index
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['data'].first).to include(
         'id' => tag.id,
         'name' => tag.name,
@@ -75,7 +75,7 @@ RSpec.describe Api::V1::TagsController, type: :controller do
     it 'follows v1 response structure' do
       get :index
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json).to have_key('status')
       expect(json['status']).to include(
         'code' => 200,
@@ -91,7 +91,7 @@ RSpec.describe Api::V1::TagsController, type: :controller do
     it 'returns tag when it belongs to current user' do
       get :show, params: { id: tag.id }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(response).to have_http_status(:ok)
       expect(json['data']['id']).to eq(tag.id)
       expect(json['data']['name']).to eq(tag.name)
@@ -104,7 +104,7 @@ RSpec.describe Api::V1::TagsController, type: :controller do
       get :show, params: { id: other_tag.id }
 
       expect(response).to have_http_status(:not_found)
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['error']['message']).to eq('Tag not found')
     end
 
@@ -133,7 +133,7 @@ RSpec.describe Api::V1::TagsController, type: :controller do
           post :create, params: valid_params
         end.to change(Tag, :count).by(1)
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(response).to have_http_status(:created)
         expect(json['data']['name']).to eq('new tag') # Tag names are downcased
         expect(json['data']['color']).to eq('#FF5733')
@@ -198,7 +198,7 @@ RSpec.describe Api::V1::TagsController, type: :controller do
           }
         }
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(response).to have_http_status(:ok)
         expect(json['data']['name']).to eq('updated name') # Tag names are downcased
         expect(json['data']['color']).to eq('#00FF00')
@@ -270,7 +270,7 @@ RSpec.describe Api::V1::TagsController, type: :controller do
       end.to change(Tag, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['status']['message']).to eq('Tag deleted successfully')
     end
 
@@ -315,7 +315,7 @@ RSpec.describe Api::V1::TagsController, type: :controller do
     it 'follows v1 response structure for success' do
       get :show, params: { id: tag.id }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json).to have_key('status')
       expect(json['status']).to include('code' => 200)
       expect(json).to have_key('data')
@@ -325,7 +325,7 @@ RSpec.describe Api::V1::TagsController, type: :controller do
     it 'follows v1 response structure for errors' do
       get :show, params: { id: 999_999 }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json).to have_key('error')
       expect(json['error']).to include(
         'code' => 'ERROR',
@@ -346,7 +346,7 @@ RSpec.describe Api::V1::TagsController, type: :controller do
 
       get :show, params: { id: tag.id }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       # Tag serializer doesn't include todos_count
       expect(json['data']).to have_key('id')
       expect(json['data']).to have_key('name')
@@ -355,7 +355,7 @@ RSpec.describe Api::V1::TagsController, type: :controller do
     it 'includes timestamps in serialized data' do
       get :show, params: { id: tag.id }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['data']).to have_key('created_at')
       expect(json['data']).to have_key('updated_at')
     end

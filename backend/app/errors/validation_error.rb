@@ -29,7 +29,7 @@ class ValidationError < ApiError
   def format_errors(errors)
     case errors
     when ActiveModel::Errors
-      errors.messages.transform_values { |messages| messages.uniq }
+      errors.messages.transform_values(&:uniq)
     when Hash
       errors
     else

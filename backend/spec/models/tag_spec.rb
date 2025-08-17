@@ -99,7 +99,7 @@ RSpec.describe Tag, type: :model do
         tag_a = create(:tag, name: 'Alpha', user: user)
         tag_b = create(:tag, name: 'Bravo', user: user)
 
-        expect(Tag.ordered).to eq([tag_a, tag_b, tag_c])
+        expect(described_class.ordered).to eq([tag_a, tag_b, tag_c])
       end
     end
   end
@@ -111,12 +111,12 @@ RSpec.describe Tag, type: :model do
 
     it 'destroys associated todo_tags when tag is destroyed' do
       create(:todo_tag, todo: todo, tag: tag)
-      expect { tag.destroy }.to change { TodoTag.count }.by(-1)
+      expect { tag.destroy }.to change(TodoTag, :count).by(-1)
     end
 
     it 'does not destroy associated todos when tag is destroyed' do
       create(:todo_tag, todo: todo, tag: tag)
-      expect { tag.destroy }.not_to(change { Todo.count })
+      expect { tag.destroy }.not_to(change(Todo, :count))
     end
   end
 end

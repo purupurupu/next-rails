@@ -69,7 +69,7 @@ class TodoSerializer < ActiveModel::Serializer
   # 検索結果のハイライト情報
   def highlights
     query = @instance_options[:highlight_query]
-    return nil unless query.present?
+    return nil if query.blank?
 
     highlights = {}
     search_term = query.downcase

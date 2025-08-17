@@ -24,7 +24,7 @@ RSpec.describe 'Api::V1::TodoHistories', type: :request do
         get "/api/v1/todos/#{todo.id}/histories", headers: auth_headers
 
         expect(response).to have_http_status(:ok)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json.length).to eq(3)
         # 新しい履歴が最初に来ることを確認
         expect(json.first['action']).to eq('priority_changed')
@@ -33,7 +33,7 @@ RSpec.describe 'Api::V1::TodoHistories', type: :request do
       it 'includes user information' do
         get "/api/v1/todos/#{todo.id}/histories", headers: auth_headers
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json.first['user']).to be_present
         expect(json.first['user']['id']).to eq(user.id)
       end
@@ -41,7 +41,7 @@ RSpec.describe 'Api::V1::TodoHistories', type: :request do
       it 'includes human readable change description' do
         get "/api/v1/todos/#{todo.id}/histories", headers: auth_headers
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json.first['human_readable_change']).to be_present
       end
     end
@@ -70,7 +70,7 @@ RSpec.describe 'Api::V1::TodoHistories', type: :request do
       expect do
         # 学習ポイント：current_userを設定するためのテスト
         post '/api/v1/todos', params: todo_params.to_json, headers: auth_headers
-      end.to change { TodoHistory.count }.by(1)
+      end.to change(TodoHistory, :count).by(1)
 
       history = TodoHistory.last
       expect(history.action).to eq('created')

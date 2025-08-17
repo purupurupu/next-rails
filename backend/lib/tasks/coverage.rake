@@ -1,6 +1,6 @@
 namespace :coverage do
   desc 'Run RSpec tests with SimpleCov coverage'
-  task :rspec do
+  task rspec: :environment do
     ENV['COVERAGE'] = 'true'
     ENV['RAILS_ENV'] = 'test'
 
@@ -33,7 +33,7 @@ namespace :coverage do
   end
 
   desc 'Clean coverage reports'
-  task :clean do
+  task clean: :environment do
     puts 'Cleaning coverage reports...'
     sh 'rm -rf coverage/'
   end

@@ -29,7 +29,7 @@ RSpec.describe 'Todo Files API', type: :request do
 
         expect(response).to have_http_status(:created)
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         todo_data = json_response['data']
         expect(todo_data['files']).to be_an(Array)
         expect(todo_data['files'].length).to eq(1)
@@ -45,12 +45,12 @@ RSpec.describe 'Todo Files API', type: :request do
 
         expect(response).to have_http_status(:created)
 
-        json_response = JSON.parse(response.body)
+        json_response = response.parsed_body
         todo_data = json_response['data']
         expect(todo_data['files']).to be_an(Array)
         expect(todo_data['files'].length).to eq(2)
 
-        filenames = todo_data['files'].map { |f| f['filename'] }
+        filenames = todo_data['files'].pluck('filename')
         expect(filenames).to contain_exactly('test_file.txt', 'test_image.png')
       end
     end
@@ -67,7 +67,7 @@ RSpec.describe 'Todo Files API', type: :request do
 
       expect(response).to have_http_status(:ok)
 
-      json_response = JSON.parse(response.body)
+      json_response = response.parsed_body
       todo_data = json_response['data']
       expect(todo_data['files']).to be_an(Array)
       expect(todo_data['files'].length).to eq(1)
@@ -89,12 +89,12 @@ RSpec.describe 'Todo Files API', type: :request do
 
       expect(response).to have_http_status(:ok)
 
-      json_response = JSON.parse(response.body)
+      json_response = response.parsed_body
       todo_data = json_response['data']
       expect(todo_data['files']).to be_an(Array)
       expect(todo_data['files'].length).to eq(2)
 
-      filenames = todo_data['files'].map { |f| f['filename'] }
+      filenames = todo_data['files'].pluck('filename')
       expect(filenames).to contain_exactly('test_file.txt', 'test_image.png')
     end
   end
@@ -122,7 +122,7 @@ RSpec.describe 'Todo Files API', type: :request do
 
       expect(response).to have_http_status(:ok)
 
-      json_response = JSON.parse(response.body)
+      json_response = response.parsed_body
       todo_data = json_response['data']
       expect(todo_data['files'].length).to eq(1)
 

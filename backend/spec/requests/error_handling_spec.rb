@@ -16,7 +16,7 @@ RSpec.describe 'Error Handling', type: :request do
     it 'includes request ID in error responses' do
       get '/api/v1/todos/999999', headers: auth_headers
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['error']['request_id']).to be_present
       expect(json['error']['request_id']).to eq(response.headers['X-Request-Id'])
     end
@@ -29,7 +29,7 @@ RSpec.describe 'Error Handling', type: :request do
 
         expect(response).to have_http_status(:not_found)
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['error']['code']).to eq('ERROR')
         expect(json['error']['message']).to include('not found')
         expect(json['error']['request_id']).to be_present
@@ -45,7 +45,7 @@ RSpec.describe 'Error Handling', type: :request do
 
         expect(response).to have_http_status(:unprocessable_entity)
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         # Expect standardized error format
         expect(json).to have_key('error')
         expect(json['error']).to include(
@@ -70,7 +70,7 @@ RSpec.describe 'Error Handling', type: :request do
 
         expect(response).to have_http_status(:unauthorized)
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['error']).to eq('Invalid Email or password.')
       end
     end
@@ -84,7 +84,7 @@ RSpec.describe 'Error Handling', type: :request do
 
         expect(response).to have_http_status(:bad_request)
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['error']['code']).to eq('ERROR')
         expect(json['error']['message']).to eq('Required parameter missing: todo')
       end
@@ -104,7 +104,7 @@ RSpec.describe 'Error Handling', type: :request do
 
       expect(response).to have_http_status(:unprocessable_entity)
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['error']['code']).to eq('ERROR')
       expect(json['error']['message']).to eq('Invalid tag IDs')
       expect(json['error']['details']['invalid_tags']).to eq([999_999])

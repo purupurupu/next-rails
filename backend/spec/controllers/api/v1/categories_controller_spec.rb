@@ -36,10 +36,10 @@ RSpec.describe Api::V1::CategoriesController, type: :controller do
 
       get :index
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(response).to have_http_status(:ok)
-      expect(json['data'].map { |c| c['id'] }).to contain_exactly(category.id, category1.id, category2.id)
-      expect(json['data'].map { |c| c['id'] }).not_to include(other_category.id)
+      expect(json['data'].pluck('id')).to contain_exactly(category.id, category1.id, category2.id)
+      expect(json['data'].pluck('id')).not_to include(other_category.id)
     end
 
     it 'returns categories ordered by name' do
@@ -49,15 +49,15 @@ RSpec.describe Api::V1::CategoriesController, type: :controller do
 
       get :index
 
-      json = JSON.parse(response.body)
-      names = json['data'].map { |c| c['name'] }
+      json = response.parsed_body
+      names = json['data'].pluck('name')
       expect(names).to eq(names.sort)
     end
 
     it 'includes proper serialized data' do
       get :index
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['data'].first).to include(
         'id' => category.id,
         'name' => category.name,
@@ -73,7 +73,7 @@ RSpec.describe Api::V1::CategoriesController, type: :controller do
     it 'follows v1 response structure' do
       get :index
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json).to have_key('status')
       expect(json['status']).to include(
         'code' => 200,
@@ -89,7 +89,7 @@ RSpec.describe Api::V1::CategoriesController, type: :controller do
     it 'returns category when it belongs to current user' do
       get :show, params: { id: category.id }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(response).to have_http_status(:ok)
       expect(json['data']['id']).to eq(category.id)
       expect(json['data']['name']).to eq(category.name)
@@ -102,7 +102,7 @@ RSpec.describe Api::V1::CategoriesController, type: :controller do
       get :show, params: { id: other_category.id }
 
       expect(response).to have_http_status(:not_found)
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['error']['message']).to eq('Category not found')
     end
 
@@ -131,7 +131,7 @@ RSpec.describe Api::V1::CategoriesController, type: :controller do
           post :create, params: valid_params
         end.to change(Category, :count).by(1)
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(response).to have_http_status(:created)
         expect(json['data']['name']).to eq('New Category')
         expect(json['data']['color']).to eq('#FF5733')
@@ -196,7 +196,7 @@ RSpec.describe Api::V1::CategoriesController, type: :controller do
           }
         }
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(response).to have_http_status(:ok)
         expect(json['data']['name']).to eq('Updated Name')
         expect(json['data']['color']).to eq('#00FF00')
@@ -268,7 +268,7 @@ RSpec.describe Api::V1::CategoriesController, type: :controller do
       end.to change(Category, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['status']['message']).to eq('Category deleted successfully')
     end
 
@@ -302,7 +302,7 @@ RSpec.describe Api::V1::CategoriesController, type: :controller do
     it 'follows v1 response structure for success' do
       get :show, params: { id: category.id }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json).to have_key('status')
       expect(json['status']).to include('code' => 200)
       expect(json).to have_key('data')
@@ -312,7 +312,7 @@ RSpec.describe Api::V1::CategoriesController, type: :controller do
     it 'follows v1 response structure for errors' do
       get :show, params: { id: 999_999 }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json).to have_key('error')
       expect(json['error']).to include(
         'code' => 'ERROR',
@@ -333,14 +333,14 @@ RSpec.describe Api::V1::CategoriesController, type: :controller do
 
       get :show, params: { id: category.id }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['data']).to include('todo_count' => 3)
     end
 
     it 'includes timestamps in serialized data' do
       get :show, params: { id: category.id }
 
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['data']).to have_key('created_at')
       expect(json['data']).to have_key('updated_at')
     end

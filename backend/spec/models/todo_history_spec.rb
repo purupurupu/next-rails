@@ -30,7 +30,7 @@ RSpec.describe TodoHistory, type: :model do
     let!(:new_history) { create(:todo_history, created_at: 1.day.ago) }
 
     it 'orders by created_at descending' do
-      expect(TodoHistory.all).to eq([new_history, old_history])
+      expect(described_class.all).to eq([new_history, old_history])
     end
   end
 
@@ -44,17 +44,17 @@ RSpec.describe TodoHistory, type: :model do
       let!(:histories) { create_list(:todo_history, 15, todo: todo) }
 
       it 'returns limited number of records' do
-        expect(TodoHistory.recent(5).count).to eq(5)
+        expect(described_class.recent(5).count).to eq(5)
       end
 
       it 'defaults to 10 records' do
-        expect(TodoHistory.recent.count).to eq(10)
+        expect(described_class.recent.count).to eq(10)
       end
     end
 
     describe '.for_field' do
       it 'returns histories for specific field' do
-        result = TodoHistory.for_field('title')
+        result = described_class.for_field('title')
         expect(result).to include(title_history)
         expect(result).not_to include(status_history)
       end
@@ -65,7 +65,7 @@ RSpec.describe TodoHistory, type: :model do
       let!(:other_history) { create(:todo_history, user: other_user) }
 
       it 'returns histories by specific user' do
-        result = TodoHistory.by_user(user)
+        result = described_class.by_user(user)
         expect(result).to include(title_history, status_history)
         expect(result).not_to include(other_history)
       end
@@ -122,7 +122,7 @@ RSpec.describe TodoHistory, type: :model do
     let!(:history3) { create(:todo_history, todo: todo, created_at: timestamp + 1.minute) }
 
     it 'groups histories by timestamp' do
-      grouped = TodoHistory.grouped_by_timestamp
+      grouped = described_class.grouped_by_timestamp
       expect(grouped.keys.count).to eq(2)
       expect(grouped[timestamp.to_i]).to contain_exactly(history1, history2)
       expect(grouped[(timestamp + 1.minute).to_i]).to eq([history3])
