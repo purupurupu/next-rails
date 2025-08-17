@@ -4,7 +4,7 @@
 # Provides structured error responses with codes, messages, and details
 class ApiError < StandardError
   attr_reader :code, :status, :details
-  
+
   def initialize(message = nil, code: nil, status: :bad_request, details: nil)
     @message = message || self.class.default_message
     @code = code || self.class.default_code
@@ -12,7 +12,7 @@ class ApiError < StandardError
     @details = details || {}
     super(@message)
   end
-  
+
   def to_json(*_args)
     {
       error: {
@@ -22,7 +22,7 @@ class ApiError < StandardError
       }
     }.to_json
   end
-  
+
   def to_h
     {
       error: {
@@ -32,12 +32,12 @@ class ApiError < StandardError
       }
     }
   end
-  
+
   class << self
     def default_message
       'An error occurred'
     end
-    
+
     def default_code
       'API_ERROR'
     end

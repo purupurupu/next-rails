@@ -7,7 +7,7 @@ class RateLimitError < ApiError
     details[:limit] = limit if limit
     details[:remaining] = remaining
     details[:reset_at] = reset_at.iso8601 if reset_at
-    
+
     super(
       message,
       code: 'RATE_LIMIT_EXCEEDED',
@@ -15,12 +15,12 @@ class RateLimitError < ApiError
       details: details
     )
   end
-  
+
   class << self
     def default_message
       'Rate limit exceeded. Please try again later.'
     end
-    
+
     def default_code
       'RATE_LIMIT_EXCEEDED'
     end

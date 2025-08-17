@@ -6,7 +6,7 @@ class NotFoundError < ApiError
     details ||= {}
     details[:resource] = resource if resource
     details[:id] = id if id
-    
+
     message ||= if resource && id
                   "#{resource.to_s.humanize} with ID '#{id}' not found"
                 elsif resource
@@ -14,7 +14,7 @@ class NotFoundError < ApiError
                 else
                   self.class.default_message
                 end
-    
+
     super(
       message,
       code: 'RESOURCE_NOT_FOUND',
@@ -22,12 +22,12 @@ class NotFoundError < ApiError
       details: details
     )
   end
-  
+
   class << self
     def default_message
       'The requested resource was not found.'
     end
-    
+
     def default_code
       'RESOURCE_NOT_FOUND'
     end
