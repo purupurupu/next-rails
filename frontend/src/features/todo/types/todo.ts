@@ -114,7 +114,7 @@ export interface TodoSearchParams {
 }
 
 export interface TodoSearchResponse {
-  todos: Todo[];
+  data: Todo[];
   meta: {
     total: number;
     current_page: number;

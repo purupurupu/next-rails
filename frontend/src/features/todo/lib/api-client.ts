@@ -83,7 +83,16 @@ class TodoApiClient extends HttpClient {
         data: Array.isArray(response.data) ? response.data : [],
       };
     }
-    return { data: [], meta: { total_count: 0, page: 1, per_page: 20 } };
+    return { 
+      data: [], 
+      meta: { 
+        total: 0, 
+        current_page: 1, 
+        total_pages: 0,
+        per_page: 20,
+        filters_applied: {}
+      } 
+    };
   }
 
   async createTodo(data: CreateTodoData, files?: File[]): Promise<Todo> {
