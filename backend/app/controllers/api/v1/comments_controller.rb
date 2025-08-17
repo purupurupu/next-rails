@@ -7,27 +7,27 @@ module Api
     class CommentsController < BaseController
       before_action :authenticate_user!
       before_action :set_todo
-      before_action :set_comment, only: [:update, :destroy]
-      
+      before_action :set_comment, only: %i[update destroy]
+
       # GET /api/v1/todos/:todo_id/comments
       def index
         # 学習ポイント：N+1クエリを避けるためのincludesの使用
         @comments = @todo.comments
                          .includes(:user)
                          .chronological
-        
+
         render_json_response(
           data: @comments,
           each_serializer: CommentSerializer,
           message: 'Comments retrieved successfully'
         )
       end
-      
+
       # POST /api/v1/todos/:todo_id/comments
       def create
         @comment = @todo.comments.build(comment_params)
         @comment.user = current_user
-        
+
         if @comment.save
           render_json_response(
             data: @comment,
@@ -42,7 +42,7 @@ module Api
           )
         end
       end
-      
+
       # PATCH/PUT /api/v1/todos/:todo_id/comments/:id
       def update
         # 学習ポイント：編集権限のチェック
@@ -52,7 +52,7 @@ module Api
             status: :forbidden
           )
         end
-        
+
         # 学習ポイント：編集可能時間のチェック
         unless @comment.editable?
           return render_error_response(
@@ -60,7 +60,7 @@ module Api
             status: :unprocessable_entity
           )
         end
-        
+
         if @comment.update(comment_params)
           render_json_response(
             data: @comment,
@@ -74,7 +74,7 @@ module Api
           )
         end
       end
-      
+
       # DELETE /api/v1/todos/:todo_id/comments/:id
       def destroy
         # 学習ポイント：削除権限のチェック（所有者のみ削除可能）
@@ -84,7 +84,7 @@ module Api
             status: :forbidden
           )
         end
-        
+
         # 学習ポイント：ソフトデリートの実装
         # 履歴保持のため、実際にはレコードを削除しない
         @comment.soft_delete!
@@ -93,9 +93,9 @@ module Api
           status: :no_content
         )
       end
-      
+
       private
-      
+
       def set_todo
         # 学習ポイント：ユーザースコープによるセキュリティ
         # 他のユーザーのTodoにアクセスできないようにする
@@ -106,7 +106,7 @@ module Api
           status: :not_found
         )
       end
-      
+
       def set_comment
         @comment = @todo.comments.find(params[:id])
       rescue ActiveRecord::RecordNotFound
@@ -115,7 +115,7 @@ module Api
           status: :not_found
         )
       end
-      
+
       def comment_params
         params.require(:comment).permit(:content)
       end

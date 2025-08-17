@@ -1,6 +1,6 @@
 class Users::RegistrationsController < Devise::RegistrationsController
   include ApiResponseFormatter
-  
+
   respond_to :json
 
   private

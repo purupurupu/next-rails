@@ -8,26 +8,26 @@ module Api
       # API version information
       API_VERSION = 'v1'
       API_VERSION_HEADER = 'X-API-Version'
-      
+
       before_action :set_api_version_header
-      
+
       private
-      
+
       # Set API version in response headers
       def set_api_version_header
         response.headers[API_VERSION_HEADER] = API_VERSION
       end
-      
+
       # Override render to ensure consistent API responses
-      def render_json_response(data: nil, message: nil, status: :ok, serializer: nil, each_serializer: nil, **options)
+      def render_json_response(data: nil, message: nil, status: :ok, serializer_options: {}, **options)
+        serializer = serializer_options[:serializer]
+        each_serializer = serializer_options[:each_serializer]
         response_body = build_response_body(data, message, status, serializer, each_serializer, options)
         render json: response_body, status: status
       end
-      
+
       # render_error_response is inherited from ApplicationController
-      
-      private
-      
+
       def build_response_body(data, message, status, serializer, each_serializer, options)
         response_body = {
           status: {
@@ -35,24 +35,24 @@ module Api
             message: message || default_message_for(status)
           }
         }
-        
+
         if data.present?
           serialized_data = if serializer || each_serializer
-            serialize_data(data, serializer, each_serializer, options)
-          else
-            data
-          end
-          
+                              serialize_data(data, serializer, each_serializer, options)
+                            else
+                              data
+                            end
+
           response_body[:data] = serialized_data
         end
-        
+
         response_body[:meta] = options[:meta] if options[:meta].present?
         response_body
       end
-      
+
       def serialize_data(data, serializer, each_serializer, options)
         serializer_options = options.merge(current_user: current_user)
-        
+
         if each_serializer
           ActiveModelSerializers::SerializableResource.new(
             data,
@@ -69,9 +69,9 @@ module Api
           data
         end
       end
-      
+
       # error_code_for and extract_error_details are inherited from ApplicationController
-      
+
       def extract_error_details(error)
         case error
         when ActiveRecord::RecordInvalid
@@ -82,15 +82,13 @@ module Api
           {}
         end
       end
-      
+
       def default_message_for(status)
         case status
-        when :ok
+        when :ok, :no_content
           'Request processed successfully'
         when :created
           'Resource created successfully'
-        when :no_content
-          'Request processed successfully'
         else
           'Request processed'
         end
