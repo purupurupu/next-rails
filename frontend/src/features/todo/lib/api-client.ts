@@ -83,15 +83,15 @@ class TodoApiClient extends HttpClient {
         data: Array.isArray(response.data) ? response.data : [],
       };
     }
-    return { 
-      data: [], 
-      meta: { 
-        total: 0, 
-        current_page: 1, 
+    return {
+      data: [],
+      meta: {
+        total: 0,
+        current_page: 1,
         total_pages: 0,
         per_page: 20,
-        filters_applied: {}
-      } 
+        filters_applied: {},
+      },
     };
   }
 
