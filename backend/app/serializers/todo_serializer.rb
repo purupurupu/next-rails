@@ -1,8 +1,10 @@
 class TodoSerializer < ActiveModel::Serializer
-  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at, :updated_at, :category, :tags, :files, :comments_count, :latest_comments, :history_count, :highlights
+  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at,
+             :updated_at, :category, :tags, :files, :comments_count, :latest_comments, :history_count, :highlights
 
   def category
     return nil unless object.category
+
     {
       id: object.category.id,
       name: object.category.name,
@@ -33,13 +35,13 @@ class TodoSerializer < ActiveModel::Serializer
       }
     end
   end
-  
+
   # 学習ポイント：コメント数を効率的に取得
   def comments_count
     # N+1クエリを避けるため、counter_cacheを使用することも検討
     object.comments.count
   end
-  
+
   # 学習ポイント：最新のコメントを3件まで取得
   def latest_comments
     # 最新の3件のコメントを取得してシリアライズ
@@ -47,18 +49,18 @@ class TodoSerializer < ActiveModel::Serializer
                      .includes(:user)
                      .recent
                      .limit(3)
-    
+
     ActiveModelSerializers::SerializableResource.new(
       comments,
       each_serializer: CommentSerializer,
       current_user: current_user
     ).as_json
   end
-  
+
   def current_user
     @instance_options[:current_user] || scope
   end
-  
+
   # 学習ポイント：履歴数の取得
   def history_count
     object.todo_histories.count
@@ -73,16 +75,14 @@ class TodoSerializer < ActiveModel::Serializer
     search_term = query.downcase
 
     # タイトルでのマッチ位置を検出
-    if object.title.downcase.include?(search_term)
-      highlights[:title] = find_match_positions(object.title, search_term)
-    end
+    highlights[:title] = find_match_positions(object.title, search_term) if object.title.downcase.include?(search_term)
 
     # 説明文でのマッチ位置を検出
     if object.description.present? && object.description.downcase.include?(search_term)
       highlights[:description] = find_match_positions(object.description, search_term)
     end
 
-    highlights.present? ? highlights : nil
+    highlights.presence
   end
 
   private
