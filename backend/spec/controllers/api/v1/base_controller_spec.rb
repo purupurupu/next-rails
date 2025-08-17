@@ -96,15 +96,9 @@ RSpec.describe Api::V1::BaseController, type: :controller do
 
       it 'renders success format without data for no_content' do
         put :update
-        json = response.parsed_body
 
         expect(response).to have_http_status(:no_content)
-        expect(json['status']).to include(
-          'code' => 204,
-          'message' => 'Request processed successfully'
-        )
-        expect(json).not_to have_key('data')
-        expect(json).not_to have_key('error')
+        expect(response.body).to be_empty
       end
     end
 

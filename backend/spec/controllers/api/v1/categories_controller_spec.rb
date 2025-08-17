@@ -267,7 +267,7 @@ RSpec.describe Api::V1::CategoriesController, type: :controller do
         delete :destroy, params: { id: category.id }
       end.to change(Category, :count).by(-1)
 
-      expect(response).to have_http_status(:no_content)
+      expect(response).to have_http_status(:ok)
       json = response.parsed_body
       expect(json['status']['message']).to eq('Category deleted successfully')
     end

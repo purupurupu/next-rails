@@ -20,8 +20,13 @@ module Api
 
       # Override render to ensure consistent API responses
       def render_json_response(data: nil, message: nil, status: :ok, serializer: nil, each_serializer: nil, **options)
-        response_body = build_response_body(data, message, status, serializer, each_serializer, options)
-        render json: response_body, status: status
+        # For no_content status, use head method to avoid body
+        if status == :no_content
+          head :no_content
+        else
+          response_body = build_response_body(data, message, status, serializer, each_serializer, options)
+          render json: response_body, status: status
+        end
       end
 
       # render_error_response is inherited from ApplicationController

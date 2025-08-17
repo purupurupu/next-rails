@@ -65,7 +65,7 @@ module Api
         @tag.destroy
         render_json_response(
           message: 'Tag deleted successfully',
-          status: :no_content
+          status: :ok
         )
       end
 

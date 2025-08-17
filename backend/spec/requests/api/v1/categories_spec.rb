@@ -146,7 +146,9 @@ RSpec.describe '/api/v1/categories', type: :request do
         delete "/api/v1/categories/#{category.id}", headers: headers
       end.to change(Category, :count).by(-1)
 
-      expect(response).to have_http_status(:no_content)
+      expect(response).to have_http_status(:ok)
+      json_response = response.parsed_body
+      expect(json_response['status']['message']).to eq('Category deleted successfully')
 
       todo_with_category.reload
       expect(todo_with_category.category).to be_nil

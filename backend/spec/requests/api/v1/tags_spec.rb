@@ -215,9 +215,11 @@ RSpec.describe 'Api::V1::Tags', type: :request do
         end.to change(Tag, :count).by(-1)
       end
 
-      it 'returns no content status' do
+      it 'returns ok status with success message' do
         delete "/api/v1/tags/#{tag.id}", headers: headers
-        expect(response).to have_http_status(:no_content)
+        expect(response).to have_http_status(:ok)
+        json_response = response.parsed_body
+        expect(json_response['status']['message']).to eq('Tag deleted successfully')
       end
 
       it 'destroys associated todo_tags' do

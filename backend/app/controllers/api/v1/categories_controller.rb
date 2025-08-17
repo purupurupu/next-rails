@@ -65,7 +65,7 @@ module Api
         @category.destroy
         render_json_response(
           message: 'Category deleted successfully',
-          status: :no_content
+          status: :ok
         )
       end
 

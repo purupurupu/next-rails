@@ -269,7 +269,7 @@ RSpec.describe Api::V1::TagsController, type: :controller do
         delete :destroy, params: { id: tag.id }
       end.to change(Tag, :count).by(-1)
 
-      expect(response).to have_http_status(:no_content)
+      expect(response).to have_http_status(:ok)
       json = response.parsed_body
       expect(json['status']['message']).to eq('Tag deleted successfully')
     end
