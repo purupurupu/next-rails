@@ -25,11 +25,11 @@ RSpec.describe AuthorizationError do
     end
 
     context 'with custom message and details' do
+      subject(:error) { described_class.new(message, resource: resource, action: action) }
+
       let(:message) { 'Admin access required' }
       let(:resource) { 'admin_dashboard' }
       let(:action) { 'view' }
-      
-      subject(:error) { described_class.new(message, resource: resource, action: action) }
 
       it 'uses custom message' do
         expect(error.message).to eq(message)
@@ -37,9 +37,9 @@ RSpec.describe AuthorizationError do
 
       it 'includes resource and action in details' do
         expect(error.details).to eq({
-          resource: 'admin_dashboard',
-          action: 'view'
-        })
+                                      resource: 'admin_dashboard',
+                                      action: 'view'
+                                    })
       end
     end
 

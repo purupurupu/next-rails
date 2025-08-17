@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe ErrorHandler do
-  let(:app) { ->(env) { [200, { 'Content-Type' => 'text/plain' }, ['OK']] } }
+  let(:app) { ->(_env) { [200, { 'Content-Type' => 'text/plain' }, ['OK']] } }
   let(:middleware) { described_class.new(app) }
   let(:env) do
     Rack::MockRequest.env_for('/api/test',
@@ -14,7 +14,7 @@ RSpec.describe ErrorHandler do
   describe '#call' do
     context 'when no error occurs' do
       it 'passes the request through successfully' do
-        status, headers, body = middleware.call(env)
+        status, _, body = middleware.call(env)
         expect(status).to eq(200)
         expect(body).to eq(['OK'])
       end
@@ -27,8 +27,8 @@ RSpec.describe ErrorHandler do
     end
 
     context 'when ApiError is raised' do
-      let(:api_error) { ::NotFoundError.new(resource: 'Todo', id: 123) }
-      let(:app) { ->(env) { raise api_error } }
+      let(:api_error) { NotFoundError.new(resource: 'Todo', id: 123) }
+      let(:app) { ->(_env) { raise api_error } }
 
       it 'returns appropriate error response' do
         status, headers, body = middleware.call(env)
@@ -46,10 +46,10 @@ RSpec.describe ErrorHandler do
 
     context 'when ActiveRecord::RecordNotFound is raised' do
       let(:error) { ActiveRecord::RecordNotFound.new("Couldn't find Todo with 'id'=999") }
-      let(:app) { ->(env) { raise error } }
+      let(:app) { ->(_env) { raise error } }
 
       it 'converts to NotFoundError and returns appropriate response' do
-        status, headers, body = middleware.call(env)
+        status, _, body = middleware.call(env)
         parsed_body = JSON.parse(body.first)
 
         expect(status).to eq(404)
@@ -64,10 +64,10 @@ RSpec.describe ErrorHandler do
         todo.errors.add(:title, "can't be blank")
         ActiveRecord::RecordInvalid.new(todo)
       end
-      let(:app) { ->(env) { raise error } }
+      let(:app) { ->(_env) { raise error } }
 
       it 'converts to ValidationError and returns appropriate response' do
-        status, headers, body = middleware.call(env)
+        status, _, body = middleware.call(env)
         parsed_body = JSON.parse(body.first)
 
         expect(status).to eq(422)
@@ -79,10 +79,10 @@ RSpec.describe ErrorHandler do
 
     context 'when ActionController::ParameterMissing is raised' do
       let(:error) { ActionController::ParameterMissing.new(:todo) }
-      let(:app) { ->(env) { raise error } }
+      let(:app) { ->(_env) { raise error } }
 
       it 'returns bad request error response' do
-        status, headers, body = middleware.call(env)
+        status, _, body = middleware.call(env)
         parsed_body = JSON.parse(body.first)
 
         expect(status).to eq(400)
@@ -94,10 +94,10 @@ RSpec.describe ErrorHandler do
 
     context 'when JWT::DecodeError is raised' do
       let(:error) { JWT::DecodeError.new('Invalid token') }
-      let(:app) { ->(env) { raise error } }
+      let(:app) { ->(_env) { raise error } }
 
       it 'converts to AuthenticationError and returns appropriate response' do
-        status, headers, body = middleware.call(env)
+        status, _, body = middleware.call(env)
         parsed_body = JSON.parse(body.first)
 
         expect(status).to eq(401)
@@ -109,10 +109,10 @@ RSpec.describe ErrorHandler do
 
     context 'when JWT::ExpiredSignature is raised' do
       let(:error) { JWT::ExpiredSignature.new('Token has expired') }
-      let(:app) { ->(env) { raise error } }
+      let(:app) { ->(_env) { raise error } }
 
       it 'converts to AuthenticationError and returns appropriate response' do
-        status, headers, body = middleware.call(env)
+        status, _, body = middleware.call(env)
         parsed_body = JSON.parse(body.first)
 
         expect(status).to eq(401)
@@ -124,7 +124,7 @@ RSpec.describe ErrorHandler do
 
     context 'when StandardError is raised' do
       let(:error) { StandardError.new('Something went wrong') }
-      let(:app) { ->(env) { raise error } }
+      let(:app) { ->(_env) { raise error } }
 
       context 'in development environment' do
         before do
@@ -133,7 +133,7 @@ RSpec.describe ErrorHandler do
         end
 
         it 'returns internal server error with details' do
-          status, headers, body = middleware.call(env)
+          status, _, body = middleware.call(env)
           parsed_body = JSON.parse(body.first)
 
           expect(status).to eq(500)
@@ -150,7 +150,7 @@ RSpec.describe ErrorHandler do
         end
 
         it 'returns internal server error without details' do
-          status, headers, body = middleware.call(env)
+          status, _, body = middleware.call(env)
           parsed_body = JSON.parse(body.first)
 
           expect(status).to eq(500)
@@ -163,8 +163,8 @@ RSpec.describe ErrorHandler do
 
     context 'with different error types' do
       it 'handles AuthorizationError correctly' do
-        error = ::AuthorizationError.new('Forbidden')
-        app = ->(env) { raise error }
+        error = AuthorizationError.new('Forbidden')
+        app = ->(_env) { raise error }
         middleware = described_class.new(app)
 
         status, _, body = middleware.call(env)
@@ -175,8 +175,8 @@ RSpec.describe ErrorHandler do
       end
 
       it 'handles RateLimitError correctly' do
-        error = ::RateLimitError.new(limit: 100, reset_at: 1.hour.from_now)
-        app = ->(env) { raise error }
+        error = RateLimitError.new(limit: 100, reset_at: 1.hour.from_now)
+        app = ->(_env) { raise error }
         middleware = described_class.new(app)
 
         status, _, body = middleware.call(env)
@@ -191,9 +191,9 @@ RSpec.describe ErrorHandler do
         errors.add(:title, "can't be blank")
         errors.add(:title, 'is too short (minimum is 3 characters)')
         errors.add(:due_date, 'must be in the future')
-        
-        error = ::ValidationError.new(errors: errors)
-        app = ->(env) { raise error }
+
+        error = ValidationError.new(errors: errors)
+        app = ->(_env) { raise error }
         middleware = described_class.new(app)
 
         status, _, body = middleware.call(env)
@@ -227,7 +227,7 @@ RSpec.describe ErrorHandler do
         request = double('request')
         params = { 'some' => 'params' }
         allow(request).to receive(:params).and_return(params)
-        
+
         # Since ActionDispatch::Http::ParameterFilter is not available in this context,
         # the method will rescue and return empty hash
         result = middleware.send(:filtered_params, request)
@@ -237,7 +237,7 @@ RSpec.describe ErrorHandler do
       it 'handles errors gracefully' do
         request = double('request')
         allow(request).to receive(:params).and_raise(StandardError)
-        
+
         result = middleware.send(:filtered_params, request)
         expect(result).to eq({})
       end
@@ -247,7 +247,7 @@ RSpec.describe ErrorHandler do
       it 'builds response with correct status code and headers' do
         body = { error: { message: 'Test error', request_id: 'test-123' } }
         status, headers, response_body = middleware.send(:build_response, body, :not_found)
-        
+
         expect(status).to eq(404)
         expect(headers['Content-Type']).to eq('application/json')
         expect(headers['X-Request-Id']).to eq('test-123')
@@ -256,8 +256,8 @@ RSpec.describe ErrorHandler do
 
       it 'generates request ID if not provided' do
         body = { error: { message: 'Test error' } }
-        _, headers, _ = middleware.send(:build_response, body, :ok)
-        
+        _, headers, = middleware.send(:build_response, body, :ok)
+
         expect(headers['X-Request-Id']).not_to be_nil
       end
     end
@@ -266,7 +266,7 @@ RSpec.describe ErrorHandler do
       it 'does not log in test environment' do
         expect(Rails.logger).not_to receive(:warn)
         expect(Rails.logger).not_to receive(:error)
-        
+
         error = StandardError.new('Test error')
         request = ActionDispatch::Request.new(env)
         middleware.send(:log_error, error, request, :warn)
@@ -276,9 +276,9 @@ RSpec.describe ErrorHandler do
 
   describe 'integration scenarios' do
     it 'handles nested API errors correctly' do
-      nested_error = StandardError.new('Database connection failed')
-      api_error = ::ApiError.new('Service unavailable', code: 'SERVICE_ERROR', status: :internal_server_error)
-      app = ->(env) { raise api_error }
+      StandardError.new('Database connection failed')
+      api_error = ApiError.new('Service unavailable', code: 'SERVICE_ERROR', status: :internal_server_error)
+      app = ->(_env) { raise api_error }
       middleware = described_class.new(app)
 
       status, _, body = middleware.call(env)
@@ -293,9 +293,9 @@ RSpec.describe ErrorHandler do
       env['action_dispatch.request_id'] = 'unique-request-123'
       env['REQUEST_METHOD'] = 'POST'
       env['PATH_INFO'] = '/api/todos'
-      
-      error = ::ApiError.new('Invalid input', code: 'INVALID_INPUT', status: :bad_request)
-      app = ->(env) { raise error }
+
+      error = ApiError.new('Invalid input', code: 'INVALID_INPUT', status: :bad_request)
+      app = ->(_env) { raise error }
       middleware = described_class.new(app)
 
       _, headers, body = middleware.call(env)

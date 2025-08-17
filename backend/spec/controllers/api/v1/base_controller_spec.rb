@@ -150,7 +150,7 @@ RSpec.describe Api::V1::BaseController, type: :controller do
 
     it 'sets proper content type' do
       get :index
-      expect(response.content_type).to match(/application\/json/)
+      expect(response.content_type).to match(%r{application/json})
     end
 
     it 'includes request ID in response' do

@@ -6,13 +6,13 @@ RSpec.describe JwtDenylist, type: :model do
       expect(JwtDenylist.column_names).to include('jti', 'exp')
     end
   end
-  
+
   describe 'devise-jwt integration' do
     it 'includes RevocationStrategies::Denylist' do
       expect(JwtDenylist.included_modules).to include(Devise::JWT::RevocationStrategies::Denylist)
     end
   end
-  
+
   describe 'factory' do
     it 'creates a valid jwt_denylist' do
       jwt_denylist = create(:jwt_denylist)

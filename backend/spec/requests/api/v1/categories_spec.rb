@@ -16,7 +16,7 @@ RSpec.describe '/api/v1/categories', type: :request do
 
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
-      
+
       expect(json_response['data'].size).to eq(3)
       expect(json_response['data'].map { |c| c['name'] }).to eq(user_categories.map(&:name).sort)
     end
@@ -29,7 +29,7 @@ RSpec.describe '/api/v1/categories', type: :request do
 
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
-      
+
       category_response = json_response['data'].find { |c| c['id'] == category.id }
       expect(category_response['todo_count']).to eq(2)
     end
@@ -43,7 +43,7 @@ RSpec.describe '/api/v1/categories', type: :request do
 
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
-      
+
       expect(json_response['data']['id']).to eq(category.id)
       expect(json_response['data']['name']).to eq(category.name)
       expect(json_response['data']['color']).to eq(category.color)
@@ -78,10 +78,10 @@ RSpec.describe '/api/v1/categories', type: :request do
 
     it 'creates a new category' do
       post '/api/v1/categories', params: valid_params, headers: headers, as: :json
-      
+
       expect(response).to have_http_status(:created)
       json_response = JSON.parse(response.body)
-      
+
       expect(json_response['data']['name']).to eq('New Category')
       expect(json_response['data']['color']).to eq('#FF5733')
     end
@@ -101,7 +101,7 @@ RSpec.describe '/api/v1/categories', type: :request do
 
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response['error']).to be_present
         expect(json_response['error']['code']).to eq('VALIDATION_FAILED')
         expect(json_response['error']['details']['validation_errors']['name']).to include("can't be blank")
@@ -127,10 +127,10 @@ RSpec.describe '/api/v1/categories', type: :request do
 
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
-      
+
       expect(json_response['data']['name']).to eq('Updated Name')
       expect(json_response['data']['color']).to eq('#FFFFFF')
-      
+
       category.reload
       expect(category.name).to eq('Updated Name')
       expect(category.color).to eq('#FFFFFF')
@@ -142,12 +142,12 @@ RSpec.describe '/api/v1/categories', type: :request do
     let!(:todo_with_category) { create(:todo, user: user, category: category) }
 
     it 'deletes the category and nullifies todo categories' do
-      expect {
+      expect do
         delete "/api/v1/categories/#{category.id}", headers: headers
-      }.to change(Category, :count).by(-1)
+      end.to change(Category, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)
-      
+
       todo_with_category.reload
       expect(todo_with_category.category).to be_nil
     end

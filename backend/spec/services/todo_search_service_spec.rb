@@ -8,39 +8,36 @@ RSpec.describe TodoSearchService do
   let(:category) { create(:category, user: user) }
   let(:tag1) { create(:tag, user: user) }
   let(:tag2) { create(:tag, user: user) }
-  
+
   let!(:todo1) do
-    create(:todo, 
-      user: user, 
-      title: 'Buy groceries',
-      description: 'Milk, eggs, bread',
-      status: 'pending',
-      priority: 'high',
-      category: category,
-      due_date: 1.day.from_now
-    ).tap { |t| t.tags << tag1 }
+    create(:todo,
+           user: user,
+           title: 'Buy groceries',
+           description: 'Milk, eggs, bread',
+           status: 'pending',
+           priority: 'high',
+           category: category,
+           due_date: 1.day.from_now).tap { |t| t.tags << tag1 }
   end
 
   let!(:todo2) do
     create(:todo,
-      user: user,
-      title: 'Complete project',
-      description: 'Finish the Rails API',
-      status: 'in_progress',
-      priority: 'medium',
-      due_date: 3.days.from_now
-    ).tap { |t| t.tags << [tag1, tag2] }
+           user: user,
+           title: 'Complete project',
+           description: 'Finish the Rails API',
+           status: 'in_progress',
+           priority: 'medium',
+           due_date: 3.days.from_now).tap { |t| t.tags << [tag1, tag2] }
   end
 
   let!(:todo3) do
     create(:todo,
-      user: user,
-      title: 'Read documentation',
-      description: 'Study Ruby on Rails guides',
-      status: 'completed',
-      priority: 'low',
-      due_date: nil  # 過去の日付はバリデーションエラーになるため
-    )
+           user: user,
+           title: 'Read documentation',
+           description: 'Study Ruby on Rails guides',
+           status: 'completed',
+           priority: 'low',
+           due_date: nil) # 過去の日付はバリデーションエラーになるため
   end
 
   let!(:other_user_todo) do
@@ -136,7 +133,7 @@ RSpec.describe TodoSearchService do
       end
 
       context 'filtering by multiple statuses' do
-        let(:params) { { status: ['pending', 'in_progress'] } }
+        let(:params) { { status: %w[pending in_progress] } }
 
         it 'returns todos with any of the specified statuses' do
           expect(search_results).to contain_exactly(todo1, todo2)
@@ -162,7 +159,7 @@ RSpec.describe TodoSearchService do
       end
 
       context 'filtering by multiple priorities' do
-        let(:params) { { priority: ['low', 'medium'] } }
+        let(:params) { { priority: %w[low medium] } }
 
         it 'returns todos with any of the specified priorities' do
           expect(search_results).to contain_exactly(todo2, todo3)
@@ -196,7 +193,7 @@ RSpec.describe TodoSearchService do
       end
 
       context 'with invalid tag IDs' do
-        let(:params) { { tag_ids: [999999] } }
+        let(:params) { { tag_ids: [999_999] } }
 
         it 'returns no results for non-existent tags' do
           expect(search_results).to be_empty
@@ -226,7 +223,7 @@ RSpec.describe TodoSearchService do
         let(:params) { { due_date_to: 2.days.from_now.to_date.to_s } }
 
         it 'returns todos with due date on or before the specified date' do
-          expect(search_results).to contain_exactly(todo1)  # todo3 has nil due_date
+          expect(search_results).to contain_exactly(todo1) # todo3 has nil due_date
         end
       end
 
@@ -271,7 +268,7 @@ RSpec.describe TodoSearchService do
         let(:params) do
           {
             q: 'e',
-            status: ['pending', 'in_progress'],
+            status: %w[pending in_progress],
             tag_ids: [tag1.id],
             due_date_from: Date.today.to_s
           }
