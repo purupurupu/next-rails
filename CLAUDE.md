@@ -76,31 +76,33 @@ docker compose exec frontend pnpm run typecheck:full  # Full TypeScript check
 **Key Dependencies**: Radix UI, date-fns, lucide-react, sonner
 
 ### Backend Development
+
+⚠️ **重要**: テスト実行時は必ず`DATABASE_URL`を上書きしてテスト用DBを使用してください。そうしないと開発用DBのデータが削除される可能性があります。
+
 ```bash
 # Run tests with RSpec (recommended for clean output)
-docker compose exec backend env RAILS_ENV=test bundle exec rspec
+docker compose exec backend env DATABASE_URL=postgres://postgres:password@db:5432/todo_app_test RAILS_ENV=test bundle exec rspec
 
 # Run specific test file
-docker compose exec backend env RAILS_ENV=test bundle exec rspec spec/models/todo_spec.rb
+docker compose exec backend env DATABASE_URL=postgres://postgres:password@db:5432/todo_app_test RAILS_ENV=test bundle exec rspec spec/models/todo_spec.rb
 
 # Run tests with documentation format
-docker compose exec backend env RAILS_ENV=test bundle exec rspec --format documentation
+docker compose exec backend env DATABASE_URL=postgres://postgres:password@db:5432/todo_app_test RAILS_ENV=test bundle exec rspec --format documentation
 
 # Run tests with code coverage
-docker compose exec backend env COVERAGE=true RAILS_ENV=test bundle exec rspec
+docker compose exec backend env DATABASE_URL=postgres://postgres:password@db:5432/todo_app_test COVERAGE=true RAILS_ENV=test bundle exec rspec
 
 # Run tests with coverage using rake task
-docker compose exec backend bundle exec rake coverage
+docker compose exec backend env DATABASE_URL=postgres://postgres:password@db:5432/todo_app_test bundle exec rake coverage
 
-# Run tests using dedicated test service (RAILS_ENV=test is pre-configured)
+# Run tests using dedicated test service (RAILS_ENV=test and DATABASE_URL are pre-configured)
 docker compose --profile test run backend-test
 
 # Run authentication tests
-docker compose exec backend env RAILS_ENV=test bundle exec rspec spec/requests/authentication_spec.rb
+docker compose exec backend env DATABASE_URL=postgres://postgres:password@db:5432/todo_app_test RAILS_ENV=test bundle exec rspec spec/requests/authentication_spec.rb
 
-# Run tests with coverage
-docker compose exec backend env COVERAGE=true RAILS_ENV=test bundle exec rspec
-docker compose exec backend bundle exec rake coverage
+# Alternative: Use the dedicated test service for simpler commands
+# docker compose --profile test run backend-test
 
 # Run RuboCop (code linter)
 docker compose exec backend bundle exec rubocop                    # Check all files
@@ -301,7 +303,7 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 
 **Before Creating Pull Requests**:
 - Run frontend checks: `pnpm run lint`, `pnpm run typecheck`
-- Run backend tests: `docker compose exec backend bundle exec rspec`
+- Run backend tests: `docker compose exec backend env DATABASE_URL=postgres://postgres:password@db:5432/todo_app_test RAILS_ENV=test bundle exec rspec`
 - Update documentation if APIs or architecture changed
 - Ensure all checks pass before pushing
 
@@ -466,6 +468,8 @@ The application uses environment variables for configuration:
 **Testing**:
 - Dedicated `backend-test` service for running tests in Docker
 - Test database: `todo_app_test`
-- Run tests: `docker compose --profile test run backend-test`
+- Development database: `todo_next`
+- **Important**: When running tests in the development container, you must override `DATABASE_URL` to use the test database
+- Recommended: Use `docker compose --profile test run backend-test` for isolated test execution
 
 **Note**: Create a `.env` file in the root directory with these variables for Docker Compose.
