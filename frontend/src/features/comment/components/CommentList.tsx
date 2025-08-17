@@ -44,7 +44,7 @@ export function CommentList({ todoId }: CommentListProps) {
             )
           : (
               <>
-                {comments.length === 0
+                {!comments || comments.length === 0
                   ? (
                       <p className="text-sm text-muted-foreground mb-4">
                         まだコメントはありません
@@ -52,7 +52,7 @@ export function CommentList({ todoId }: CommentListProps) {
                     )
                   : (
                       <div className="space-y-4 mb-4">
-                        {comments.map((comment) => (
+                        {Array.isArray(comments) && comments.map((comment) => (
                           <CommentItem
                             key={comment.id}
                             comment={comment}
