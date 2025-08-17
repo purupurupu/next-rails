@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe Api::V1::BaseController, type: :controller do
-  controller(Api::V1::BaseController) do
+  controller(described_class) do
     def index
       render_json_response(data: { message: 'test' }, status: :ok)
     end
@@ -21,7 +21,7 @@ RSpec.describe Api::V1::BaseController, type: :controller do
     end
 
     def custom_error
-      raise BusinessLogicError.new('Custom error')
+      raise BusinessLogicError, 'Custom error'
     end
   end
 
@@ -70,7 +70,7 @@ RSpec.describe Api::V1::BaseController, type: :controller do
     context 'with successful response' do
       it 'renders standard success format with data' do
         get :index
-        json = JSON.parse(response.body)
+        json = response.parsed_body
 
         expect(response).to have_http_status(:ok)
         expect(json['status']).to include(
@@ -83,7 +83,7 @@ RSpec.describe Api::V1::BaseController, type: :controller do
 
       it 'renders success format with data and meta' do
         post :create
-        json = JSON.parse(response.body)
+        json = response.parsed_body
 
         expect(response).to have_http_status(:created)
         expect(json['status']).to include(
@@ -96,22 +96,16 @@ RSpec.describe Api::V1::BaseController, type: :controller do
 
       it 'renders success format without data for no_content' do
         put :update
-        json = JSON.parse(response.body)
 
         expect(response).to have_http_status(:no_content)
-        expect(json['status']).to include(
-          'code' => 204,
-          'message' => 'Request processed successfully'
-        )
-        expect(json).not_to have_key('data')
-        expect(json).not_to have_key('error')
+        expect(response.body).to be_empty
       end
     end
 
     context 'with error response' do
       it 'renders standard error format' do
         get :custom_error
-        json = JSON.parse(response.body)
+        json = response.parsed_body
 
         expect(response).to have_http_status(:unprocessable_entity)
         expect(json['error']).to include(
@@ -132,7 +126,7 @@ RSpec.describe Api::V1::BaseController, type: :controller do
     context 'when ActiveRecord::RecordNotFound is raised' do
       it 'handles the error with proper format' do
         get :show
-        json = JSON.parse(response.body)
+        json = response.parsed_body
 
         expect(response).to have_http_status(:not_found)
         expect(json['error']).to include(
@@ -150,7 +144,7 @@ RSpec.describe Api::V1::BaseController, type: :controller do
 
     it 'sets proper content type' do
       get :index
-      expect(response.content_type).to match(/application\/json/)
+      expect(response.content_type).to match(%r{application/json})
     end
 
     it 'includes request ID in response' do
@@ -161,14 +155,14 @@ RSpec.describe Api::V1::BaseController, type: :controller do
 
   describe 'inherited behavior' do
     it 'inherits from ApplicationController' do
-      expect(Api::V1::BaseController).to be < ApplicationController
+      expect(described_class).to be < ApplicationController
     end
 
     it 'uses appropriate modules' do
       # BaseController doesn't directly include ApiResponseFormatter
       # It inherits behavior from ApplicationController
-      expect(Api::V1::BaseController).to be < ApplicationController
-      expect(Api::V1::BaseController.private_instance_methods).to include(:render_json_response)
+      expect(described_class).to be < ApplicationController
+      expect(described_class.private_instance_methods).to include(:render_json_response)
     end
   end
 end

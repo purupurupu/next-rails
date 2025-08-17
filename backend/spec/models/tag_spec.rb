@@ -2,18 +2,19 @@ require 'rails_helper'
 
 RSpec.describe Tag, type: :model do
   describe 'associations' do
-    it { should belong_to(:user) }
-    it { should have_many(:todo_tags).dependent(:destroy) }
-    it { should have_many(:todos).through(:todo_tags) }
+    it { is_expected.to belong_to(:user) }
+    it { is_expected.to have_many(:todo_tags).dependent(:destroy) }
+    it { is_expected.to have_many(:todos).through(:todo_tags) }
   end
 
   describe 'validations' do
-    let(:user) { create(:user) }
     subject { build(:tag, user: user) }
 
-    it { should validate_presence_of(:name) }
-    it { should validate_length_of(:name).is_at_most(30) }
-    
+    let(:user) { create(:user) }
+
+    it { is_expected.to validate_presence_of(:name) }
+    it { is_expected.to validate_length_of(:name).is_at_most(30) }
+
     context 'name uniqueness' do
       it 'validates uniqueness of name scoped to user (case-insensitive)' do
         create(:tag, name: 'Work', user: user)
@@ -98,7 +99,7 @@ RSpec.describe Tag, type: :model do
         tag_a = create(:tag, name: 'Alpha', user: user)
         tag_b = create(:tag, name: 'Bravo', user: user)
 
-        expect(Tag.ordered).to eq([tag_a, tag_b, tag_c])
+        expect(described_class.ordered).to eq([tag_a, tag_b, tag_c])
       end
     end
   end
@@ -109,13 +110,13 @@ RSpec.describe Tag, type: :model do
     let(:todo) { create(:todo, user: user) }
 
     it 'destroys associated todo_tags when tag is destroyed' do
-      todo_tag = create(:todo_tag, todo: todo, tag: tag)
-      expect { tag.destroy }.to change { TodoTag.count }.by(-1)
+      create(:todo_tag, todo: todo, tag: tag)
+      expect { tag.destroy }.to change(TodoTag, :count).by(-1)
     end
 
     it 'does not destroy associated todos when tag is destroyed' do
       create(:todo_tag, todo: todo, tag: tag)
-      expect { tag.destroy }.not_to change { Todo.count }
+      expect { tag.destroy }.not_to(change(Todo, :count))
     end
   end
 end

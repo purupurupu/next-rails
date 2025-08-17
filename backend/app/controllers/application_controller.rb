@@ -2,23 +2,23 @@ class ApplicationController < ActionController::API
   before_action :authenticate_user!, unless: :devise_registration_or_session_controller?
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :set_request_id
-  
+
   # Unified error handling using custom error classes
   rescue_from ::ApiError, with: :handle_api_error
   rescue_from ActiveRecord::RecordNotFound, with: :handle_not_found
   rescue_from ActiveRecord::RecordInvalid, with: :handle_unprocessable_entity
   rescue_from ActionController::ParameterMissing, with: :handle_parameter_missing
   rescue_from JWT::DecodeError, JWT::ExpiredSignature, with: :handle_authentication_error
-  
+
   private
-  
+
   def devise_registration_or_session_controller?
     devise_controller? && (
-      controller_name == 'registrations' || 
-      (controller_name == 'sessions' && action_name.in?(['create', 'new', 'destroy']))
+      controller_name == 'registrations' ||
+      (controller_name == 'sessions' && action_name.in?(%w[create new destroy]))
     )
   end
-  
+
   def configure_permitted_parameters
     devise_parameter_sanitizer.permit(:sign_up, keys: [:name])
     devise_parameter_sanitizer.permit(:account_update, keys: [:name])
@@ -43,12 +43,12 @@ class ApplicationController < ActionController::API
     # Extract model and id from exception if possible
     model_name = exception.model if exception.respond_to?(:model)
     record_id = exception.id if exception.respond_to?(:id)
-    
+
     error = ::NotFoundError.new(
       resource: model_name,
       id: record_id
     )
-    
+
     render_error_response(error: error, status: :not_found)
   end
 
@@ -57,7 +57,7 @@ class ApplicationController < ActionController::API
     error = ::ValidationError.new(
       errors: exception.record&.errors
     )
-    
+
     render_error_response(error: error, status: :unprocessable_entity)
   end
 
@@ -76,34 +76,34 @@ class ApplicationController < ActionController::API
       'Invalid or expired token',
       details: { error_type: exception.class.name }
     )
-    
+
     render_error_response(error: error, status: :unauthorized)
   end
 
   # Common error response rendering
   def render_error_response(error:, status: :unprocessable_entity, details: nil)
     error_body = if error.is_a?(::ApiError)
-      {
-        error: {
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          request_id: request.request_id,
-          timestamp: Time.current.iso8601
-        }
-      }
-    else
-      {
-        error: {
-          code: error_code_for(error),
-          message: error.is_a?(String) ? error : error.message,
-          details: details || {},
-          request_id: request.request_id,
-          timestamp: Time.current.iso8601
-        }
-      }
-    end
-    
+                   {
+                     error: {
+                       code: error.code,
+                       message: error.message,
+                       details: error.details,
+                       request_id: request.request_id,
+                       timestamp: Time.current.iso8601
+                     }
+                   }
+                 else
+                   {
+                     error: {
+                       code: error_code_for(error),
+                       message: error.is_a?(String) ? error : error.message,
+                       details: details || {},
+                       request_id: request.request_id,
+                       timestamp: Time.current.iso8601
+                     }
+                   }
+                 end
+
     render json: error_body, status: status
   end
 
@@ -119,7 +119,7 @@ class ApplicationController < ActionController::API
   def log_error(exception, level = :error)
     # Skip logging in test environment or when running specs
     return if Rails.env.test? || ENV['RAILS_ENV'] == 'test' || defined?(RSpec)
-    
+
     Rails.logger.send(level) do
       {
         error_class: exception.class.name,
@@ -131,7 +131,7 @@ class ApplicationController < ActionController::API
       }.compact.to_json
     end
   end
-  
+
   def filtered_params
     # Use Rails parameter filtering
     filter = ActionDispatch::Http::ParameterFilter.new(Rails.application.config.filter_parameters)

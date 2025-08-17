@@ -25,12 +25,6 @@ RSpec.describe RateLimitError do
     end
 
     context 'with all parameters' do
-      let(:message) { 'Too many API calls' }
-      let(:limit) { 100 }
-      let(:remaining) { 0 }
-      let(:reset_at) { Time.parse('2024-01-15 12:00:00 UTC') }
-      let(:custom_details) { { endpoint: '/api/todos' } }
-      
       subject(:error) do
         described_class.new(
           message,
@@ -41,17 +35,23 @@ RSpec.describe RateLimitError do
         )
       end
 
+      let(:message) { 'Too many API calls' }
+      let(:limit) { 100 }
+      let(:remaining) { 0 }
+      let(:reset_at) { Time.parse('2024-01-15 12:00:00 UTC') }
+      let(:custom_details) { { endpoint: '/api/todos' } }
+
       it 'uses custom message' do
         expect(error.message).to eq(message)
       end
 
       it 'includes all rate limit details' do
         expect(error.details).to include({
-          limit: 100,
-          remaining: 0,
-          reset_at: '2024-01-15T12:00:00Z',
-          endpoint: '/api/todos'
-        })
+                                           limit: 100,
+                                           remaining: 0,
+                                           reset_at: '2024-01-15T12:00:00Z',
+                                           endpoint: '/api/todos'
+                                         })
       end
     end
 
@@ -60,15 +60,16 @@ RSpec.describe RateLimitError do
 
       it 'includes only provided parameters' do
         expect(error.details).to eq({
-          limit: 50,
-          remaining: 0
-        })
+                                      limit: 50,
+                                      remaining: 0
+                                    })
       end
     end
 
     context 'with reset_at as Time object' do
-      let(:reset_time) { Time.now + 1.hour }
       subject(:error) { described_class.new(reset_at: reset_time) }
+
+      let(:reset_time) { 1.hour.from_now }
 
       it 'converts reset_at to ISO8601 format' do
         expect(error.details[:reset_at]).to eq(reset_time.iso8601)

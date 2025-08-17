@@ -5,7 +5,7 @@ FactoryBot.define do
       skip_associations { false }
       shared_user { nil }
     end
-    
+
     # Lazy evaluation of associations
     todo do
       if skip_associations
@@ -16,7 +16,7 @@ FactoryBot.define do
         association(:todo)
       end
     end
-    
+
     tag do
       if skip_associations
         nil
@@ -28,13 +28,13 @@ FactoryBot.define do
         association(:tag)
       end
     end
-    
+
     # For build_stubbed usage
     trait :stubbed do
       to_create { |instance| instance.id = instance.class.generate_id }
     end
   end
-  
+
   # Helper method for generating IDs for stubbed instances
   def self.generate_id
     @generated_todo_tag_id ||= 4000

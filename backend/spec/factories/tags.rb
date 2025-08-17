@@ -4,12 +4,12 @@ FactoryBot.define do
     transient do
       skip_user { false }
     end
-    
+
     # Lazy evaluation of user association
     user { skip_user ? nil : association(:user) }
-    
+
     sequence(:name) { |n| "tag-#{n}" }
-    color { "#FF0000" }
+    color { '#FF0000' }
 
     trait :with_todos do
       transient do
@@ -30,13 +30,13 @@ FactoryBot.define do
     trait :without_color do
       color { nil }
     end
-    
+
     # For build_stubbed usage
     trait :stubbed do
       to_create { |instance| instance.id = instance.class.generate_id }
     end
   end
-  
+
   # Helper method for generating IDs for stubbed instances
   def self.generate_id
     @generated_tag_id ||= 3000

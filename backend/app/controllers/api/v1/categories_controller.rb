@@ -4,7 +4,7 @@ module Api
   module V1
     class CategoriesController < BaseController
       before_action :authenticate_user!
-      before_action :set_category, only: [:show, :update, :destroy]
+      before_action :set_category, only: %i[show update destroy]
 
       # GET /api/v1/categories
       def index
@@ -65,7 +65,7 @@ module Api
         @category.destroy
         render_json_response(
           message: 'Category deleted successfully',
-          status: :no_content
+          status: :ok
         )
       end
 

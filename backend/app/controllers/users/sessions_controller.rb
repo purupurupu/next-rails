@@ -1,13 +1,13 @@
 class Users::SessionsController < Devise::SessionsController
   include ApiResponseFormatter
-  
+
   respond_to :json
-  
+
   # Override Devise's authentication failure handling
   def auth_options
     super.merge(recall: 'users/sessions#auth_failure')
   end
-  
+
   def auth_failure
     error = ::AuthenticationError.new('Invalid email or password')
     render_error_response(error: error, status: :unauthorized)

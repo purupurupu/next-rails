@@ -41,7 +41,7 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
         // Direct array response (fallback)
         setTodos(response);
         setSearchResponse({
-          todos: response,
+          data: response,
           meta: { total: response.length, current_page: 1, total_pages: 1, per_page: response.length, search_query: params.q, filters_applied: {} },
           suggestions: [],
         });
@@ -51,7 +51,7 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
         setTodos(todos);
 
         setSearchResponse({
-          todos: todos,
+          data: todos,
           meta: response.meta || {
             total: todos.length,
             current_page: 1,
@@ -62,21 +62,6 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
           },
           suggestions: response.suggestions || [],
         });
-      } else if (Array.isArray(response)) {
-        // Simple array response
-        setTodos(response);
-        setSearchResponse({
-          todos: response,
-          meta: {
-            total: response.length,
-            current_page: 1,
-            total_pages: 1,
-            per_page: response.length,
-            search_query: params.q,
-            filters_applied: {},
-          },
-          suggestions: [],
-        });
       } else {
         setTodos([]);
         setSearchResponse(null);
@@ -85,7 +70,7 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
       // Show suggestions if no results
       const todosArray = Array.isArray(response)
         ? response
-        : (searchResponse?.todos || []);
+        : (searchResponse?.data || []);
       const suggestions = searchResponse?.suggestions || [];
 
       if (todosArray.length === 0 && suggestions.length > 0) {
@@ -103,7 +88,7 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [searchResponse?.data, searchResponse?.suggestions]);
 
   const refreshSearch = useCallback(async () => {
     await searchTodos(debouncedSearchParams);

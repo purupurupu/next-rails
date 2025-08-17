@@ -4,7 +4,7 @@ module Api
   module V1
     class TagsController < BaseController
       before_action :authenticate_user!
-      before_action :set_tag, only: [:show, :update, :destroy]
+      before_action :set_tag, only: %i[show update destroy]
 
       # GET /api/v1/tags
       def index
@@ -65,7 +65,7 @@ module Api
         @tag.destroy
         render_json_response(
           message: 'Tag deleted successfully',
-          status: :no_content
+          status: :ok
         )
       end
 

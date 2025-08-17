@@ -10,12 +10,12 @@ class AuthenticationError < ApiError
       details: details
     )
   end
-  
+
   class << self
     def default_message
       'Authentication failed. Please check your credentials.'
     end
-    
+
     def default_code
       'AUTHENTICATION_FAILED'
     end

@@ -2,10 +2,10 @@ require 'rails_helper'
 
 RSpec.describe Todo, type: :model do
   describe 'associations' do
-    it { should belong_to(:user) }
-    it { should belong_to(:category).optional }
+    it { is_expected.to belong_to(:user) }
+    it { is_expected.to belong_to(:category).optional }
   end
-  
+
   describe 'validations' do
     it 'is valid with valid attributes' do
       todo = build(:todo)
@@ -21,22 +21,21 @@ RSpec.describe Todo, type: :model do
       todo = build(:todo, due_date: 1.day.ago)
       expect(todo).not_to be_valid
     end
-    
+
     it 'is not valid without a user' do
       todo = build(:todo, user: nil)
       expect(todo).not_to be_valid
     end
-
   end
 
   describe 'enums' do
     describe 'priority' do
       it 'defines priority values correctly' do
-        expect(Todo.priorities).to eq({ 'low' => 0, 'medium' => 1, 'high' => 2 })
+        expect(described_class.priorities).to eq({ 'low' => 0, 'medium' => 1, 'high' => 2 })
       end
 
       it 'sets default priority to medium' do
-        todo = Todo.new(title: 'Test', user: create(:user))
+        todo = described_class.new(title: 'Test', user: create(:user))
         todo.save!
         expect(todo.priority).to eq('medium')
       end
@@ -51,11 +50,11 @@ RSpec.describe Todo, type: :model do
 
     describe 'status' do
       it 'defines status values correctly' do
-        expect(Todo.statuses).to eq({ 'pending' => 0, 'in_progress' => 1, 'completed' => 2 })
+        expect(described_class.statuses).to eq({ 'pending' => 0, 'in_progress' => 1, 'completed' => 2 })
       end
 
       it 'sets default status to pending' do
-        todo = Todo.new(title: 'Test', user: create(:user))
+        todo = described_class.new(title: 'Test', user: create(:user))
         todo.save!
         expect(todo.status).to eq('pending')
       end

@@ -16,7 +16,7 @@ RSpec.describe 'Todos API', type: :request do
         get '/api/v1/todos', headers: headers
 
         expect(response).to have_http_status(:ok)
-        body = JSON.parse(response.body)
+        body = response.parsed_body
         todos = body['data']
         expect(todos.length).to eq(3)
         todos.each do |todo|
@@ -25,22 +25,21 @@ RSpec.describe 'Todos API', type: :request do
       end
 
       it 'returns todos with all required fields' do
-        todo = create(:todo, 
-          user: user, 
-          title: 'Test Todo',
-          priority: :high, 
-          status: :in_progress, 
-          description: 'Test description',
-          due_date: Date.tomorrow
-        )
-        
+        todo = create(:todo,
+                      user: user,
+                      title: 'Test Todo',
+                      priority: :high,
+                      status: :in_progress,
+                      description: 'Test description',
+                      due_date: Date.tomorrow)
+
         get '/api/v1/todos', headers: headers
 
         expect(response).to have_http_status(:ok)
-        body = JSON.parse(response.body)
+        body = response.parsed_body
         todos = body['data']
         todo_response = todos.find { |t| t['id'] == todo.id }
-        
+
         expect(todo_response).to include(
           'id' => todo.id,
           'title' => 'Test Todo',
@@ -57,7 +56,7 @@ RSpec.describe 'Todos API', type: :request do
     context 'when unauthenticated' do
       it 'returns unauthorized' do
         get '/api/v1/todos'
-        
+
         # Unauthenticated requests return unauthorized status with Devise JWT
         expect(response).to have_http_status(:unauthorized)
       end
@@ -78,11 +77,11 @@ RSpec.describe 'Todos API', type: :request do
     context 'when authenticated' do
       it 'creates a new todo' do
         simple_params = { todo: { title: 'Simple Todo' } }
-        
+
         post '/api/v1/todos', params: simple_params, headers: headers, as: :json
-        
+
         expect(response).to have_http_status(:created)
-        body = JSON.parse(response.body)
+        body = response.parsed_body
         todo = body['data']
         expect(todo['title']).to eq('Simple Todo')
       end
@@ -90,7 +89,7 @@ RSpec.describe 'Todos API', type: :request do
       it 'assigns todo to current user' do
         simple_attributes = { title: 'User Todo Test' }
         post '/api/v1/todos', params: { todo: simple_attributes }, headers: headers, as: :json
-        
+
         expect(response).to have_http_status(:created)
         todo = Todo.last
         expect(todo).not_to be_nil
@@ -102,7 +101,7 @@ RSpec.describe 'Todos API', type: :request do
         post '/api/v1/todos', params: { todo: minimal_attributes }, headers: headers, as: :json
 
         expect(response).to have_http_status(:created)
-        body = JSON.parse(response.body)
+        body = response.parsed_body
         todo = body['data']
         expect(todo['priority']).to eq('medium')
         expect(todo['status']).to eq('pending')
@@ -113,7 +112,7 @@ RSpec.describe 'Todos API', type: :request do
         post '/api/v1/todos', params: { todo: { title: '' } }, headers: headers, as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)
-        errors = JSON.parse(response.body)
+        errors = response.parsed_body
         expect(errors['error']).to be_present
         expect(errors['error']['code']).to eq('VALIDATION_FAILED')
         expect(errors['error']['details']['validation_errors']['title']).to include("can't be blank")
@@ -146,7 +145,7 @@ RSpec.describe 'Todos API', type: :request do
 
       it 'prevents updating other users todos' do
         other_todo = create(:todo, user: other_user)
-        
+
         put "/api/v1/todos/#{other_todo.id}", params: { todo: update_attributes }, headers: headers, as: :json
 
         expect(response).to have_http_status(:not_found)
@@ -160,20 +159,20 @@ RSpec.describe 'Todos API', type: :request do
     context 'when authenticated' do
       it 'deletes the todo' do
         todo_id = todo.id
-        
-        expect {
+
+        expect do
           delete "/api/v1/todos/#{todo_id}", headers: headers
-        }.to change(Todo, :count).by(-1)
+        end.to change(Todo, :count).by(-1)
 
         expect(response).to have_http_status(:no_content)
       end
 
       it 'prevents deleting other users todos' do
         other_todo = create(:todo, user: other_user)
-        
-        expect {
+
+        expect do
           delete "/api/v1/todos/#{other_todo.id}", headers: headers
-        }.not_to change(Todo, :count)
+        end.not_to change(Todo, :count)
 
         expect(response).to have_http_status(:not_found)
       end
@@ -198,11 +197,11 @@ RSpec.describe 'Todos API', type: :request do
         patch '/api/v1/todos/update_order', params: reorder_params, headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
-        
+
         todo1.reload
         todo2.reload
         todo3.reload
-        
+
         expect(todo1.position).to eq(3)
         expect(todo2.position).to eq(1)
         expect(todo3.position).to eq(2)
@@ -210,13 +209,13 @@ RSpec.describe 'Todos API', type: :request do
 
       it 'prevents reordering other users todos' do
         other_todo = create(:todo, user: other_user, position: 1)
-        
+
         reorder_params = {
           todos: [{ id: other_todo.id, position: 5 }]
         }
 
         patch '/api/v1/todos/update_order', params: reorder_params, headers: headers, as: :json
-        
+
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -230,22 +229,22 @@ RSpec.describe 'Todos API', type: :request do
 
     context 'when authenticated' do
       it 'updates todo tags' do
-        patch "/api/v1/todos/#{todo.id}/tags", 
-              params: { tag_ids: [tag1.id, tag2.id] }, 
-              headers: headers, 
+        patch "/api/v1/todos/#{todo.id}/tags",
+              params: { tag_ids: [tag1.id, tag2.id] },
+              headers: headers,
               as: :json
 
         expect(response).to have_http_status(:ok)
-        expect(todo.reload.tag_ids).to match_array([tag1.id, tag2.id])
+        expect(todo.reload.tag_ids).to contain_exactly(tag1.id, tag2.id)
       end
 
       it 'returns todo with tags in response' do
-        patch "/api/v1/todos/#{todo.id}/tags", 
-              params: { tag_ids: [tag1.id] }, 
-              headers: headers, 
+        patch "/api/v1/todos/#{todo.id}/tags",
+              params: { tag_ids: [tag1.id] },
+              headers: headers,
               as: :json
 
-        body = JSON.parse(response.body)
+        body = response.parsed_body
         todo_data = body['data']
         expect(todo_data['tags']).to be_an(Array)
         expect(todo_data['tags'].first['id']).to eq(tag1.id)
@@ -254,10 +253,10 @@ RSpec.describe 'Todos API', type: :request do
 
       it 'replaces existing tags' do
         todo.tags << [tag1, tag2]
-        
-        patch "/api/v1/todos/#{todo.id}/tags", 
-              params: { tag_ids: [tag3.id] }, 
-              headers: headers, 
+
+        patch "/api/v1/todos/#{todo.id}/tags",
+              params: { tag_ids: [tag3.id] },
+              headers: headers,
               as: :json
 
         expect(todo.reload.tag_ids).to eq([tag3.id])
@@ -265,10 +264,10 @@ RSpec.describe 'Todos API', type: :request do
 
       it 'removes all tags when empty array is provided' do
         todo.tags << [tag1, tag2]
-        
-        patch "/api/v1/todos/#{todo.id}/tags", 
-              params: { tag_ids: [] }, 
-              headers: headers, 
+
+        patch "/api/v1/todos/#{todo.id}/tags",
+              params: { tag_ids: [] },
+              headers: headers,
               as: :json
 
         expect(response).to have_http_status(:ok)
@@ -277,45 +276,45 @@ RSpec.describe 'Todos API', type: :request do
 
       it 'prevents using tags from other users' do
         other_user_tag = create(:tag, user: other_user)
-        
-        patch "/api/v1/todos/#{todo.id}/tags", 
-              params: { tag_ids: [tag1.id, other_user_tag.id] }, 
-              headers: headers, 
+
+        patch "/api/v1/todos/#{todo.id}/tags",
+              params: { tag_ids: [tag1.id, other_user_tag.id] },
+              headers: headers,
               as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['error']['message']).to eq('Invalid tag IDs')
         expect(todo.reload.tags).to be_empty
       end
 
       it 'prevents updating tags on other users todos' do
         other_todo = create(:todo, user: other_user)
-        
-        patch "/api/v1/todos/#{other_todo.id}/tags", 
-              params: { tag_ids: [tag1.id] }, 
-              headers: headers, 
+
+        patch "/api/v1/todos/#{other_todo.id}/tags",
+              params: { tag_ids: [tag1.id] },
+              headers: headers,
               as: :json
 
         expect(response).to have_http_status(:not_found)
       end
 
       it 'handles non-existent tag IDs' do
-        patch "/api/v1/todos/#{todo.id}/tags", 
-              params: { tag_ids: [999999] }, 
-              headers: headers, 
+        patch "/api/v1/todos/#{todo.id}/tags",
+              params: { tag_ids: [999_999] },
+              headers: headers,
               as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['error']['message']).to eq('Invalid tag IDs')
       end
     end
 
     context 'when not authenticated' do
       it 'returns unauthorized' do
-        patch "/api/v1/todos/#{todo.id}/tags", 
-              params: { tag_ids: [tag1.id] }, 
+        patch "/api/v1/todos/#{todo.id}/tags",
+              params: { tag_ids: [tag1.id] },
               as: :json
 
         expect(response).to have_http_status(:unauthorized)
@@ -337,9 +336,9 @@ RSpec.describe 'Todos API', type: :request do
         post '/api/v1/todos', params: { todo: todo_params }, headers: headers, as: :json
 
         expect(response).to have_http_status(:created)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         created_todo = Todo.find(json['data']['id'])
-        expect(created_todo.tag_ids).to match_array([tag1.id, tag2.id])
+        expect(created_todo.tag_ids).to contain_exactly(tag1.id, tag2.id)
       end
 
       it 'returns todo with tags in response' do
@@ -350,7 +349,7 @@ RSpec.describe 'Todos API', type: :request do
 
         post '/api/v1/todos', params: { todo: todo_params }, headers: headers, as: :json
 
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['data']['tags']).to be_an(Array)
         expect(json['data']['tags'].length).to eq(1)
         expect(json['data']['tags'].first['id']).to eq(tag1.id)
@@ -367,7 +366,7 @@ RSpec.describe 'Todos API', type: :request do
 
         # The todo should be created but without invalid tags
         expect(response).to have_http_status(:created)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         created_todo = Todo.find(json['data']['id'])
         expect(created_todo.tags).to be_empty
       end
@@ -395,13 +394,13 @@ RSpec.describe 'Todos API', type: :request do
       it 'preserves existing tags when tag_ids not provided' do
         todo.tags << [tag1, tag2]
 
-        patch "/api/v1/todos/#{todo.id}", 
-              params: { todo: { title: 'Updated title' } }, 
-              headers: headers, 
+        patch "/api/v1/todos/#{todo.id}",
+              params: { todo: { title: 'Updated title' } },
+              headers: headers,
               as: :json
 
         expect(response).to have_http_status(:ok)
-        expect(todo.reload.tag_ids).to match_array([tag1.id, tag2.id])
+        expect(todo.reload.tag_ids).to contain_exactly(tag1.id, tag2.id)
       end
     end
   end

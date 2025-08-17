@@ -2,17 +2,18 @@ require 'rails_helper'
 
 RSpec.describe TodoTag, type: :model do
   describe 'associations' do
-    it { should belong_to(:todo) }
-    it { should belong_to(:tag) }
+    it { is_expected.to belong_to(:todo) }
+    it { is_expected.to belong_to(:tag) }
   end
 
   describe 'validations' do
+    subject { build(:todo_tag, todo: todo, tag: tag) }
+
     let(:user) { create(:user) }
     let(:todo) { create(:todo, user: user) }
     let(:tag) { create(:tag, user: user) }
-    subject { build(:todo_tag, todo: todo, tag: tag) }
 
-    it { should validate_uniqueness_of(:todo_id).scoped_to(:tag_id) }
+    it { is_expected.to validate_uniqueness_of(:todo_id).scoped_to(:tag_id) }
 
     it 'prevents duplicate todo-tag combinations' do
       create(:todo_tag, todo: todo, tag: tag)

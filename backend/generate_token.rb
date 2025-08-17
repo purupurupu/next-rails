@@ -9,5 +9,5 @@ user = User.create!(
 )
 
 token = JwtService.encode(user_id: user.id)
-puts "User created with ID: #{user.id}"
-puts "JWT Token: #{token}"
+Rails.logger.debug { "User created with ID: #{user.id}" }
+Rails.logger.debug { "JWT Token: #{token}" }

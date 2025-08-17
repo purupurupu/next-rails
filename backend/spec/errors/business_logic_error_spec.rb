@@ -25,11 +25,11 @@ RSpec.describe BusinessLogicError do
     end
 
     context 'with custom values' do
+      subject(:error) { described_class.new(message, code: code, details: details) }
+
       let(:message) { 'Custom business error' }
       let(:code) { 'CUSTOM_ERROR' }
       let(:details) { { field: 'value' } }
-      
-      subject(:error) { described_class.new(message, code: code, details: details) }
 
       it 'uses custom message' do
         expect(error.message).to eq(message)
@@ -61,13 +61,13 @@ end
 RSpec.describe BusinessLogicError::DuplicateResourceError do
   describe '#initialize' do
     context 'with all parameters' do
-      let(:resource) { 'user' }
-      let(:field) { 'email' }
-      let(:value) { 'test@example.com' }
-      
       subject(:error) do
         described_class.new(resource: resource, field: field, value: value)
       end
+
+      let(:resource) { 'user' }
+      let(:field) { 'email' }
+      let(:value) { 'test@example.com' }
 
       it 'generates appropriate message' do
         expect(error.message).to eq("User with email 'test@example.com' already exists")
@@ -79,16 +79,17 @@ RSpec.describe BusinessLogicError::DuplicateResourceError do
 
       it 'includes all details' do
         expect(error.details).to eq({
-          resource: 'user',
-          field: 'email',
-          value: 'test@example.com'
-        })
+                                      resource: 'user',
+                                      field: 'email',
+                                      value: 'test@example.com'
+                                    })
       end
     end
 
     context 'with custom message' do
-      let(:message) { 'This email is taken' }
       subject(:error) { described_class.new(message, resource: 'user', field: 'email') }
+
+      let(:message) { 'This email is taken' }
 
       it 'uses custom message' do
         expect(error.message).to eq(message)
@@ -120,10 +121,6 @@ end
 RSpec.describe BusinessLogicError::InvalidStateTransitionError do
   describe '#initialize' do
     context 'with all parameters' do
-      let(:from_state) { 'pending' }
-      let(:to_state) { 'completed' }
-      let(:allowed_states) { %w[in_progress cancelled] }
-      
       subject(:error) do
         described_class.new(
           from_state: from_state,
@@ -131,6 +128,10 @@ RSpec.describe BusinessLogicError::InvalidStateTransitionError do
           allowed_states: allowed_states
         )
       end
+
+      let(:from_state) { 'pending' }
+      let(:to_state) { 'completed' }
+      let(:allowed_states) { %w[in_progress cancelled] }
 
       it 'generates appropriate message' do
         expect(error.message).to eq("Cannot transition from 'pending' to 'completed'")
@@ -142,16 +143,17 @@ RSpec.describe BusinessLogicError::InvalidStateTransitionError do
 
       it 'includes all details' do
         expect(error.details).to eq({
-          from_state: 'pending',
-          to_state: 'completed',
-          allowed_states: %w[in_progress cancelled]
-        })
+                                      from_state: 'pending',
+                                      to_state: 'completed',
+                                      allowed_states: %w[in_progress cancelled]
+                                    })
       end
     end
 
     context 'with custom message' do
-      let(:message) { 'Invalid workflow transition' }
       subject(:error) { described_class.new(message, from_state: 'draft', to_state: 'published') }
+
+      let(:message) { 'Invalid workflow transition' }
 
       it 'uses custom message' do
         expect(error.message).to eq(message)
@@ -175,10 +177,6 @@ end
 RSpec.describe BusinessLogicError::ResourceLimitExceededError do
   describe '#initialize' do
     context 'with all parameters' do
-      let(:resource) { 'todo' }
-      let(:limit) { 100 }
-      let(:current) { 105 }
-      
       subject(:error) do
         described_class.new(
           resource: resource,
@@ -186,6 +184,10 @@ RSpec.describe BusinessLogicError::ResourceLimitExceededError do
           current: current
         )
       end
+
+      let(:resource) { 'todo' }
+      let(:limit) { 100 }
+      let(:current) { 105 }
 
       it 'generates appropriate message with pluralization' do
         expect(error.message).to eq('Maximum limit of 100 todos exceeded')
@@ -197,16 +199,17 @@ RSpec.describe BusinessLogicError::ResourceLimitExceededError do
 
       it 'includes all details' do
         expect(error.details).to eq({
-          resource: 'todo',
-          limit: 100,
-          current: 105
-        })
+                                      resource: 'todo',
+                                      limit: 100,
+                                      current: 105
+                                    })
       end
     end
 
     context 'with custom message' do
-      let(:message) { 'You have reached your plan limit' }
       subject(:error) { described_class.new(message, resource: 'project', limit: 5) }
+
+      let(:message) { 'You have reached your plan limit' }
 
       it 'uses custom message' do
         expect(error.message).to eq(message)

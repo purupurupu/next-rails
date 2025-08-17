@@ -11,7 +11,7 @@ module ApiResponseFormatter
       }
     }
     response_data[:data] = data if data.present?
-    
+
     render json: response_data, status: status
   end
 

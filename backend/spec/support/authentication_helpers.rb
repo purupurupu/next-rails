@@ -9,14 +9,14 @@ module AuthenticationHelpers
 
   # Controller spec authentication using Devise test helpers
   def sign_in_user(user)
-    if defined?(sign_in) # Devise controller test helpers available
-      sign_in user
-    else
-      raise "sign_in method not available. Make sure Devise test helpers are included for controller specs."
+    unless defined?(sign_in)
+      raise 'sign_in method not available. Make sure Devise test helpers are included for controller specs.'
     end
+
+    sign_in user
   end
 
-  # Helper method to generate JWT token for testing (cached per user)  
+  # Helper method to generate JWT token for testing (cached per user)
   def jwt_token_for(user)
     return jwt_tokens[user.id] if jwt_tokens[user.id]
 
@@ -26,22 +26,18 @@ module AuthenticationHelpers
     user.save! if user.changed?
 
     # Create a new request context for login
-    post '/auth/sign_in', 
-         params: { user: { email: user.email, password: 'password123' } }, 
-         as: :json, 
+    post '/auth/sign_in',
+         params: { user: { email: user.email, password: 'password123' } },
+         as: :json,
          headers: { 'Content-Type' => 'application/json', 'Host' => 'localhost:3001' }
-    
-    if response.successful?
-      token = response.headers['Authorization']
-      if token
-        jwt_tokens[user.id] = token
-        return token
-      else
-        raise "No Authorization header returned for user #{user.email}. Response: #{response.body}"
-      end
-    else
-      raise "Failed to authenticate user #{user.email}: #{response.status} - #{response.body}"
-    end
+
+    raise "Failed to authenticate user #{user.email}: #{response.status} - #{response.body}" unless response.successful?
+
+    token = response.headers['Authorization']
+    raise "No Authorization header returned for user #{user.email}. Response: #{response.body}" unless token
+
+    jwt_tokens[user.id] = token
+    token
   end
 
   # Helper method to set authorization headers for request specs
@@ -63,16 +59,16 @@ module AuthenticationHelpers
 
   # Debug helper to inspect authentication state
   def debug_auth_for(user)
-    puts "=== Auth Debug for #{user.email} ==="
-    puts "User ID: #{user.id}"
-    puts "User valid: #{user.valid?}"
-    puts "User errors: #{user.errors.full_messages}" unless user.valid?
-    
+    Rails.logger.debug { "=== Auth Debug for #{user.email} ===" }
+    Rails.logger.debug { "User ID: #{user.id}" }
+    Rails.logger.debug { "User valid: #{user.valid?}" }
+    Rails.logger.debug { "User errors: #{user.errors.full_messages}" } unless user.valid?
+
     if jwt_tokens[user.id]
-      puts "Cached token exists: #{jwt_tokens[user.id][0..20]}..." 
+      Rails.logger.debug { "Cached token exists: #{jwt_tokens[user.id][0..20]}..." }
     else
-      puts "No cached token"
+      Rails.logger.debug 'No cached token'
     end
-    puts "=================================="
+    Rails.logger.debug '=================================='
   end
 end
