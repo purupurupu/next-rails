@@ -2,8 +2,26 @@
 
 FactoryBot.define do
   factory :comment do
-    association :user
-    content { Faker::Lorem.paragraph(sentence_count: 2) }
+    # Use transient attributes for conditional associations
+    transient do
+      skip_user { false }
+      skip_commentable { false }
+      shared_user { nil }
+    end
+    
+    # Lazy evaluation of user association
+    user do
+      if skip_user
+        nil
+      elsif shared_user
+        shared_user
+      else
+        association(:user)
+      end
+    end
+    
+    # Simple content instead of Faker for performance
+    sequence(:content) { |n| "Comment #{n} content" }
     deleted_at { nil }
     
     # 学習ポイント：ポリモーフィック関連のファクトリー
@@ -11,7 +29,17 @@ FactoryBot.define do
     for_todo # trait
     
     trait :for_todo do
-      association :commentable, factory: :todo
+      commentable do
+        if skip_commentable
+          nil
+        elsif shared_user
+          association(:todo, user: shared_user, skip_user: true)
+        elsif user
+          association(:todo, user: user, skip_user: true)
+        else
+          association(:todo)
+        end
+      end
     end
     
     trait :deleted do
@@ -19,7 +47,7 @@ FactoryBot.define do
     end
     
     trait :long do
-      content { Faker::Lorem.paragraph(sentence_count: 10) }
+      content { "This is a long comment. " * 10 }
     end
     
     trait :recent do
@@ -29,5 +57,16 @@ FactoryBot.define do
     trait :old do
       created_at { 1.month.ago }
     end
+    
+    # For build_stubbed usage
+    trait :stubbed do
+      to_create { |instance| instance.id = instance.class.generate_id }
+    end
+  end
+  
+  # Helper method for generating IDs for stubbed instances
+  def self.generate_id
+    @generated_comment_id ||= 5000
+    @generated_comment_id += 1
   end
 end
