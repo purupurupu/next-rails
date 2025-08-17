@@ -102,6 +102,12 @@ docker compose exec backend env RAILS_ENV=test bundle exec rspec spec/requests/a
 docker compose exec backend env COVERAGE=true RAILS_ENV=test bundle exec rspec
 docker compose exec backend bundle exec rake coverage
 
+# Run RuboCop (code linter)
+docker compose exec backend bundle exec rubocop                    # Check all files
+docker compose exec backend bundle exec rubocop -a                 # Auto-correct safe offenses
+docker compose exec backend bundle exec rubocop -A                 # Auto-correct all offenses (unsafe)
+docker compose exec backend bundle exec rubocop path/to/file.rb    # Check specific file
+
 # View coverage report (macOS)
 open backend/coverage/index.html
 
