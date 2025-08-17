@@ -18,7 +18,7 @@ module Api
 
         render_json_response(
           data: @comments,
-          serializer_options: { each_serializer: CommentSerializer },
+          each_serializer: CommentSerializer,
           message: 'Comments retrieved successfully'
         )
       end
@@ -31,7 +31,7 @@ module Api
         if @comment.save
           render_json_response(
             data: @comment,
-            serializer_options: { serializer: CommentSerializer },
+            serializer: CommentSerializer,
             status: :created,
             message: 'Comment created successfully'
           )
@@ -64,7 +64,7 @@ module Api
         if @comment.update(comment_params)
           render_json_response(
             data: @comment,
-            serializer_options: { serializer: CommentSerializer },
+            serializer: CommentSerializer,
             message: 'Comment updated successfully'
           )
         else

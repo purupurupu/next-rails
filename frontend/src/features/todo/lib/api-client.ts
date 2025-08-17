@@ -11,7 +11,9 @@ import type {
 
 class TodoApiClient extends HttpClient {
   async getTodos(): Promise<Todo[]> {
-    return this.get<Todo[]>(API_ENDPOINTS.TODOS);
+    const response = await this.get<Todo[]>(API_ENDPOINTS.TODOS);
+    // 配列であることを保証
+    return Array.isArray(response) ? response : [];
   }
 
   async getTodoById(id: number): Promise<Todo> {
@@ -73,7 +75,15 @@ class TodoApiClient extends HttpClient {
     if (params.per_page) queryParams.append("per_page", String(params.per_page));
 
     const url = queryParams.toString() ? `${API_ENDPOINTS.TODOS_SEARCH}?${queryParams}` : API_ENDPOINTS.TODOS_SEARCH;
-    return this.get<TodoSearchResponse>(url);
+    const response = await this.get<TodoSearchResponse>(url);
+    // dataプロパティが配列であることを保証
+    if (response && typeof response === 'object' && 'data' in response) {
+      return {
+        ...response,
+        data: Array.isArray(response.data) ? response.data : []
+      };
+    }
+    return { data: [], meta: { total_count: 0, page: 1, per_page: 20 } };
   }
 
   async createTodo(data: CreateTodoData, files?: File[]): Promise<Todo> {

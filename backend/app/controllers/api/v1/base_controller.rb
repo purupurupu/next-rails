@@ -19,9 +19,7 @@ module Api
       end
 
       # Override render to ensure consistent API responses
-      def render_json_response(data: nil, message: nil, status: :ok, serializer_options: {}, **options)
-        serializer = serializer_options[:serializer]
-        each_serializer = serializer_options[:each_serializer]
+      def render_json_response(data: nil, message: nil, status: :ok, serializer: nil, each_serializer: nil, **options)
         response_body = build_response_body(data, message, status, serializer, each_serializer, options)
         render json: response_body, status: status
       end
