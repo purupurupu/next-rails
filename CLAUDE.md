@@ -93,14 +93,11 @@ docker compose exec backend env COVERAGE=true RAILS_ENV=test bundle exec rspec
 # Run tests with coverage using rake task
 docker compose exec backend bundle exec rake coverage
 
-# Run tests using dedicated test service (RAILS_ENV=test and DATABASE_URL are pre-configured)
-docker compose --profile test run backend-test
+# Note: Always use RAILS_ENV=test when running tests to ensure test database is used
 
 # Run authentication tests
 docker compose exec backend env RAILS_ENV=test bundle exec rspec spec/requests/authentication_spec.rb
 
-# Alternative: Use the dedicated test service for simpler commands
-# docker compose --profile test run backend-test
 
 # Run RuboCop (code linter)
 docker compose exec backend bundle exec rubocop                    # Check all files
@@ -464,10 +461,9 @@ The application uses environment variables for configuration:
 - `POSTGRES_PASSWORD` - Database password
 
 **Testing**:
-- Dedicated `backend-test` service for running tests in Docker
 - Test database: `todo_app_test`
 - Development database: `todo_next`
 - Test database is automatically selected when `RAILS_ENV=test` is specified
-- Alternative: Use `docker compose --profile test run backend-test` for isolated test execution
+- The test_database.rb initializer ensures the correct database is used in test environment
 
 **Note**: Create a `.env` file in the root directory with these variables for Docker Compose.
