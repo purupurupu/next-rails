@@ -1,12 +1,12 @@
 namespace :coverage do
-  desc "Run RSpec tests with SimpleCov coverage"
+  desc 'Run RSpec tests with SimpleCov coverage'
   task :rspec do
     ENV['COVERAGE'] = 'true'
     ENV['RAILS_ENV'] = 'test'
-    
-    puts "Running RSpec with SimpleCov coverage..."
-    puts "Coverage report will be generated in ./coverage/index.html"
-    
+
+    puts 'Running RSpec with SimpleCov coverage...'
+    puts 'Coverage report will be generated in ./coverage/index.html'
+
     # Run RSpec with coverage
     sh 'bundle exec rspec' do |ok, res|
       if ok
@@ -17,9 +17,9 @@ namespace :coverage do
       end
     end
   end
-  
-  desc "Run RSpec tests with SimpleCov coverage and open report"
-  task :rspec_open => :rspec do
+
+  desc 'Run RSpec tests with SimpleCov coverage and open report'
+  task rspec_open: :rspec do
     if File.exist?('coverage/index.html')
       case RUBY_PLATFORM
       when /darwin/
@@ -27,18 +27,18 @@ namespace :coverage do
       when /linux/
         sh 'xdg-open coverage/index.html'
       else
-        puts "Please open coverage/index.html manually"
+        puts 'Please open coverage/index.html manually'
       end
     end
   end
-  
-  desc "Clean coverage reports"
+
+  desc 'Clean coverage reports'
   task :clean do
-    puts "Cleaning coverage reports..."
+    puts 'Cleaning coverage reports...'
     sh 'rm -rf coverage/'
   end
 end
 
 # Alias for convenience
-desc "Run tests with coverage (alias for coverage:rspec)"
-task :coverage => 'coverage:rspec'
+desc 'Run tests with coverage (alias for coverage:rspec)'
+task coverage: 'coverage:rspec'
