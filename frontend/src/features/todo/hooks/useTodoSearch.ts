@@ -103,7 +103,7 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [searchResponse?.todos, searchResponse?.suggestions]);
 
   const refreshSearch = useCallback(async () => {
     await searchTodos(debouncedSearchParams);

@@ -77,10 +77,10 @@ class TodoApiClient extends HttpClient {
     const url = queryParams.toString() ? `${API_ENDPOINTS.TODOS_SEARCH}?${queryParams}` : API_ENDPOINTS.TODOS_SEARCH;
     const response = await this.get<TodoSearchResponse>(url);
     // dataプロパティが配列であることを保証
-    if (response && typeof response === 'object' && 'data' in response) {
+    if (response && typeof response === "object" && "data" in response) {
       return {
         ...response,
-        data: Array.isArray(response.data) ? response.data : []
+        data: Array.isArray(response.data) ? response.data : [],
       };
     }
     return { data: [], meta: { total_count: 0, page: 1, per_page: 20 } };
