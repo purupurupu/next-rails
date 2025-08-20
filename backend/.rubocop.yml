@@ -98,6 +98,14 @@ RSpec/NestedGroups:
 RSpec/MultipleMemoizedHelpers:
   Max: 10
 
+# 番号付きletを許可（テストの可読性のため）
+RSpec/IndexedLet:
+  Enabled: false
+
+# Contextの説明を柔軟に（日本語対応含む）
+RSpec/ContextWording:
+  Enabled: false
+
 # 日本語コメントを許可
 Style/AsciiComments:
   Enabled: false
