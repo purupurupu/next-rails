@@ -82,6 +82,14 @@ jobs:
             echo "::notice::Coverage ($coverage%) meets minimum threshold ($MIN_COVERAGE%)"
           fi
 
+      - name: Run RuboCop
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/todo_app_test
+        run: |
+          cd backend
+          bundle exec rubocop --parallel
+
   frontend-tests:
     name: Frontend Tests
     runs-on: ubuntu-latest
