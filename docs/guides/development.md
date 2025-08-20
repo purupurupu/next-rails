@@ -173,10 +173,13 @@ test: add todo controller specs
 ### Pull Request Process
 1. Create feature branch
 2. Make changes with clear commits
-3. Push branch and create PR
-4. Ensure tests pass
-5. Request code review
-6. Merge after approval
+3. Run quality checks locally:
+   - Frontend: `pnpm run lint`, `pnpm run typecheck`
+   - Backend: `bundle exec rspec`, `bundle exec rubocop`
+4. Push branch and create PR
+5. Ensure CI checks pass (tests, RuboCop)
+6. Request code review
+7. Merge after approval
 
 ## Testing Guidelines
 

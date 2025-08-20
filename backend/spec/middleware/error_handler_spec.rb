@@ -128,8 +128,7 @@ RSpec.describe ErrorHandler do
 
       context 'in development environment' do
         before do
-          allow(Rails).to receive_message_chain(:env, :production?).and_return(false)
-          allow(Rails).to receive_message_chain(:env, :test?).and_return(false)
+          allow(Rails.env).to receive_messages(production?: false, test?: false)
         end
 
         it 'returns internal server error with details' do
@@ -145,8 +144,7 @@ RSpec.describe ErrorHandler do
 
       context 'in production environment' do
         before do
-          allow(Rails).to receive_message_chain(:env, :production?).and_return(true)
-          allow(Rails).to receive_message_chain(:env, :test?).and_return(false)
+          allow(Rails.env).to receive_messages(production?: true, test?: false)
         end
 
         it 'returns internal server error without details' do
@@ -224,7 +222,7 @@ RSpec.describe ErrorHandler do
     describe '#filtered_params' do
       it 'returns params from request' do
         # Test the basic functionality without mocking Rails internals
-        request = double('request')
+        request = instance_double(ActionDispatch::Request)
         params = { 'some' => 'params' }
         allow(request).to receive(:params).and_return(params)
 
@@ -235,7 +233,7 @@ RSpec.describe ErrorHandler do
       end
 
       it 'handles errors gracefully' do
-        request = double('request')
+        request = instance_double(ActionDispatch::Request)
         allow(request).to receive(:params).and_raise(StandardError)
 
         result = middleware.send(:filtered_params, request)
@@ -264,12 +262,15 @@ RSpec.describe ErrorHandler do
 
     describe '#log_error' do
       it 'does not log in test environment' do
-        expect(Rails.logger).not_to receive(:warn)
-        expect(Rails.logger).not_to receive(:error)
+        allow(Rails.logger).to receive(:warn)
+        allow(Rails.logger).to receive(:error)
 
         error = StandardError.new('Test error')
         request = ActionDispatch::Request.new(env)
         middleware.send(:log_error, error, request, :warn)
+
+        expect(Rails.logger).not_to have_received(:warn)
+        expect(Rails.logger).not_to have_received(:error)
       end
     end
   end

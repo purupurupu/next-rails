@@ -3,6 +3,9 @@
 module Api
   module V1
     class TodosController < BaseController
+      include TodoSearchFilters
+      include TodoSearchSuggestions
+
       before_action :set_todo, only: %i[show update destroy update_tags destroy_file]
 
       def index
@@ -223,80 +226,6 @@ module Api
         end
 
         permitted
-      end
-
-      def active_filters
-        filters = {}
-        if search_params[:q] || search_params[:query] || search_params[:search]
-          filters[:search] =
-            search_params[:q] || search_params[:query] || search_params[:search]
-        end
-        filters[:category_id] = search_params[:category_id] if search_params[:category_id].present?
-        filters[:status] = Array(search_params[:status]) if search_params[:status].present?
-        filters[:priority] = Array(search_params[:priority]) if search_params[:priority].present?
-        filters[:tag_ids] = search_params[:tag_ids] if search_params[:tag_ids].present?
-        if search_params[:due_date_from].present? || search_params[:due_date_to].present?
-          filters[:date_range] = {
-            from: search_params[:due_date_from],
-            to: search_params[:due_date_to]
-          }
-        end
-        filters
-      end
-
-      def search_suggestions
-        suggestions = []
-
-        # Check if search query is present
-        if search_params[:q].present? || search_params[:query].present? || search_params[:search].present?
-          suggestions << {
-            type: 'spelling',
-            message: '検索キーワードのスペルを確認してください。'
-          }
-          suggestions << {
-            type: 'broader_search',
-            message: 'より一般的なキーワードで検索してみてください。'
-          }
-        end
-
-        # Check if too many filters are applied
-        if active_filters.size > 3
-          suggestions << {
-            type: 'reduce_filters',
-            message: 'フィルター条件を減らしてみてください。',
-            current_filters: active_filters.keys
-          }
-        end
-
-        # Specific filter suggestions
-        if search_params[:status].present? && Array(search_params[:status]).size > 1
-          suggestions << {
-            type: 'status_filter',
-            message: 'ステータスフィルターを1つに絞ってみてください。'
-          }
-        end
-
-        if search_params[:tag_ids].present? && search_params[:tag_mode] == 'all'
-          suggestions << {
-            type: 'tag_mode',
-            message: 'タグの検索モードを「いずれか」（ANY）に変更してみてください。'
-          }
-        end
-
-        if search_params[:due_date_from].present? && search_params[:due_date_to].present?
-          suggestions << {
-            type: 'date_range',
-            message: '日付範囲を広げてみてください。'
-          }
-        end
-
-        # General suggestions
-        suggestions << {
-          type: 'clear_filters',
-          message: 'すべてのフィルターをクリアして、もう一度お試しください。'
-        }
-
-        suggestions
       end
     end
   end

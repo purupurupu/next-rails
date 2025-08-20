@@ -15,10 +15,13 @@ RSpec.describe 'Api::V1::Comments', type: :request do
   let(:other_auth_headers) { auth_headers_for(other_user) }
 
   describe 'GET /api/v1/todos/:todo_id/comments' do
-    let!(:comments) { create_list(:comment, 3, commentable: todo) }
     let!(:old_comment) { create(:comment, commentable: todo, created_at: 2.days.ago) }
 
     context 'with valid todo_id' do
+      before do
+        create_list(:comment, 3, commentable: todo)
+      end
+
       it 'returns comments in chronological order' do
         get "/api/v1/todos/#{todo.id}/comments", headers: auth_headers
 

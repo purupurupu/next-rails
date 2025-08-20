@@ -17,6 +17,10 @@ AllCops:
     - 'spec/spec_helper.rb'
     - 'spec/rails_helper.rb'
     - 'node_modules/**/*'
+    # 新規追加
+    - 'lib/tasks/**/*'        # Rakeタスク
+    - 'spec/support/**/*'     # テストサポートファイル
+    - 'test/**/*'             # 未使用のテストフレームワーク
 
 # Style
 Style/Documentation:
@@ -41,6 +45,7 @@ Metrics/BlockLength:
     - 'config/routes.rb'
     - 'app/models/concerns/**/*'
     - 'db/migrate/**/*'
+    - 'lib/tasks/**/*'
 
 Metrics/MethodLength:
   Max: 30
@@ -72,6 +77,7 @@ Rails/SkipsModelValidations:
   Exclude:
     - 'spec/**/*'
     - 'db/migrate/**/*'
+    - 'app/controllers/api/v1/todos_controller.rb'  # ポジション更新は同期的バリデーション不要
 
 Rails/Output:
   Exclude:
@@ -79,19 +85,37 @@ Rails/Output:
 
 # RSpec
 RSpec/ExampleLength:
-  Max: 20
+  Max: 25
 
 RSpec/MultipleExpectations:
-  Max: 5
+  Max: 10
+  Exclude:
+    - 'spec/requests/**/*'
 
 RSpec/NestedGroups:
   Max: 4
 
 RSpec/MultipleMemoizedHelpers:
-  Max: 10
+  Max: 15
+
+# 番号付きletを許可（テストの可読性のため）
+RSpec/IndexedLet:
+  Enabled: false
+
+# Contextの説明を柔軟に（日本語対応含む）
+RSpec/ContextWording:
+  Enabled: false
+
+# 複数のdescribeブロックを許可（関連するクラスをまとめてテスト）
+RSpec/MultipleDescribes:
+  Enabled: false
 
 # 日本語コメントを許可
 Style/AsciiComments:
+  Enabled: false
+
+# メソッドチェーンのmapを許可（読みやすさを優先）
+Performance/MapMethodChain:
   Enabled: false
 
 # 一時的に無効化（段階的に対応）

@@ -299,6 +299,7 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 **Before Creating Pull Requests**:
 - Run frontend checks: `pnpm run lint`, `pnpm run typecheck`
 - Run backend tests: `docker compose exec backend env RAILS_ENV=test bundle exec rspec`
+- Run backend linter: `docker compose exec backend bundle exec rubocop`
 - Update documentation if APIs or architecture changed
 - Ensure all checks pass before pushing
 

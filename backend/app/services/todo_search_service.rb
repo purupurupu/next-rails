@@ -143,28 +143,39 @@ class TodoSearchService
 
   def apply_sorting(scope)
     sort_by = params[:sort_by] || 'position'
-    sort_order = params[:sort_order]&.downcase == 'desc' ? 'DESC' : 'ASC'
+    sort_order = normalize_sort_order
 
-    case sort_by
-    when 'created_at'
-      scope.order(created_at: sort_order)
-    when 'updated_at'
-      scope.order(updated_at: sort_order)
-    when 'due_date'
-      scope.order(Arel.sql("due_date IS NULL, due_date #{sort_order}"))
-    when 'title'
-      scope.order(Arel.sql("LOWER(title) #{sort_order}"))
-    when 'priority'
-      # Sort by priority value (high=2, medium=1, low=0)
-      order_direction = sort_order == 'DESC' ? 'DESC' : 'ASC'
-      scope.order(priority: order_direction)
-    when 'status'
-      # Sort by status value (completed=2, in_progress=1, pending=0)
-      scope.order(status: sort_order)
-    else
-      # Default to position-based ordering
-      scope.ordered
-    end
+    sorting_methods = {
+      'created_at' => -> { sort_by_timestamp(scope, :created_at, sort_order) },
+      'updated_at' => -> { sort_by_timestamp(scope, :updated_at, sort_order) },
+      'due_date' => -> { sort_by_due_date(scope, sort_order) },
+      'title' => -> { sort_by_title(scope, sort_order) },
+      'priority' => -> { sort_by_enum_field(scope, :priority, sort_order) },
+      'status' => -> { sort_by_enum_field(scope, :status, sort_order) }
+    }
+
+    method = sorting_methods[sort_by]
+    method ? method.call : scope.ordered
+  end
+
+  def normalize_sort_order
+    params[:sort_order]&.downcase == 'desc' ? 'DESC' : 'ASC'
+  end
+
+  def sort_by_timestamp(scope, field, order)
+    scope.order(field => order)
+  end
+
+  def sort_by_due_date(scope, order)
+    scope.order(Arel.sql("due_date IS NULL, due_date #{order}"))
+  end
+
+  def sort_by_title(scope, order)
+    scope.order(Arel.sql("LOWER(title) #{order}"))
+  end
+
+  def sort_by_enum_field(scope, field, order)
+    scope.order(field => order)
   end
 
   def apply_includes(scope)

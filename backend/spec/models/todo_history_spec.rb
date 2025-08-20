@@ -14,15 +14,15 @@ RSpec.describe TodoHistory, type: :model do
   end
 
   describe 'enums' do
-    it {
-      expect(subject).to define_enum_for(:action).with_values(
-        created: 0,
-        updated: 1,
-        deleted: 2,
-        status_changed: 3,
-        priority_changed: 4
+    it 'defines action enum with correct values' do
+      expect(described_class.actions).to eq(
+        'created' => 0,
+        'updated' => 1,
+        'deleted' => 2,
+        'status_changed' => 3,
+        'priority_changed' => 4
       )
-    }
+    end
   end
 
   describe 'default scope' do
@@ -41,7 +41,9 @@ RSpec.describe TodoHistory, type: :model do
     let!(:status_history) { create(:todo_history, todo: todo, user: user, field_name: 'status') }
 
     describe '.recent' do
-      let!(:histories) { create_list(:todo_history, 15, todo: todo) }
+      before do
+        create_list(:todo_history, 15, todo: todo)
+      end
 
       it 'returns limited number of records' do
         expect(described_class.recent(5).count).to eq(5)

@@ -77,3 +77,4 @@ yarn.lock
 
 # Ignore Coding Agent Files
 PLAN.md
+.serena/
