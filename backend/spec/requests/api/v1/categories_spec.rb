@@ -9,7 +9,10 @@ RSpec.describe '/api/v1/categories', type: :request do
 
   describe 'GET /api/v1/categories' do
     let!(:user_categories) { create_list(:category, 3, user: user) }
-    let!(:other_user_category) { create(:category, user: other_user) }
+    
+    before do
+      create(:category, user: other_user) # Other user's category
+    end
 
     it 'returns user categories in alphabetical order' do
       get '/api/v1/categories', headers: headers
@@ -33,35 +36,73 @@ RSpec.describe '/api/v1/categories', type: :request do
       category_response = json_response['data'].find { |c| c['id'] == category.id }
       expect(category_response['todo_count']).to eq(2)
     end
+
+    it 'includes proper serialized data with timestamps' do
+      get '/api/v1/categories', headers: headers
+
+      json_response = response.parsed_body
+      expect(json_response['data'].first).to include(
+        'id' => be_a(Integer),
+        'name' => be_a(String),
+        'color' => be_a(String),
+        'todo_count' => be_a(Integer),
+        'created_at' => be_a(String),
+        'updated_at' => be_a(String)
+      )
+    end
+
+    context 'with response headers' do
+      before { get '/api/v1/categories', headers: headers }
+
+      it_behaves_like 'standard success response'
+    end
+
+    context 'without authentication' do
+      it 'returns unauthorized' do
+        get '/api/v1/categories'
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
   end
 
   describe 'GET /api/v1/categories/:id' do
     let(:category) { create(:category, user: user) }
 
-    it 'returns the category' do
-      get "/api/v1/categories/#{category.id}", headers: headers
+    context 'with valid category' do
+      before { get "/api/v1/categories/#{category.id}", headers: headers }
 
-      expect(response).to have_http_status(:ok)
-      json_response = response.parsed_body
+      it 'returns the category' do
+        expect(response).to have_http_status(:ok)
+        json_response = response.parsed_body
 
-      expect(json_response['data']['id']).to eq(category.id)
-      expect(json_response['data']['name']).to eq(category.name)
-      expect(json_response['data']['color']).to eq(category.color)
+        expect(json_response['data']['id']).to eq(category.id)
+        expect(json_response['data']['name']).to eq(category.name)
+        expect(json_response['data']['color']).to eq(category.color)
+      end
+
+      it_behaves_like 'standard success response'
     end
 
     context 'when category does not exist' do
+      before { get '/api/v1/categories/999', headers: headers }
+
       it 'returns not found' do
-        get '/api/v1/categories/999', headers: headers
         expect(response).to have_http_status(:not_found)
       end
+
+      it_behaves_like 'standard error response', 'ERROR'
     end
 
     context 'when category belongs to other user' do
       let(:other_category) { create(:category, user: other_user) }
 
+      before { get "/api/v1/categories/#{other_category.id}", headers: headers }
+
       it 'returns not found' do
-        get "/api/v1/categories/#{other_category.id}", headers: headers
         expect(response).to have_http_status(:not_found)
+
+        json_response = response.parsed_body
+        expect(json_response['error']['message']).to eq('Category not found')
       end
     end
   end
@@ -76,14 +117,34 @@ RSpec.describe '/api/v1/categories', type: :request do
       }
     end
 
-    it 'creates a new category' do
-      post '/api/v1/categories', params: valid_params, headers: headers, as: :json
+    context 'with valid params' do
+      it 'creates a new category' do
+        expect do
+          post '/api/v1/categories', params: valid_params, headers: headers, as: :json
+        end.to change(Category, :count).by(1)
 
-      expect(response).to have_http_status(:created)
-      json_response = response.parsed_body
+        expect(response).to have_http_status(:created)
+        json_response = response.parsed_body
 
-      expect(json_response['data']['name']).to eq('New Category')
-      expect(json_response['data']['color']).to eq('#FF5733')
+        expect(json_response['data']['name']).to eq('New Category')
+        expect(json_response['data']['color']).to eq('#FF5733')
+      end
+
+      it 'assigns category to current user' do
+        post '/api/v1/categories', params: valid_params, headers: headers, as: :json
+
+        new_category = Category.last
+        expect(new_category.user).to eq(user)
+      end
+
+      it 'uses default color when not provided' do
+        post '/api/v1/categories', params: { category: { name: 'No Color' } }, headers: headers, as: :json
+
+        expect(response).to have_http_status(:created)
+        new_category = Category.last
+        expect(new_category.color).to be_present
+        expect(new_category.color).to match(/^#[0-9A-F]{6}$/i)
+      end
     end
 
     context 'with invalid params' do
@@ -107,6 +168,26 @@ RSpec.describe '/api/v1/categories', type: :request do
         expect(json_response['error']['details']['validation_errors']['name']).to include("can't be blank")
         expect(json_response['error']['details']['validation_errors']['color']).to include('must be a valid hex color')
       end
+
+      it 'returns error when name is duplicate for same user' do
+        create(:category, user: user, name: 'Existing')
+
+        expect do
+          post '/api/v1/categories', params: { category: { name: 'Existing' } }, headers: headers, as: :json
+        end.not_to change(Category, :count)
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it 'allows duplicate names for different users' do
+        create(:category, user: other_user, name: 'Shared Name')
+
+        expect do
+          post '/api/v1/categories', params: { category: { name: 'Shared Name' } }, headers: headers, as: :json
+        end.to change(Category, :count).by(1)
+
+        expect(response).to have_http_status(:created)
+      end
     end
   end
 
@@ -122,18 +203,50 @@ RSpec.describe '/api/v1/categories', type: :request do
       }
     end
 
-    it 'updates the category' do
-      patch "/api/v1/categories/#{category.id}", params: update_params, headers: headers, as: :json
+    context 'with valid params' do
+      it 'updates the category' do
+        patch "/api/v1/categories/#{category.id}", params: update_params, headers: headers, as: :json
 
-      expect(response).to have_http_status(:ok)
-      json_response = response.parsed_body
+        expect(response).to have_http_status(:ok)
+        json_response = response.parsed_body
 
-      expect(json_response['data']['name']).to eq('Updated Name')
-      expect(json_response['data']['color']).to eq('#FFFFFF')
+        expect(json_response['data']['name']).to eq('Updated Name')
+        expect(json_response['data']['color']).to eq('#FFFFFF')
 
-      category.reload
-      expect(category.name).to eq('Updated Name')
-      expect(category.color).to eq('#FFFFFF')
+        category.reload
+        expect(category.name).to eq('Updated Name')
+        expect(category.color).to eq('#FFFFFF')
+      end
+
+      it 'allows partial updates' do
+        patch "/api/v1/categories/#{category.id}", params: { category: { name: 'Only Name Updated' } }, headers: headers, as: :json
+
+        expect(response).to have_http_status(:ok)
+
+        category.reload
+        expect(category.name).to eq('Only Name Updated')
+        expect(category.color).to eq('#000000') # Original color unchanged
+      end
+    end
+
+    context 'with invalid params' do
+      it 'returns error when updating with duplicate name' do
+        create(:category, user: user, name: 'Taken Name')
+
+        patch "/api/v1/categories/#{category.id}", params: { category: { name: 'Taken Name' } }, headers: headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+
+    context 'when category belongs to other user' do
+      let(:other_category) { create(:category, user: other_user) }
+
+      it 'returns not found' do
+        patch "/api/v1/categories/#{other_category.id}", params: update_params, headers: headers, as: :json
+
+        expect(response).to have_http_status(:not_found)
+      end
     end
   end
 
