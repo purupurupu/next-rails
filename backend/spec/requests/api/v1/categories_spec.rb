@@ -9,7 +9,7 @@ RSpec.describe '/api/v1/categories', type: :request do
 
   describe 'GET /api/v1/categories' do
     let!(:user_categories) { create_list(:category, 3, user: user) }
-    
+
     before do
       create(:category, user: other_user) # Other user's category
     end

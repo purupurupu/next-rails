@@ -12,12 +12,10 @@ RSpec.describe 'Api::V1::TodoHistories', type: :request do
 
   describe 'GET /api/v1/todos/:todo_id/histories' do
     context 'with valid todo_id' do
-      let!(:histories) do
-        [
-          create(:todo_history, :created, todo: todo, user: user, created_at: 3.days.ago),
-          create(:todo_history, :status_changed, todo: todo, user: user, created_at: 2.days.ago),
-          create(:todo_history, :priority_changed, todo: todo, user: user, created_at: 1.day.ago)
-        ]
+      before do
+        create(:todo_history, :created, todo: todo, user: user, created_at: 3.days.ago)
+        create(:todo_history, :status_changed, todo: todo, user: user, created_at: 2.days.ago)
+        create(:todo_history, :priority_changed, todo: todo, user: user, created_at: 1.day.ago)
       end
 
       it 'returns todo histories in reverse chronological order' do

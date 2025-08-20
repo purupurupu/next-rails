@@ -45,7 +45,7 @@ RSpec.describe Todo, type: :model do
 
         todo.files.attach([text_blob, image_blob])
         expect(todo.files.count).to eq(2)
-        expect(todo.files.map(&:filename).map(&:to_s)).to contain_exactly('test_file.txt', 'test_image.png')
+        expect(todo.files.map { |file| file.filename.to_s }).to contain_exactly('test_file.txt', 'test_image.png')
       end
 
       it 'preserves existing files when adding new ones' do

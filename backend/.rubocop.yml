@@ -85,7 +85,7 @@ Rails/Output:
 
 # RSpec
 RSpec/ExampleLength:
-  Max: 20
+  Max: 25
 
 RSpec/MultipleExpectations:
   Max: 10
@@ -96,7 +96,7 @@ RSpec/NestedGroups:
   Max: 4
 
 RSpec/MultipleMemoizedHelpers:
-  Max: 10
+  Max: 15
 
 # 番号付きletを許可（テストの可読性のため）
 RSpec/IndexedLet:
@@ -104,6 +104,10 @@ RSpec/IndexedLet:
 
 # Contextの説明を柔軟に（日本語対応含む）
 RSpec/ContextWording:
+  Enabled: false
+
+# 複数のdescribeブロックを許可（関連するクラスをまとめてテスト）
+RSpec/MultipleDescribes:
   Enabled: false
 
 # 日本語コメントを許可

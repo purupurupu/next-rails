@@ -48,9 +48,8 @@ RSpec.describe User, type: :model do
   end
 
   describe 'email case insensitivity' do
-    let!(:user) { create(:user, email: 'test@example.com') }
-
     it 'does not allow duplicate emails with different cases' do
+      create(:user, email: 'test@example.com')
       duplicate_user = build(:user, email: 'TEST@EXAMPLE.COM')
       expect(duplicate_user).not_to be_valid
       expect(duplicate_user.errors[:email]).to include('has already been taken')

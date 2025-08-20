@@ -22,10 +22,10 @@ RSpec.describe 'Todos API Extended', type: :request do
 
   describe 'GET /api/v1/todos' do
     context 'with associations' do
-      let!(:todo) { create(:todo, user: user, category: category, tags: [primary_tag]) }
       let!(:todo_with_associations) { create(:todo, user: user, category: category, tags: [primary_tag, secondary_tag]) }
 
       before do
+        create(:todo, user: user, category: category, tags: [primary_tag])
         create(:comment, commentable: todo_with_associations, user: user)
         get '/api/v1/todos', headers: headers
       end
@@ -54,18 +54,16 @@ RSpec.describe 'Todos API Extended', type: :request do
         todo1.update_column(:position, 3)
         todo2.update_column(:position, 1)
         todo3.update_column(:position, 2)
-        
-        @todo_ids = [todo2.id, todo3.id, todo1.id]
       end
 
       it 'returns todos in correct order (by position)' do
         get '/api/v1/todos', headers: headers
 
         json = response.parsed_body
-        todo_ids = json['data'].pluck('id')
+        positions = json['data'].pluck('position')
 
         # Todos should be ordered by position (ascending)
-        expect(todo_ids).to eq(@todo_ids)
+        expect(positions).to eq([1, 2, 3])
       end
     end
   end
@@ -214,8 +212,6 @@ RSpec.describe 'Todos API Extended', type: :request do
 
   describe 'PATCH /api/v1/todos/update_order' do
     let!(:first_todo) { create(:todo, user: user, position: 1) }
-    let!(:second_todo) { create(:todo, user: user, position: 2) }
-    let!(:third_todo) { create(:todo, user: user, position: 3) }
 
     context 'with error handling' do
       it 'validates all todos belong to current user' do
