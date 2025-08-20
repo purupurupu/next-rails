@@ -15,12 +15,12 @@ RSpec.describe TodoHistory, type: :model do
 
   describe 'enums' do
     it 'defines action enum with correct values' do
-      expect(described_class).to define_enum_for(:action).with_values(
-        created: 0,
-        updated: 1,
-        deleted: 2,
-        status_changed: 3,
-        priority_changed: 4
+      expect(described_class.actions).to eq(
+        'created' => 0,
+        'updated' => 1,
+        'deleted' => 2,
+        'status_changed' => 3,
+        'priority_changed' => 4
       )
     end
   end

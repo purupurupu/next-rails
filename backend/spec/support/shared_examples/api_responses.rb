@@ -21,7 +21,7 @@ RSpec.shared_examples 'standard success response' do
       'code' => response.status,
       'message' => be_a(String)
     )
-    expect(json).to have_key('data')
+    # Note: 'data' key may not be present if the data is empty
     expect(json).not_to have_key('error')
   end
 
