@@ -24,26 +24,33 @@ module Api
         if status == :no_content
           head :no_content
         else
-          response_body = build_response_body(data, message, status, serializer, each_serializer, options)
+          response_options = {
+            data: data,
+            message: message,
+            status: status,
+            serializer: serializer,
+            each_serializer: each_serializer
+          }.merge(options)
+          response_body = build_response_body(response_options)
           render json: response_body, status: status
         end
       end
 
       # render_error_response is inherited from ApplicationController
 
-      def build_response_body(data, message, status, serializer, each_serializer, options)
+      def build_response_body(options)
         response_body = {
           status: {
-            code: Rack::Utils.status_code(status),
-            message: message || default_message_for(status)
+            code: Rack::Utils.status_code(options[:status]),
+            message: options[:message] || default_message_for(options[:status])
           }
         }
 
-        if data.present?
-          serialized_data = if serializer || each_serializer
-                              serialize_data(data, serializer, each_serializer, options)
+        if options[:data].present?
+          serialized_data = if options[:serializer] || options[:each_serializer]
+                              serialize_data(options[:data], options[:serializer], options[:each_serializer], options)
                             else
-                              data
+                              options[:data]
                             end
 
           response_body[:data] = serialized_data
