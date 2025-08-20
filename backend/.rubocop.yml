@@ -114,6 +114,10 @@ RSpec/MultipleDescribes:
 Style/AsciiComments:
   Enabled: false
 
+# メソッドチェーンのmapを許可（読みやすさを優先）
+Performance/MapMethodChain:
+  Enabled: false
+
 # 一時的に無効化（段階的に対応）
 Lint/DuplicateBranch:
   Enabled: false
