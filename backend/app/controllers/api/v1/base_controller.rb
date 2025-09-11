@@ -61,20 +61,25 @@ module Api
       end
 
       def serialize_data(data, serializer, each_serializer, options)
-        serializer_options = options.merge(current_user: current_user)
+        # Extract custom params from options
+        custom_params = options.except(:data, :message, :status, :serializer, :each_serializer, :meta, :params)
+
+        # Merge all params including current_user and any custom params
+        all_params = { current_user: current_user }.merge(custom_params).merge(options[:params] || {})
+        serializer_options = { params: all_params }
 
         if each_serializer
-          ActiveModelSerializers::SerializableResource.new(
-            data,
-            each_serializer: each_serializer,
-            **serializer_options
-          ).as_json
+          # For collections, serialize each item and extract attributes
+          data.map do |item|
+            serialized = each_serializer.new(item, serializer_options).serializable_hash[:data]
+            # Return attributes directly with id from the serialized data
+            serialized[:attributes]
+          end
         elsif serializer
-          ActiveModelSerializers::SerializableResource.new(
-            data,
-            serializer: serializer,
-            **serializer_options
-          ).as_json
+          # For single items
+          serialized = serializer.new(data, serializer_options).serializable_hash[:data]
+          # Return attributes directly with id from the serialized data
+          serialized[:attributes]
         else
           data
         end

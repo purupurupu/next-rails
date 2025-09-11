@@ -9,7 +9,7 @@ class ValidationError < ApiError
     super(
       message,
       code: 'VALIDATION_FAILED',
-      status: :unprocessable_entity,
+      status: :unprocessable_content,
       details: details
     )
   end

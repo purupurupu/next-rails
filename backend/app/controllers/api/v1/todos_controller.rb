@@ -73,7 +73,7 @@ module Api
         else
           render_error_response(
             error: ::ValidationError.new(errors: @todo.errors),
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
       end
@@ -99,7 +99,7 @@ module Api
         else
           render_error_response(
             error: ::ValidationError.new(errors: @todo.errors),
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
       end
@@ -128,7 +128,7 @@ module Api
         else
           render_error_response(
             error: 'Invalid tag IDs',
-            status: :unprocessable_entity,
+            status: :unprocessable_content,
             details: { invalid_tags: tag_ids - user_tag_ids }
           )
         end
@@ -167,7 +167,7 @@ module Api
         Rails.logger.error "Failed to update todo order: #{e.message}" unless Rails.env.test? || defined?(RSpec)
         render_error_response(
           error: 'Failed to update todo order',
-          status: :unprocessable_entity,
+          status: :unprocessable_content,
           details: { error: e.message }
         )
       end

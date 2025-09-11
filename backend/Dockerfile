@@ -1,4 +1,4 @@
-FROM ruby:3.2.5
+FROM ruby:3.4.5
 
 # 必要なパッケージのインストール
 RUN apt-get update -qq && apt-get install -y nodejs postgresql-client

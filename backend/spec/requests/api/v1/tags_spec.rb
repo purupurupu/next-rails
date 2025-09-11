@@ -114,7 +114,7 @@ RSpec.describe 'Api::V1::Tags', type: :request do
 
         it 'returns unprocessable entity status' do
           post '/api/v1/tags', params: { tag: invalid_attributes }, headers: headers, as: :json
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
 
         it 'returns validation errors' do
@@ -127,7 +127,7 @@ RSpec.describe 'Api::V1::Tags', type: :request do
         it 'returns error for duplicate name' do
           create(:tag, name: 'work', user: user)
           post '/api/v1/tags', params: { tag: { name: 'WORK' } }, headers: headers, as: :json
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           json = response.parsed_body
           expect(json['error']['code']).to eq('VALIDATION_FAILED')
           expect(json['error']['details']['validation_errors']['name']).to include('has already been taken')
@@ -174,7 +174,7 @@ RSpec.describe 'Api::V1::Tags', type: :request do
       context 'with invalid parameters' do
         it 'returns unprocessable entity status' do
           patch "/api/v1/tags/#{tag.id}", params: { tag: invalid_attributes }, headers: headers, as: :json
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
 
         it 'returns validation errors' do

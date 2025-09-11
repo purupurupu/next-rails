@@ -111,7 +111,7 @@ RSpec.describe 'Todos API', type: :request do
       it 'returns error for invalid attributes' do
         post '/api/v1/todos', params: { todo: { title: '' } }, headers: headers, as: :json
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         errors = response.parsed_body
         expect(errors['error']).to be_present
         expect(errors['error']['code']).to eq('VALIDATION_FAILED')
@@ -282,7 +282,7 @@ RSpec.describe 'Todos API', type: :request do
               headers: headers,
               as: :json
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         json = response.parsed_body
         expect(json['error']['message']).to eq('Invalid tag IDs')
         expect(todo.reload.tags).to be_empty
@@ -305,7 +305,7 @@ RSpec.describe 'Todos API', type: :request do
               headers: headers,
               as: :json
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         json = response.parsed_body
         expect(json['error']['message']).to eq('Invalid tag IDs')
       end

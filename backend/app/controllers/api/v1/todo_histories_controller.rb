@@ -14,7 +14,12 @@ module Api
                           .includes(:user)
                           .recent(50) # 最新50件まで
 
-        render json: @histories, each_serializer: TodoHistorySerializer
+        serialized_histories = @histories.map do |history|
+          serialized = TodoHistorySerializer.new(history,
+                                                 params: { current_user: current_user }).serializable_hash[:data]
+          serialized[:attributes]
+        end
+        render json: serialized_histories
       end
 
       private

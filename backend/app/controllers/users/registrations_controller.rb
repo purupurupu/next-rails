@@ -17,7 +17,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
         "User couldn't be created successfully",
         errors: resource.errors
       )
-      render_error_response(error: error, status: :unprocessable_entity)
+      render_error_response(error: error, status: :unprocessable_content)
     end
   end
 end

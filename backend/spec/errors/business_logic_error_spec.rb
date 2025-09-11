@@ -16,7 +16,7 @@ RSpec.describe BusinessLogicError do
       end
 
       it 'has unprocessable_entity status' do
-        expect(error.status).to eq(:unprocessable_entity)
+        expect(error.status).to eq(:unprocessable_content)
       end
 
       it 'has empty details' do
@@ -244,7 +244,7 @@ RSpec.describe BusinessLogicError::ResourceLimitExceededError do
 
     it 'has unprocessable_entity status' do
       error = described_class.new
-      expect(error.status).to eq(:unprocessable_entity)
+      expect(error.status).to eq(:unprocessable_content)
     end
   end
 end

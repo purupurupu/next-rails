@@ -10,9 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_07_29_121452) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_11_122044) do
   # These are extensions that must be enabled in order to support this database
-  enable_extension "plpgsql"
+  enable_extension "pg_catalog.plpgsql"
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -153,13 +153,4 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_29_121452) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "categories", "users"
-  add_foreign_key "comments", "users"
-  add_foreign_key "tags", "users"
-  add_foreign_key "todo_histories", "todos"
-  add_foreign_key "todo_histories", "users"
-  add_foreign_key "todo_tags", "tags"
-  add_foreign_key "todo_tags", "todos"
-  add_foreign_key "todos", "categories"
-  add_foreign_key "todos", "users"
 end

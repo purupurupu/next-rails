@@ -38,7 +38,7 @@ module Api
         else
           render_error_response(
             error: ::ValidationError.new(errors: @comment.errors),
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
       end
@@ -57,7 +57,7 @@ module Api
         unless @comment.editable?
           return render_error_response(
             error: 'コメントの編集可能時間が過ぎています',
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
 
@@ -70,7 +70,7 @@ module Api
         else
           render_error_response(
             error: ::ValidationError.new(errors: @comment.errors),
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
       end

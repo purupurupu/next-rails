@@ -65,7 +65,7 @@ RSpec.describe 'Authentication', type: :request do
       it 'returns error response' do
         post '/auth/sign_up', params: invalid_attributes, as: :json, headers: headers
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
 
         json_response = response.parsed_body
         expect(json_response['error']['code']).to eq('VALIDATION_FAILED')
@@ -81,7 +81,7 @@ RSpec.describe 'Authentication', type: :request do
       it 'returns error response' do
         post '/auth/sign_up', params: valid_attributes, as: :json, headers: headers
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
 
         json_response = response.parsed_body
         expect(json_response['error']['code']).to eq('VALIDATION_FAILED')

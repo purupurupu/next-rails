@@ -39,7 +39,7 @@ module Api
         else
           render_error_response(
             error: ::ValidationError.new(errors: @tag.errors),
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
       end
@@ -55,7 +55,7 @@ module Api
         else
           render_error_response(
             error: ::ValidationError.new(errors: @tag.errors),
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
         end
       end
