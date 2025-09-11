@@ -160,7 +160,7 @@ RSpec.describe '/api/v1/categories', type: :request do
       it 'returns validation errors' do
         post '/api/v1/categories', params: invalid_params, headers: headers, as: :json
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         json_response = response.parsed_body
 
         expect(json_response['error']).to be_present
@@ -176,7 +176,7 @@ RSpec.describe '/api/v1/categories', type: :request do
           post '/api/v1/categories', params: { category: { name: 'Existing' } }, headers: headers, as: :json
         end.not_to change(Category, :count)
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
 
       it 'allows duplicate names for different users' do
@@ -235,7 +235,7 @@ RSpec.describe '/api/v1/categories', type: :request do
 
         patch "/api/v1/categories/#{category.id}", params: { category: { name: 'Taken Name' } }, headers: headers, as: :json
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
 

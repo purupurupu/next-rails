@@ -83,7 +83,7 @@ RSpec.describe 'Api::V1::Comments', type: :request do
       it 'returns unprocessable entity' do
         post "/api/v1/todos/#{todo.id}/comments", params: invalid_params.to_json, headers: auth_headers
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         json = response.parsed_body
         expect(json['error']).to be_present
         expect(json['error']['code']).to eq('VALIDATION_FAILED')
@@ -122,7 +122,7 @@ RSpec.describe 'Api::V1::Comments', type: :request do
         it 'returns unprocessable entity' do
           patch "/api/v1/todos/#{todo.id}/comments/#{comment.id}", params: update_params.to_json, headers: auth_headers
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           json = response.parsed_body
           expect(json['error']['message']).to include('編集可能時間')
         end

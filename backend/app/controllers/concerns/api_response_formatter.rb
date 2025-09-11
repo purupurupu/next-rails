@@ -15,7 +15,7 @@ module ApiResponseFormatter
     render json: response_data, status: status
   end
 
-  def error_response(message:, status: :unprocessable_entity)
+  def error_response(message:, status: :unprocessable_content)
     render json: {
       status: {
         code: status_code_for(status),
@@ -31,7 +31,7 @@ module ApiResponseFormatter
     when :unauthorized then 401
     when :forbidden then 403
     when :not_found then 404
-    when :unprocessable_entity then 422
+    when :unprocessable_content then 422
     when :internal_server_error then 500
     else
       Rack::Utils::SYMBOL_TO_STATUS_CODE[status] || 500

@@ -58,7 +58,7 @@ class ApplicationController < ActionController::API
       errors: exception.record&.errors
     )
 
-    render_error_response(error: error, status: :unprocessable_entity)
+    render_error_response(error: error, status: :unprocessable_content)
   end
 
   def handle_parameter_missing(exception)
@@ -81,7 +81,7 @@ class ApplicationController < ActionController::API
   end
 
   # Common error response rendering
-  def render_error_response(error:, status: :unprocessable_entity, details: nil)
+  def render_error_response(error:, status: :unprocessable_content, details: nil)
     error_body = if error.is_a?(::ApiError)
                    {
                      error: {

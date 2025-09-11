@@ -6,7 +6,7 @@ class BusinessLogicError < ApiError
     super(
       message,
       code: code || 'BUSINESS_LOGIC_ERROR',
-      status: :unprocessable_entity,
+      status: :unprocessable_content,
       details: details
     )
   end

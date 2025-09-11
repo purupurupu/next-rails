@@ -43,7 +43,7 @@ RSpec.describe 'Error Handling', type: :request do
              headers: auth_headers,
              as: :json
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
 
         json = response.parsed_body
         # Expect standardized error format
@@ -102,7 +102,7 @@ RSpec.describe 'Error Handling', type: :request do
             headers: auth_headers,
             as: :json
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
 
       json = response.parsed_body
       expect(json['error']['code']).to eq('ERROR')

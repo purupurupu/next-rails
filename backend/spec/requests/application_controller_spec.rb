@@ -63,7 +63,7 @@ RSpec.describe 'ApplicationController', type: :request do
       it 'converts to ValidationError format' do
         post '/api/v1/todos', params: { todo: { title: '' } }, headers: auth_headers
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         json = response.parsed_body
         expect(json['error']['code']).to eq('VALIDATION_FAILED')
         expect(json['error']['details']['validation_errors']).not_to be_empty
