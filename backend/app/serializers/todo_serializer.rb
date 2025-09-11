@@ -102,4 +102,3 @@ class TodoSerializer
     positions
   end
 end
-

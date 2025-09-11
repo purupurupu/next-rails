@@ -4,8 +4,9 @@ plugins:
   - rubocop-performance
 
 AllCops:
-  TargetRubyVersion: 3.2
+  TargetRubyVersion: 3.4
   NewCops: enable
+  SuggestExtensions: false
   Exclude:
     - 'db/**/*'
     - 'bin/**/*'
@@ -123,6 +124,9 @@ Lint/DuplicateBranch:
   Enabled: false
 
 Rails/I18nLocaleTexts:
+  Enabled: false
+
+Rails/StrongParametersExpect:
   Enabled: false
 
 Naming/PredicateMethod:
