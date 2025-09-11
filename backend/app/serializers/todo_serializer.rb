@@ -1,9 +1,11 @@
-class TodoSerializer < ActiveModel::Serializer
-  attributes :id, :title, :completed, :position, :due_date, :priority, :status, :description, :user_id, :created_at,
-             :updated_at, :category, :tags, :files, :comments_count, :latest_comments, :history_count, :highlights
+class TodoSerializer
+  include JSONAPI::Serializer
 
-  def category
-    return nil unless object.category
+  attributes :id, :title, :completed, :position, :due_date, :priority, :status,
+             :description, :user_id, :created_at, :updated_at
+
+  attribute :category do |object|
+    next nil unless object.category
 
     {
       id: object.category.id,
@@ -12,7 +14,7 @@ class TodoSerializer < ActiveModel::Serializer
     }
   end
 
-  def tags
+  attribute :tags do |object|
     object.tags.map do |tag|
       {
         id: tag.id,
@@ -22,8 +24,8 @@ class TodoSerializer < ActiveModel::Serializer
     end
   end
 
-  def files
-    return [] unless object.files.attached?
+  attribute :files do |object|
+    next [] unless object.files.attached?
 
     object.files.map do |file|
       {
@@ -37,57 +39,53 @@ class TodoSerializer < ActiveModel::Serializer
   end
 
   # 学習ポイント：コメント数を効率的に取得
-  def comments_count
+  attribute :comments_count do |object|
     # N+1クエリを避けるため、counter_cacheを使用することも検討
     object.comments.count
   end
 
   # 学習ポイント：最新のコメントを3件まで取得
-  def latest_comments
+  attribute :latest_comments do |object, params|
     # 最新の3件のコメントを取得してシリアライズ
     comments = object.comments
                      .includes(:user)
                      .recent
                      .limit(3)
 
-    ActiveModelSerializers::SerializableResource.new(
-      comments,
-      each_serializer: CommentSerializer,
-      current_user: current_user
-    ).as_json
-  end
-
-  def current_user
-    @instance_options[:current_user] || scope
+    comments.map do |comment|
+      CommentSerializer.new(comment,
+                            params: { current_user: params[:current_user] }).serializable_hash[:data][:attributes]
+    end
   end
 
   # 学習ポイント：履歴数の取得
-  def history_count
+  attribute :history_count do |object|
     object.todo_histories.count
   end
 
   # 検索結果のハイライト情報
-  def highlights
-    query = @instance_options[:highlight_query]
-    return nil if query.blank?
+  attribute :highlights do |object, params|
+    query = params[:highlight_query]
+    next nil if query.blank?
 
     highlights = {}
     search_term = query.downcase
 
     # タイトルでのマッチ位置を検出
-    highlights[:title] = find_match_positions(object.title, search_term) if object.title.downcase.include?(search_term)
+    if object.title.downcase.include?(search_term)
+      highlights[:title] =
+        TodoSerializer.find_match_positions(object.title, search_term)
+    end
 
     # 説明文でのマッチ位置を検出
     if object.description.present? && object.description.downcase.include?(search_term)
-      highlights[:description] = find_match_positions(object.description, search_term)
+      highlights[:description] = TodoSerializer.find_match_positions(object.description, search_term)
     end
 
     highlights.presence
   end
 
-  private
-
-  def find_match_positions(text, search_term)
+  def self.find_match_positions(text, search_term)
     positions = []
     text_lower = text.downcase
     index = 0
@@ -104,3 +102,4 @@ class TodoSerializer < ActiveModel::Serializer
     positions
   end
 end
+

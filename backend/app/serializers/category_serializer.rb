@@ -1,7 +1,7 @@
-class CategorySerializer < ActiveModel::Serializer
-  attributes :id, :name, :color, :todo_count, :created_at, :updated_at
+class CategorySerializer
+  include JSONAPI::Serializer
 
-  def todo_count
-    object.todos_count
-  end
+  attributes :id, :name, :color, :created_at, :updated_at
+
+  attribute :todo_count, &:todos_count
 end
