@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Architecture Overview
 
 This is a full-stack Todo application with user authentication using:
+
 - **Frontend**: Next.js 15.4.1 with TypeScript, React 19, and Tailwind CSS v4
 - **Package Manager**: pnpm (NOT npm)
 - **Backend**: Rails 7.1.3+ API-only application with Devise + JWT authentication
@@ -14,13 +15,15 @@ This is a full-stack Todo application with user authentication using:
 - **Infrastructure**: Docker Compose orchestrating three services
 
 Services run on:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:3001
+
+- Frontend: <http://localhost:3000>
+- Backend API: <http://localhost:3001>
 - PostgreSQL: localhost:5432
 
 ## 📚 Documentation
 
 For detailed technical documentation, see the [docs directory](./docs/):
+
 - [Architecture Details](./docs/architecture/) - System design and technical decisions
 - [API Documentation](./docs/api/) - Complete API reference
 - [Development Guides](./docs/guides/) - Setup, coding standards, and workflows
@@ -29,6 +32,7 @@ For detailed technical documentation, see the [docs directory](./docs/):
 ## Common Development Commands
 
 ### Docker Operations
+
 ```bash
 # Start all services
 docker compose up -d
@@ -58,6 +62,7 @@ docker compose build --no-cache frontend
 ```
 
 ### Frontend Development
+
 ```bash
 # All commands run inside the frontend container
 docker compose exec frontend pnpm run dev        # Development server
@@ -130,6 +135,7 @@ docker compose exec backend bundle exec rails db:reset  # drop + create + migrat
 **Key Gems**: Devise + JWT, Sidekiq, RSpec
 
 **Core Models**:
+
 - **User**: Authentication with email/password
 - **Todo**: User's tasks with title, completion status, position, priority (low/medium/high), status (pending/in_progress/completed), optional description, due date, category association, tag associations, file attachments, comments, and history tracking
 - **Category**: User-scoped organization categories with name and color for grouping todos
@@ -142,6 +148,7 @@ docker compose exec backend bundle exec rails db:reset  # drop + create + migrat
 See [Database Architecture](./docs/architecture/database.md) for detailed schema.
 
 **API Endpoints**:
+
 - Authentication: `/auth/*` (login, register, logout)
 - Todos: `/api/v1/todos/*` (CRUD + bulk reorder + tag assignment + file attachments)
 - Todo Search: `/api/v1/todos/search` (advanced search and filtering)
@@ -155,6 +162,7 @@ See [API Documentation](./docs/api/) for details.
 ## API Structure
 
 The Rails backend provides:
+
 - **Authentication API** at `/auth/*` with user registration, login, and logout
 - **Todo API** at `/api/v1/todos` with user-scoped CRUD operations
 - **Category API** at `/api/v1/categories` with user-scoped CRUD operations
@@ -172,6 +180,7 @@ The Rails backend provides:
 - User model attributes: `email`, `name`, `created_at`
 
 Frontend should make API calls to:
+
 - `http://localhost:3001/api/v1/todos` - Basic todo operations
 - `http://localhost:3001/api/v1/todos/search` - Search and filtering
 - `http://localhost:3001/api/v1/categories` - Category management
@@ -182,7 +191,8 @@ Frontend should make API calls to:
 
 ## Key Implementation Details
 
-1. **Authentication System**: 
+1. **Authentication System**:
+
    - Devise + Devise-JWT for user authentication
    - JWT tokens returned in Authorization header and stored in localStorage on frontend
    - Token-based API authentication with Bearer tokens
@@ -212,6 +222,7 @@ Frontend should make API calls to:
 The project has successfully transitioned from Nuxt.js to Next.js and now includes full user authentication. The backend API is fully functional with complete CRUD operations, validation, and drag-and-drop reordering support. The frontend is a Next.js application with a complete todo feature implementation including:
 
 **Authentication Features**:
+
 - User registration and login
 - JWT token-based authentication
 - Protected routes with authentication guards
@@ -219,6 +230,7 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 - Secure logout with token invalidation
 
 **Todo Features**:
+
 - User-scoped todos (each user sees only their own)
 - Todo creation with due dates
 - Todo editing and deletion
@@ -236,6 +248,7 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 - shadcn/ui components for consistent UI
 
 **Search and Filtering Features**:
+
 - Full-text search in title and description
 - Advanced filtering by category, status, priority, tags
 - Date range filtering for due dates
@@ -246,6 +259,7 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 - Real-time search with debouncing
 
 **Additional Features**:
+
 - **Comments**: Add discussions to todos with soft delete and edit time limits
 - **File Attachments**: Upload multiple files per todo (10MB limit per file)
 - **History Tracking**: Complete audit trail of all todo changes
@@ -264,11 +278,13 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 ### Git Commit Best Practices
 
 **Commit Size and Scope**:
+
 - Keep commits small and focused on a single logical change
 - Each commit should represent a complete, working state
 - Avoid mixing unrelated changes in a single commit
 
 **Recommended Commit Granularity**:
+
 1. **Model/Migration Changes**: Create model with migration and validations
 2. **API Endpoints**: Controller actions with routing changes
 3. **Frontend Components**: Component with its types and styles
@@ -277,6 +293,7 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 6. **Documentation Updates**: Separate from code changes
 
 **Example Commit Sequence for a Feature**:
+
 ```
 1. feat(backend): Add Category model with validations
 2. feat(backend): Add category association to Todo model
@@ -291,12 +308,14 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 ```
 
 **Commit Message Format**:
+
 - Use conventional commits: `type(scope): description`
 - Types: feat, fix, docs, style, refactor, test, chore
 - Keep the first line under 50 characters
 - Add detailed description if needed
 
 **Before Creating Pull Requests**:
+
 - Run frontend checks: `pnpm run lint`, `pnpm run typecheck`
 - Run backend tests: `docker compose exec backend env RAILS_ENV=test bundle exec rspec`
 - Run backend linter: `docker compose exec backend bundle exec rubocop`
@@ -312,11 +331,13 @@ See [Development Guide](./docs/guides/development.md) for detailed guidelines.
 If you encounter errors like "Module not found" after adding new packages:
 
 1. **Symptoms:**
+
    - `Module not found: Can't resolve '@some-package'`
    - pnpm store location mismatch errors
    - Turbopack panic errors
 
 2. **Solution:**
+
    ```bash
    # Stop and rebuild the container
    docker compose down
@@ -332,6 +353,7 @@ If you encounter errors like "Module not found" after adding new packages:
 ## Frontend Architecture
 
 ### Directory Structure
+
 ```
 frontend/src/
 ├── app/               # Next.js App Router pages (routing files)
@@ -365,6 +387,7 @@ frontend/src/
 ### Naming Conventions
 
 1. **Files and Directories**:
+
    - Components: PascalCase (e.g., `TodoItem.tsx`, `TodoForm.tsx`)
    - Hooks: camelCase with `use` prefix (e.g., `useTodos.ts`)
    - Utilities: kebab-case (e.g., `api-client.ts`, `constants.ts`)
@@ -379,6 +402,7 @@ frontend/src/
 ### Key Files
 
 **Authentication**:
+
 - `lib/auth-client.ts` - Authentication API client with login/register/logout
 - `contexts/auth-context.tsx` - Authentication context provider
 - `components/auth/login-form.tsx` - Login form component
@@ -387,11 +411,13 @@ frontend/src/
 - `app/auth/page.tsx` - Authentication page
 
 **API & Core**:
+
 - `lib/api-client.ts` - Base HttpClient with common HTTP methods (GET, POST, PUT, PATCH, DELETE)
 - `lib/constants.ts` - API endpoints and configuration constants
 - `lib/utils.ts` - Utility functions (date formatting, validation, etc.)
 
 **Todo Feature**:
+
 - `features/todo/lib/api-client.ts` - Todo-specific API client extending HttpClient
 - `features/todo/types/todo.ts` - Todo-related TypeScript interfaces and types
 - `features/todo/hooks/useTodos.ts` - Todo state management with optimistic updates
@@ -401,6 +427,7 @@ frontend/src/
 - `features/todo/components/TodoFilters.tsx` - Filter controls (all, active, completed)
 
 **Category Feature**:
+
 - `features/category/lib/api-client.ts` - Category-specific API client extending HttpClient
 - `features/category/types/category.ts` - Category-related TypeScript interfaces and types
 - `features/category/hooks/useCategories.ts` - Category state management
@@ -409,6 +436,7 @@ frontend/src/
 - `features/category/components/CategorySelector.tsx` - Category selection dropdown
 
 **UI Components**:
+
 - `components/ui/` - Shared UI components (shadcn/ui based)
 - `components/navigation.tsx` - Navigation with authentication state
 
@@ -423,13 +451,15 @@ frontend/src/
 4. **Reusability**: Common UI components and hooks are shared across features
 
 5. **Authentication Architecture**:
+
    - JWT token-based authentication
    - Auth context for global authentication state
    - Protected routes with authentication guards
    - Persistent authentication with localStorage
    - Separate auth client for authentication API calls
 
-6. **API Client Pattern**: 
+6. **API Client Pattern**:
+
    - Base `HttpClient` provides common HTTP methods (GET, POST, PUT, PATCH, DELETE)
    - Separate `AuthClient` for authentication operations
    - Feature-specific API clients extend `HttpClient` and implement domain-specific methods
@@ -451,20 +481,24 @@ frontend/src/
 The application uses environment variables for configuration:
 
 **Backend Services**:
+
 - `DATABASE_URL` - Full database connection string
 - `RAILS_ENV` - Rails environment (development/production/test)
 - `RAILS_MASTER_KEY` - Rails master key for encrypted credentials
 - `SECRET_KEY_BASE` - Secret key for Rails session encryption
 
 **Database (compose.yml)**:
+
 - `POSTGRES_DB` - Database name
 - `POSTGRES_USER` - Database user
 - `POSTGRES_PASSWORD` - Database password
 
 **Testing**:
+
 - Test database: `todo_app_test`
 - Development database: `todo_next`
 - Test database is automatically selected when `RAILS_ENV=test` is specified
 - The test_database.rb initializer ensures the correct database is used in test environment
 
 **Note**: Create a `.env` file in the root directory with these variables for Docker Compose.
+
