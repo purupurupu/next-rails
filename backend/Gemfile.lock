@@ -72,6 +72,8 @@ GEM
       securerandom (>= 0.3)
       tzinfo (~> 2.0, >= 2.0.5)
       uri (>= 0.13.1)
+    addressable (2.8.7)
+      public_suffix (>= 2.0.2, < 7.0)
     ast (2.4.3)
     base64 (0.3.0)
     bcrypt (3.1.20)
@@ -142,6 +144,10 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     json (2.13.2)
+    json-schema (6.0.0)
+      addressable (~> 2.8)
+      bigdecimal (~> 3.1)
+    json_rpc_handler (0.1.1)
     jsonapi-serializer (2.2.0)
       activesupport (>= 4.2)
     jwt (2.10.2)
@@ -170,6 +176,9 @@ GEM
       net-pop
       net-smtp
     marcel (1.0.4)
+    mcp (0.4.0)
+      json-schema (>= 4.1)
+      json_rpc_handler (~> 0.1)
     mini_magick (5.3.1)
       logger
     mini_mime (1.1.5)
@@ -206,6 +215,7 @@ GEM
     psych (5.2.6)
       date
       stringio
+    public_suffix (6.0.2)
     puma (7.0.2)
       nio4r (~> 2.0)
     racc (1.8.1)
@@ -370,6 +380,7 @@ DEPENDENCIES
   image_processing (~> 1.2)
   jsonapi-serializer
   kaminari
+  mcp
   pg (~> 1.1)
   puma (>= 5.0)
   rack-cors
