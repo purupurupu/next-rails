@@ -18,6 +18,9 @@ gem 'rack-cors'
 gem 'devise'
 gem 'devise-jwt'
 
+# MCP Server
+gem 'mcp'
+
 # API serialization
 gem 'jsonapi-serializer'
 

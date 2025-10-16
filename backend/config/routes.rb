@@ -17,6 +17,9 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
 
+  # MCP endpoint
+  post '/mcp', to: 'mcp#handle'
+
   # API routes
   namespace :api do
     # Explicit v1 namespace for URL-based versioning
