@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class McpController < ApplicationController
-  # CSRF保護を無効化（MCP通信用）
-  skip_before_action :verify_authenticity_token
+  # MCP通信用に認証をスキップ
+  skip_before_action :authenticate_user!
 
   def handle
     # MCPサーバーインスタンスを作成
