@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
 class McpController < ApplicationController
-  # MCP通信用に認証をスキップ
+  # 認証をスキップしてカスタム検証を使用
   skip_before_action :authenticate_user!
+  before_action :verify_mcp_token
+
+  # TODO: 本番環境では環境変数から取得すること
+  MCP_TOKEN = 'your-secret-mcp-token-here'
 
   def handle
     # MCPサーバーインスタンスを作成
@@ -27,5 +31,23 @@ class McpController < ApplicationController
       },
       id: nil
     }, status: :internal_server_error
+  end
+
+  private
+
+  def verify_mcp_token
+    # Authorizationヘッダーからトークンを取得
+    token = request.headers['Authorization']&.gsub(/^Bearer /, '')
+
+    unless token == MCP_TOKEN
+      render json: {
+        jsonrpc: '2.0',
+        error: {
+          code: -32001,
+          message: 'Unauthorized: Invalid MCP token'
+        },
+        id: nil
+      }, status: :unauthorized
+    end
   end
 end

@@ -12,10 +12,6 @@ module Mcp
             type: 'string',
             description: 'Search query for todo title (partial match)'
           },
-          user_id: {
-            type: 'integer',
-            description: 'User ID to scope the search'
-          },
           status: {
             type: 'string',
             enum: %w[pending in_progress completed],
@@ -35,21 +31,16 @@ module Mcp
             description: 'Maximum number of results (default: 10, max: 50)'
           }
         },
-        required: %w[query user_id]
+        required: %w[query]
       )
 
-      def self.call(query:, user_id:, status: nil, priority: nil, category_id: nil, limit: 10, **_options)
+      def self.call(query:, status: nil, priority: nil, category_id: nil, limit: 10, **_options)
         # リミットの検証
         limit = [[limit.to_i, 1].max, 50].min
 
-        # ユーザーの存在確認
-        user = User.find_by(id: user_id)
-        return error_response('User not found') unless user
-
-        # 基本クエリ: ユーザースコープ + タイトル検索
-        todos = user.todos
-                    .where('title ILIKE ?', "%#{sanitize_query(query)}%")
-                    .includes(:category, :tags)
+        # 基本クエリ: タイトル検索（全ユーザーのTODO）
+        todos = Todo.where('title ILIKE ?', "%#{sanitize_query(query)}%")
+                    .includes(:category, :tags, :user)
 
         # フィルター適用
         todos = todos.where(status:) if status.present?
@@ -97,6 +88,7 @@ module Mcp
           category_color: todo.category&.color,
           tags: todo.tags.map { |tag| { name: tag.name, color: tag.color } },
           completed: todo.completed,
+          user_email: todo.user.email,
           created_at: todo.created_at.iso8601,
           updated_at: todo.updated_at.iso8601
         }
