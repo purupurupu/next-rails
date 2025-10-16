@@ -36,7 +36,7 @@ module Mcp
 
       def self.call(query:, status: nil, priority: nil, category_id: nil, limit: 10, **_options)
         # リミットの検証
-        limit = [[limit.to_i, 1].max, 50].min
+        limit = limit.to_i.clamp(1, 50)
 
         # 基本クエリ: タイトル検索（全ユーザーのTODO）
         todos = Todo.where('title ILIKE ?', "%#{sanitize_query(query)}%")
@@ -54,13 +54,13 @@ module Mcp
 
         # レスポンス作成
         MCP::Tool::Response.new([{
-          type: 'text',
-          text: JSON.pretty_generate({
-            count: results.size,
-            total_found: todos.count,
-            todos: results
-          })
-        }])
+                                  type: 'text',
+                                  text: JSON.pretty_generate({
+                                                               count: results.size,
+                                                               total_found: todos.count,
+                                                               todos: results
+                                                             })
+                                }])
       rescue ActiveRecord::RecordNotFound => e
         error_response("Record not found: #{e.message}")
       rescue StandardError => e
@@ -96,9 +96,9 @@ module Mcp
 
       def self.error_response(message)
         MCP::Tool::Response.new([{
-          type: 'text',
-          text: JSON.generate({ error: message })
-        }])
+                                  type: 'text',
+                                  text: JSON.generate({ error: message })
+                                }])
       end
 
       private_class_method :sanitize_query, :format_todo, :error_response

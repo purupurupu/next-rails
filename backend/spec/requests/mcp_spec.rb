@@ -8,6 +8,7 @@ RSpec.describe 'MCP Server', type: :request do
   # テストデータ作成
   let!(:user) { create(:user, email: 'demo@example.com') }
   let!(:category) { create(:category, user: user, name: '学習') }
+  # rubocop:disable RSpec/LetSetup
   let!(:todo1) do
     create(:todo,
            user: user,
@@ -25,6 +26,7 @@ RSpec.describe 'MCP Server', type: :request do
            status: :pending,
            priority: :medium)
   end
+  # rubocop:enable RSpec/LetSetup
 
   describe 'POST /mcp' do
     context 'トークン認証' do
@@ -38,7 +40,7 @@ RSpec.describe 'MCP Server', type: :request do
 
           json_response = response.parsed_body
           expect(json_response['jsonrpc']).to eq('2.0')
-          expect(json_response['error']['code']).to eq(-32001)
+          expect(json_response['error']['code']).to eq(-32_001)
           expect(json_response['error']['message']).to eq('Unauthorized: Invalid MCP token')
         end
       end
@@ -52,7 +54,7 @@ RSpec.describe 'MCP Server', type: :request do
           expect(response).to have_http_status(:unauthorized)
 
           json_response = response.parsed_body
-          expect(json_response['error']['code']).to eq(-32001)
+          expect(json_response['error']['code']).to eq(-32_001)
           expect(json_response['error']['message']).to eq('Unauthorized: Invalid MCP token')
         end
       end
@@ -314,7 +316,7 @@ RSpec.describe 'MCP Server', type: :request do
 
         json_response = response.parsed_body
         expect(json_response['jsonrpc']).to eq('2.0')
-        expect(json_response['error']['code']).to eq(-32700)
+        expect(json_response['error']['code']).to eq(-32_700)
         expect(json_response['error']['message']).to eq('Parse error')
       end
     end

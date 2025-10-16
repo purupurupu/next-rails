@@ -26,7 +26,7 @@ class McpController < ApplicationController
     render json: {
       jsonrpc: '2.0',
       error: {
-        code: -32603,
+        code: -32_603,
         message: "Internal error: #{e.message}"
       },
       id: nil
@@ -39,15 +39,15 @@ class McpController < ApplicationController
     # Authorizationヘッダーからトークンを取得
     token = request.headers['Authorization']&.gsub(/^Bearer /, '')
 
-    unless token == MCP_TOKEN
-      render json: {
-        jsonrpc: '2.0',
-        error: {
-          code: -32001,
-          message: 'Unauthorized: Invalid MCP token'
-        },
-        id: nil
-      }, status: :unauthorized
-    end
+    return if token == MCP_TOKEN
+
+    render json: {
+      jsonrpc: '2.0',
+      error: {
+        code: -32_001,
+        message: 'Unauthorized: Invalid MCP token'
+      },
+      id: nil
+    }, status: :unauthorized
   end
 end
