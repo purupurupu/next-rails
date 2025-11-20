@@ -34,6 +34,9 @@ export function Navigation() {
               <Link href="/tags" className="text-sm text-gray-600 hover:text-gray-900">
                 タグ
               </Link>
+              <Link href="/notes" className="text-sm text-gray-600 hover:text-gray-900">
+                ノート
+              </Link>
             </>
           )}
         </div>

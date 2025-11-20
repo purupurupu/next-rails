@@ -16,6 +16,11 @@ export const API_ENDPOINTS = {
   CATEGORY_BY_ID: (id: number) => `/api/v1/categories/${id}`,
   TAGS: "/api/v1/tags",
   TAG_BY_ID: (id: number) => `/api/v1/tags/${id}`,
+  NOTES: "/api/v1/notes",
+  NOTE_BY_ID: (id: number) => `/api/v1/notes/${id}`,
+  NOTE_REVISIONS: (noteId: number) => `/api/v1/notes/${noteId}/revisions`,
+  NOTE_REVISION_RESTORE: (noteId: number, revisionId: number) =>
+    `/api/v1/notes/${noteId}/revisions/${revisionId}/restore`,
 } as const;
 
 export const TODO_FILTERS = {
