@@ -37,10 +37,47 @@ export function NotesWorkspace() {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
-  const selectedNote = useMemo(
-    () => notes.find((note) => note.id === selectedId) || null,
-    [notes, selectedId],
+  const safeNotes = useMemo(
+    () => (Array.isArray(notes) ? notes : []),
+    [notes],
   );
+
+  const selectedNote = useMemo(
+    () => safeNotes.find((note) => note.id === selectedId) || null,
+    [safeNotes, selectedId],
+  );
+
+  const loadRevisions = useCallback(async (noteId: number) => {
+    try {
+      const response = await fetchRevisions(noteId);
+      setRevisions(response.data);
+    } catch {
+      setRevisions([]);
+    }
+  }, []);
+
+  const loadNotes = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetchNotes({
+        q: search || undefined,
+        pinned: pinnedOnly ? true : undefined,
+        archived: view === "archived" ? true : undefined,
+        trashed: view === "trashed" ? true : undefined,
+      });
+      setNotes(response.data);
+
+      if (selectedId && !response.data.some((n) => n.id === selectedId)) {
+        setSelectedId(response.data[0]?.id ?? null);
+      } else if (!selectedId) {
+        setSelectedId(response.data[0]?.id ?? null);
+      }
+    } catch {
+      toast.error("ノート一覧の取得に失敗しました");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [pinnedOnly, search, selectedId, view]);
 
   useEffect(() => {
     loadNotes();
@@ -73,38 +110,6 @@ export function NotesWorkspace() {
 
     return () => clearTimeout(timer);
   }, [draft, selectedNote]);
-
-  const loadNotes = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetchNotes({
-        q: search || undefined,
-        pinned: pinnedOnly ? true : undefined,
-        archived: view === "archived" ? true : undefined,
-        trashed: view === "trashed" ? true : undefined,
-      });
-      setNotes(response.data);
-
-      if (selectedId && !response.data.some((n) => n.id === selectedId)) {
-        setSelectedId(response.data[0]?.id ?? null);
-      } else if (!selectedId) {
-        setSelectedId(response.data[0]?.id ?? null);
-      }
-    } catch {
-      toast.error("ノート一覧の取得に失敗しました");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [pinnedOnly, search, selectedId, view]);
-
-  const loadRevisions = useCallback(async (noteId: number) => {
-    try {
-      const response = await fetchRevisions(noteId);
-      setRevisions(response.data);
-    } catch {
-      setRevisions([]);
-    }
-  }, []);
 
   async function handleSaveDraft(id: number, payload: { title: string; body_md: string }) {
     setIsSaving(true);
@@ -271,10 +276,10 @@ export function NotesWorkspace() {
         <Separator />
         <div className="space-y-2 max-h-[65vh] overflow-y-auto pr-1">
           {isLoading && <p className="text-sm text-muted-foreground">読み込み中...</p>}
-          {!isLoading && notes.length === 0 && (
+          {!isLoading && safeNotes.length === 0 && (
             <p className="text-sm text-muted-foreground">ノートがありません</p>
           )}
-          {notes.map((note) => (
+          {safeNotes.map((note) => (
             <button
               key={note.id}
               type="button"
