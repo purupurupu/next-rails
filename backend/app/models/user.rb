@@ -10,6 +10,7 @@ class User < ApplicationRecord
   has_many :categories, dependent: :destroy
   has_many :tags, dependent: :destroy
   has_many :comments, dependent: :destroy
+  has_many :notes, dependent: :destroy
 
   # バリデーション（学習ポイント：カスタムバリデーション）
   validates :name, presence: true, length: { minimum: 2, maximum: 50 }

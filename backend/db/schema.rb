@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_11_122044) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_17_090001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -73,6 +73,41 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_11_122044) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["jti"], name: "index_jwt_denylists_on_jti"
+  end
+
+  create_table "note_revisions", force: :cascade do |t|
+    t.bigint "note_id", null: false
+    t.bigint "user_id", null: false
+    t.string "title", limit: 150
+    t.text "body_md"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["note_id", "created_at"], name: "index_note_revisions_on_note_id_and_created_at"
+    t.index ["note_id"], name: "index_note_revisions_on_note_id"
+    t.index ["user_id"], name: "index_note_revisions_on_user_id"
+  end
+
+  create_table "notes", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "title", limit: 150
+    t.text "body_md"
+    t.text "body_plain"
+    t.boolean "pinned", default: false, null: false
+    t.datetime "archived_at"
+    t.datetime "trashed_at"
+    t.datetime "last_edited_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["archived_at"], name: "index_notes_on_archived_at"
+    t.index ["body_plain"], name: "index_notes_on_body_plain"
+    t.index ["last_edited_at"], name: "index_notes_on_last_edited_at"
+    t.index ["pinned"], name: "index_notes_on_pinned"
+    t.index ["trashed_at"], name: "index_notes_on_trashed_at"
+    t.index ["user_id", "archived_at"], name: "index_notes_on_user_id_and_archived_at"
+    t.index ["user_id", "last_edited_at"], name: "index_notes_on_user_id_and_last_edited_at"
+    t.index ["user_id", "pinned"], name: "index_notes_on_user_id_and_pinned"
+    t.index ["user_id", "trashed_at"], name: "index_notes_on_user_id_and_trashed_at"
+    t.index ["user_id"], name: "index_notes_on_user_id"
   end
 
   create_table "tags", force: :cascade do |t|
@@ -153,4 +188,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_11_122044) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "categories", "users"
+  add_foreign_key "comments", "users"
+  add_foreign_key "note_revisions", "notes"
+  add_foreign_key "note_revisions", "users"
+  add_foreign_key "notes", "users"
+  add_foreign_key "tags", "users"
+  add_foreign_key "todo_histories", "todos"
+  add_foreign_key "todo_histories", "users"
+  add_foreign_key "todo_tags", "tags"
+  add_foreign_key "todo_tags", "todos"
+  add_foreign_key "todos", "categories"
+  add_foreign_key "todos", "users"
 end
