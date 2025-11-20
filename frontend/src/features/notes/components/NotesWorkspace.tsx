@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SearchBar } from "@/features/todo/components/SearchBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +44,7 @@ export function NotesWorkspace() {
 
   useEffect(() => {
     loadNotes();
-  }, [view, pinnedOnly, search]);
+  }, [loadNotes]);
 
   useEffect(() => {
     if (selectedNote) {
@@ -57,15 +57,13 @@ export function NotesWorkspace() {
       setDraft(initialDraft);
       setRevisions([]);
     }
-  }, [selectedNote?.id]);
+  }, [selectedNote, loadRevisions]);
 
   // Autosave when draft changes
   useEffect(() => {
     if (!selectedNote) return;
 
-    const hasChanges =
-      draft.title !== (selectedNote.title || "") ||
-      draft.body_md !== (selectedNote.body_md || "");
+    const hasChanges = draft.title !== (selectedNote.title || "") || draft.body_md !== (selectedNote.body_md || "");
 
     if (!hasChanges) return;
 
@@ -74,9 +72,9 @@ export function NotesWorkspace() {
     }, SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [draft.title, draft.body_md, selectedNote?.id]);
+  }, [draft, selectedNote]);
 
-  async function loadNotes() {
+  const loadNotes = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetchNotes({
@@ -87,27 +85,26 @@ export function NotesWorkspace() {
       });
       setNotes(response.data);
 
-      // Keep selection stable; if current note is gone pick first available
       if (selectedId && !response.data.some((n) => n.id === selectedId)) {
         setSelectedId(response.data[0]?.id ?? null);
       } else if (!selectedId) {
         setSelectedId(response.data[0]?.id ?? null);
       }
-    } catch (error) {
+    } catch {
       toast.error("ノート一覧の取得に失敗しました");
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [pinnedOnly, search, selectedId, view]);
 
-  async function loadRevisions(noteId: number) {
+  const loadRevisions = useCallback(async (noteId: number) => {
     try {
       const response = await fetchRevisions(noteId);
       setRevisions(response.data);
     } catch {
       setRevisions([]);
     }
-  }
+  }, []);
 
   async function handleSaveDraft(id: number, payload: { title: string; body_md: string }) {
     setIsSaving(true);
@@ -225,7 +222,7 @@ export function NotesWorkspace() {
     const text = draft.body_md || "";
     if (!text.trim()) return "<p class=\"text-muted-foreground\">何も入力されていません</p>";
     return renderMarkdown(text);
-  }, [draft.body_md]);
+  }, [draft]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[320px,1fr] gap-6">
@@ -300,7 +297,9 @@ export function NotesWorkspace() {
                 {(note.body_md || "").slice(0, 120) || "本文なし"}
               </p>
               <p className="text-[11px] text-muted-foreground">
-                更新: {new Date(note.updated_at).toLocaleString()}
+                更新:
+                {" "}
+                {new Date(note.updated_at).toLocaleString()}
               </p>
             </button>
           ))}
@@ -308,110 +307,117 @@ export function NotesWorkspace() {
       </Card>
 
       <Card className="p-4 space-y-4 min-h-[70vh]">
-        {!selectedNote ? (
-          <div className="h-full flex items-center justify-center text-muted-foreground">
-            左のリストからノートを選択するか、新規作成してください。
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between gap-2">
-              <Input
-                value={draft.title}
-                onChange={(e) => setDraft((prev) => ({ ...prev, title: e.target.value }))}
-                placeholder="タイトル"
-                className="font-semibold text-lg"
-              />
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePinToggle(selectedNote)}
-                >
-                  {selectedNote.pinned ? "ピン解除" : "ピン留め"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleArchiveToggle(selectedNote)}
-                >
-                  {selectedNote.archived_at ? "アーカイブ解除" : "アーカイブ"}
-                </Button>
-                <Button
-                  variant={selectedNote.trashed_at ? "default" : "destructive"}
-                  size="sm"
-                  onClick={() => handleTrashToggle(selectedNote)}
-                >
-                  {selectedNote.trashed_at ? "復元" : "ゴミ箱へ"}
-                </Button>
-                {selectedNote.trashed_at && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteForever(selectedNote)}
-                  >
-                    完全削除
-                  </Button>
-                )}
+        {!selectedNote
+          ? (
+              <div className="h-full flex items-center justify-center text-muted-foreground">
+                左のリストからノートを選択するか、新規作成してください。
               </div>
-            </div>
-
-            <Textarea
-              value={draft.body_md}
-              onChange={(e) => setDraft((prev) => ({ ...prev, body_md: e.target.value }))}
-              placeholder="Markdownでメモを書いてください"
-              className="min-h-[220px] font-mono text-sm"
-            />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>
-                {isSaving
-                  ? "保存中..."
-                  : lastSavedAt
-                    ? `保存済み: ${new Date(lastSavedAt).toLocaleTimeString()}`
-                    : "自動保存が有効です"}
-              </span>
-              <span>リビジョン: {revisions.length}件</span>
-            </div>
-
-            <Separator />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <p className="text-sm font-semibold">プレビュー</p>
-                <div
-                  className="rounded border bg-muted/30 p-3 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: previewHtml }}
-                />
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm font-semibold">リビジョン</p>
-                <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
-                  {revisions.length === 0 && (
-                    <p className="text-xs text-muted-foreground">リビジョンがありません</p>
-                  )}
-                  {revisions.map((rev) => (
-                    <div
-                      key={rev.id}
-                      className="rounded border p-2 text-xs flex items-center justify-between gap-2"
+            )
+          : (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <Input
+                    value={draft.title}
+                    onChange={(e) => setDraft((prev) => ({ ...prev, title: e.target.value }))}
+                    placeholder="タイトル"
+                    className="font-semibold text-lg"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePinToggle(selectedNote)}
                     >
-                      <div>
-                        <p className="font-semibold line-clamp-1">{rev.title || "無題"}</p>
-                        <p className="text-muted-foreground">
-                          {new Date(rev.created_at).toLocaleString()}
-                        </p>
-                      </div>
+                      {selectedNote.pinned ? "ピン解除" : "ピン留め"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleArchiveToggle(selectedNote)}
+                    >
+                      {selectedNote.archived_at ? "アーカイブ解除" : "アーカイブ"}
+                    </Button>
+                    <Button
+                      variant={selectedNote.trashed_at ? "default" : "destructive"}
+                      size="sm"
+                      onClick={() => handleTrashToggle(selectedNote)}
+                    >
+                      {selectedNote.trashed_at ? "復元" : "ゴミ箱へ"}
+                    </Button>
+                    {selectedNote.trashed_at && (
                       <Button
+                        variant="destructive"
                         size="sm"
-                        variant="outline"
-                        onClick={() => handleRestoreRevision(rev.id)}
+                        onClick={() => handleDeleteForever(selectedNote)}
                       >
-                        復元
+                        完全削除
                       </Button>
-                    </div>
-                  ))}
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
-          </>
-        )}
+
+                <Textarea
+                  value={draft.body_md}
+                  onChange={(e) => setDraft((prev) => ({ ...prev, body_md: e.target.value }))}
+                  placeholder="Markdownでメモを書いてください"
+                  className="min-h-[220px] font-mono text-sm"
+                />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>
+                    {isSaving
+                      ? "保存中..."
+                      : lastSavedAt
+                        ? `保存済み: ${new Date(lastSavedAt).toLocaleTimeString()}`
+                        : "自動保存が有効です"}
+                  </span>
+                  <span>
+                    リビジョン:
+                    {" "}
+                    {revisions.length}
+                    件
+                  </span>
+                </div>
+
+                <Separator />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold">プレビュー</p>
+                    <div
+                      className="rounded border bg-muted/30 p-3 prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: previewHtml }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold">リビジョン</p>
+                    <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+                      {revisions.length === 0 && (
+                        <p className="text-xs text-muted-foreground">リビジョンがありません</p>
+                      )}
+                      {revisions.map((rev) => (
+                        <div
+                          key={rev.id}
+                          className="rounded border p-2 text-xs flex items-center justify-between gap-2"
+                        >
+                          <div>
+                            <p className="font-semibold line-clamp-1">{rev.title || "無題"}</p>
+                            <p className="text-muted-foreground">
+                              {new Date(rev.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRestoreRevision(rev.id)}
+                          >
+                            復元
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
       </Card>
     </div>
   );

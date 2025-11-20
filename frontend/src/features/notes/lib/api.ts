@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from "@/lib/constants";
 import { httpClient } from "@/lib/api-client";
-import { Note, NoteRevision, NotesListResponse } from "../types";
+import { Note, NotesListResponse } from "../types";
 
 export interface NotesQuery {
   q?: string;
