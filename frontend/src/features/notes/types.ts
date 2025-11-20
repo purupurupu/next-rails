@@ -32,3 +32,8 @@ export interface NotesListResponse {
   data: Note[];
   meta?: NotesMeta;
 }
+
+export interface NoteRevisionsResponse {
+  data: NoteRevision[];
+  meta?: NotesMeta;
+}

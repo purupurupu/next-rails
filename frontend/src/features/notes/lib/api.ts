@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from "@/lib/constants";
 import { httpClient } from "@/lib/api-client";
-import { Note, NotesListResponse } from "../types";
+import { Note, NoteRevisionsResponse, NotesListResponse } from "../types";
 
 export interface NotesQuery {
   q?: string;
@@ -47,8 +47,8 @@ export async function deleteNote(id: number, force = false): Promise<void> {
   await httpClient.delete<void>(endpoint);
 }
 
-export async function fetchRevisions(noteId: number): Promise<NotesListResponse> {
-  return httpClient.get<NotesListResponse>(API_ENDPOINTS.NOTE_REVISIONS(noteId));
+export async function fetchRevisions(noteId: number): Promise<NoteRevisionsResponse> {
+  return httpClient.get<NoteRevisionsResponse>(API_ENDPOINTS.NOTE_REVISIONS(noteId));
 }
 
 export async function restoreRevision(noteId: number, revisionId: number): Promise<Note> {
