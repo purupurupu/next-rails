@@ -38,6 +38,11 @@ Rails.application.routes.draw do
       end
       resources :categories
       resources :tags
+      resources :notes do
+        resources :revisions, only: [:index], controller: 'note_revisions' do
+          post 'restore', on: :member
+        end
+      end
     end
     
   end
