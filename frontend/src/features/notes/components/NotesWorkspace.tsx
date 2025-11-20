@@ -25,6 +25,8 @@ const SAVE_DEBOUNCE_MS = 900;
 
 const initialDraft = { title: "", body_md: "" };
 
+const ensureNotesArray = (list: Note[] | null | undefined): Note[] => (Array.isArray(list) ? list : []);
+
 export function NotesWorkspace() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -65,12 +67,12 @@ export function NotesWorkspace() {
         archived: view === "archived" ? true : undefined,
         trashed: view === "trashed" ? true : undefined,
       });
-      setNotes(response.data);
+      setNotes(ensureNotesArray(response.data));
 
-      if (selectedId && !response.data.some((n) => n.id === selectedId)) {
-        setSelectedId(response.data[0]?.id ?? null);
+      if (selectedId && !ensureNotesArray(response.data).some((n) => n.id === selectedId)) {
+        setSelectedId(ensureNotesArray(response.data)[0]?.id ?? null);
       } else if (!selectedId) {
-        setSelectedId(response.data[0]?.id ?? null);
+        setSelectedId(ensureNotesArray(response.data)[0]?.id ?? null);
       }
     } catch {
       toast.error("ノート一覧の取得に失敗しました");
@@ -115,7 +117,7 @@ export function NotesWorkspace() {
     setIsSaving(true);
     try {
       const updated = await updateNote(id, payload);
-      setNotes((prev) => prev.map((note) => (note.id === id ? updated : note)));
+      setNotes((prev) => ensureNotesArray(prev).map((note) => (note.id === id ? updated : note)));
       setLastSavedAt(new Date().toISOString());
     } catch {
       toast.error("保存に失敗しました");
@@ -128,7 +130,7 @@ export function NotesWorkspace() {
     setIsSaving(true);
     try {
       const note = await createNote({ title: "新しいメモ", body_md: "" });
-      setNotes((prev) => [note, ...prev]);
+      setNotes((prev) => [note, ...ensureNotesArray(prev)]);
       setSelectedId(note.id);
       setLastSavedAt(note.updated_at);
       toast.success("新しいノートを作成しました");
@@ -142,7 +144,7 @@ export function NotesWorkspace() {
   async function handlePinToggle(note: Note) {
     try {
       const updated = await updateNote(note.id, { pinned: !note.pinned });
-      setNotes((prev) => prev.map((n) => (n.id === note.id ? updated : n)));
+      setNotes((prev) => ensureNotesArray(prev).map((n) => (n.id === note.id ? updated : n)));
       toast.success(updated.pinned ? "ピン留めしました" : "ピン留めを外しました");
       if (pinnedOnly && !updated.pinned) {
         loadNotes();
@@ -157,7 +159,7 @@ export function NotesWorkspace() {
       const updated = await updateNote(note.id, { archived: !note.archived_at });
 
       setNotes((prev) => {
-        const mapped = prev.map((n) => (n.id === note.id ? updated : n));
+        const mapped = ensureNotesArray(prev).map((n) => (n.id === note.id ? updated : n));
         return mapped.filter((n) => {
           if (view === "active" && n.id === note.id && updated.archived_at) return false;
           if (view === "archived" && n.id === note.id && !updated.archived_at) return false;
@@ -179,7 +181,7 @@ export function NotesWorkspace() {
     try {
       const updated = await updateNote(note.id, { trashed: !note.trashed_at });
       setNotes((prev) => {
-        const mapped = prev.map((n) => (n.id === note.id ? updated : n));
+        const mapped = ensureNotesArray(prev).map((n) => (n.id === note.id ? updated : n));
         if (view === "trashed") {
           return mapped.filter((n) => !(n.id === note.id && !updated.trashed_at));
         }
@@ -197,7 +199,7 @@ export function NotesWorkspace() {
   async function handleDeleteForever(note: Note) {
     try {
       await deleteNote(note.id, true);
-      setNotes((prev) => prev.filter((n) => n.id !== note.id));
+      setNotes((prev) => ensureNotesArray(prev).filter((n) => n.id !== note.id));
       if (selectedId === note.id) {
         setSelectedId(null);
       }
@@ -211,7 +213,7 @@ export function NotesWorkspace() {
     if (!selectedNote) return;
     try {
       const restored = await restoreRevision(selectedNote.id, revisionId);
-      setNotes((prev) => prev.map((n) => (n.id === restored.id ? restored : n)));
+      setNotes((prev) => ensureNotesArray(prev).map((n) => (n.id === restored.id ? restored : n)));
       setDraft({
         title: restored.title || "",
         body_md: restored.body_md || "",
