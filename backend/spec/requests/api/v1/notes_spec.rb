@@ -34,23 +34,23 @@ RSpec.describe 'Notes API', type: :request do
       get '/api/v1/notes', params: { trashed: true }, headers: headers
 
       expect(response).to have_http_status(:ok)
-      titles = response.parsed_body['data'].map { |n| n['title'] }
-      expect(titles).to match_array(['Trash'])
+      titles = response.parsed_body['data'].pluck('title')
+      expect(titles).to contain_exactly('Trash')
     end
 
     it 'filters archived notes' do
       get '/api/v1/notes', params: { archived: true }, headers: headers
 
       expect(response).to have_http_status(:ok)
-      titles = response.parsed_body['data'].map { |n| n['title'] }
-      expect(titles).to match_array(['Archived'])
+      titles = response.parsed_body['data'].pluck('title')
+      expect(titles).to contain_exactly('Archived')
     end
 
     it 'filters by pinned flag' do
       create(:note, user: user, title: 'Pinned note', pinned: true)
 
       get '/api/v1/notes', params: { pinned: true }, headers: headers
-      titles = response.parsed_body['data'].map { |n| n['title'] }
+      titles = response.parsed_body['data'].pluck('title')
       expect(titles).to include('Pinned note')
       expect(titles).not_to include('Active')
     end
@@ -90,7 +90,7 @@ RSpec.describe 'Notes API', type: :request do
       expect(response).to have_http_status(:ok)
       data = response.parsed_body['data']
       expect(data['title']).to eq('Updated')
-      expect(data['pinned']).to eq(true)
+      expect(data['pinned']).to be(true)
     end
 
     it 'archives and restores' do

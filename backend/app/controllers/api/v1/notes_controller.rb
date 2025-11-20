@@ -118,7 +118,7 @@ module Api
       end
 
       def apply_state_flags(note)
-        return unless params[:note].present?
+        return if params[:note].blank?
 
         state_params = params.require(:note).permit(:archived, :trashed)
         note.archived_at = truthy_param?(state_params[:archived]) ? Time.current : nil if state_params.key?(:archived)
