@@ -11,6 +11,7 @@
 | [authentication.md](./authentication.md) | JWT認証フロー・トークン仕様 |
 | [business-logic.md](./business-logic.md) | バリデーション・コールバック・ビジネスルール |
 | [error-handling.md](./error-handling.md) | エラーコード体系・レスポンス形式 |
+| [docker-setup.md](./docker-setup.md) | Docker設定・Dockerfile・compose.yml |
 | [rust-implementation-guide.md](./rust-implementation-guide.md) | Rust向け実装ガイド（Axum + SeaORM） |
 | [go-implementation-guide.md](./go-implementation-guide.md) | Go向け実装ガイド（Echo + GORM） |
 
