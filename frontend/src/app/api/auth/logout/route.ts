@@ -19,7 +19,7 @@ export async function POST() {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       ).catch(() => {
         // Rails側のログアウトエラーは無視（Cookieは削除する）
       });

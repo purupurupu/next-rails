@@ -17,14 +17,14 @@ export async function POST(request: NextRequest) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(body),
-      }
+      },
     );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
         { error: errorData.status?.message || "認証に失敗しました" },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     if (!authHeader) {
       return NextResponse.json(
         { error: "認証トークンを受信できませんでした" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -44,13 +44,13 @@ export async function POST(request: NextRequest) {
     cookieStore.set(
       AUTH_CONFIG.TOKEN_COOKIE_NAME,
       token,
-      AUTH_CONFIG.COOKIE_OPTIONS
+      AUTH_CONFIG.COOKIE_OPTIONS,
     );
 
     cookieStore.set(
       AUTH_CONFIG.USER_COOKIE_NAME,
       JSON.stringify(data.data),
-      AUTH_CONFIG.USER_COOKIE_OPTIONS
+      AUTH_CONFIG.USER_COOKIE_OPTIONS,
     );
 
     return NextResponse.json({
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     console.error("Login error:", error);
     return NextResponse.json(
       { error: "ネットワークエラーが発生しました" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -11,7 +11,7 @@ export async function GET() {
     if (!token) {
       return NextResponse.json(
         { authenticated: false, user: null },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -29,13 +29,13 @@ export async function GET() {
 
     return NextResponse.json(
       { authenticated: false, user: null },
-      { status: 401 }
+      { status: 401 },
     );
   } catch (error) {
     console.error("Auth check error:", error);
     return NextResponse.json(
       { authenticated: false, user: null },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

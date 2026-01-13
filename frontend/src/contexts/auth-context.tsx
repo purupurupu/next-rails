@@ -23,7 +23,7 @@ function getUserFromCookie(): User | null {
   try {
     const cookies = document.cookie.split("; ");
     const userCookie = cookies.find((c) =>
-      c.startsWith(`${AUTH_CONFIG.USER_COOKIE_NAME}=`)
+      c.startsWith(`${AUTH_CONFIG.USER_COOKIE_NAME}=`),
     );
     if (userCookie) {
       const value = decodeURIComponent(userCookie.split("=")[1]);
