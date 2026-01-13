@@ -68,4 +68,24 @@ class Comment < ApplicationRecord
   def owned_by?(user)
     self.user == user
   end
+
+  # 学習ポイント：ポリモーフィック関連のcounter_cache手動管理
+  # Railsの標準counter_cacheはポリモーフィック関連では使用できないため、
+  # コールバックで手動更新する
+  after_create :increment_comments_count
+  after_destroy :decrement_comments_count
+
+  private
+
+  def increment_comments_count
+    return unless commentable.respond_to?(:comments_count)
+
+    commentable.class.increment_counter(:comments_count, commentable.id)
+  end
+
+  def decrement_comments_count
+    return unless commentable.respond_to?(:comments_count)
+
+    commentable.class.decrement_counter(:comments_count, commentable.id)
+  end
 end

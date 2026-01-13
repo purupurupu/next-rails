@@ -39,10 +39,8 @@ class TodoSerializer
   end
 
   # 学習ポイント：コメント数を効率的に取得
-  attribute :comments_count do |object|
-    # N+1クエリを避けるため、counter_cacheを使用することも検討
-    object.comments.count
-  end
+  # counter_cacheを使用してN+1クエリを回避
+  attribute :comments_count, &:comments_count
 
   # 学習ポイント：最新のコメントを3件まで取得
   attribute :latest_comments do |object, params|
@@ -59,9 +57,8 @@ class TodoSerializer
   end
 
   # 学習ポイント：履歴数の取得
-  attribute :history_count do |object|
-    object.todo_histories.count
-  end
+  # counter_cacheを使用してN+1クエリを回避
+  attribute :history_count, &:todo_histories_count
 
   # 検索結果のハイライト情報
   attribute :highlights do |object, params|

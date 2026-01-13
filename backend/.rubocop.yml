@@ -79,6 +79,7 @@ Rails/SkipsModelValidations:
     - 'spec/**/*'
     - 'db/migrate/**/*'
     - 'app/controllers/api/v1/todos_controller.rb'  # ポジション更新は同期的バリデーション不要
+    - 'app/models/comment.rb'  # counter_cache更新はバリデーション不要
 
 Rails/Output:
   Exclude:
