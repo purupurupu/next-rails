@@ -34,7 +34,6 @@ export function useTodoSearch(searchParams: TodoSearchParams): UseTodoSearchRetu
       setError(null);
 
       const response = await todoApiClient.searchTodos(params);
-      console.log("Search response:", response); // Debug log
 
       // Handle v1 API response format
       if (Array.isArray(response)) {
