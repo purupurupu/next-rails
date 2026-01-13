@@ -51,7 +51,6 @@ module Api
 
       def create
         @todo = current_user.todos.build(todo_params.except(:tag_ids, :files))
-        @todo.current_user = current_user
 
         assign_tags_if_present
         return render_validation_error(@todo) unless @todo.save
@@ -66,8 +65,6 @@ module Api
       end
 
       def update
-        @todo.current_user = current_user
-
         assign_tags_if_present
         attach_files_if_present
         return render_validation_error(@todo) unless @todo.update(todo_params.except(:tag_ids, :files))
