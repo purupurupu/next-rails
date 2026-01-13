@@ -1,4 +1,4 @@
-import { httpClient } from "./api-client";
+import { httpClient, ApiError } from "./api-client";
 import { API_BASE_URL, API_ENDPOINTS } from "./constants";
 import type {
   User,
@@ -24,8 +24,9 @@ class AuthClient {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.status?.message || "Authentication failed");
+        const errorData = await response.json().catch(() => ({}));
+        const message = errorData.error?.message || errorData.status?.message || "認証に失敗しました";
+        throw new ApiError(message, response.status, errorData.error?.details);
       }
 
       const responseData: AuthResponse = await response.json();
@@ -33,7 +34,7 @@ class AuthClient {
       // Authorizationヘッダーからトークンを取得
       const authHeader = response.headers.get("Authorization");
       if (!authHeader) {
-        throw new Error("No authorization token received");
+        throw new ApiError("認証トークンを受信できませんでした", 401);
       }
 
       // Bearerプレフィックスを削除
@@ -50,10 +51,10 @@ class AuthClient {
         token: token,
       };
     } catch (error) {
-      if (error instanceof Error) {
+      if (error instanceof ApiError) {
         throw error;
       }
-      throw new Error("Network error occurred");
+      throw new ApiError("ネットワークエラーが発生しました", 0);
     }
   }
 
