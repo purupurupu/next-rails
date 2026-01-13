@@ -12,8 +12,8 @@ import {
   fetchRevisions,
   restoreRevision,
   updateNote,
-} from "../lib/api";
-import { Note, NoteRevision } from "../types";
+} from "../lib/api-client";
+import type { Note, NoteRevision } from "../types/note";
 
 type ViewFilter = "active" | "archived" | "trashed";
 

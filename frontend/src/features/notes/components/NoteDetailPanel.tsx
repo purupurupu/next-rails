@@ -6,7 +6,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
-import { Note, NoteRevision } from "../types";
+import type { Note, NoteRevision } from "../types/note";
 import styles from "./NotesWorkspace.module.css";
 
 const markdownSanitizeSchema = {
