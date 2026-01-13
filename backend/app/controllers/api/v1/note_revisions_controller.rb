@@ -6,7 +6,7 @@ module Api
       before_action :set_note
 
       def index
-        revisions = @note.note_revisions.order(created_at: :desc).page(page_param).per(per_page_param)
+        revisions = paginate(@note.note_revisions.order(created_at: :desc))
 
         render_json_response(
           data: revisions,
@@ -38,27 +38,6 @@ module Api
 
       def set_note
         @note = current_user.notes.find(params[:note_id])
-      end
-
-      def page_param
-        (params[:page] || 1).to_i
-      end
-
-      def per_page_param
-        per_page = (params[:per_page] || 20).to_i
-        return 1 if per_page < 1
-        return 100 if per_page > 100
-
-        per_page
-      end
-
-      def pagination_meta(scope)
-        {
-          total: scope.total_count,
-          current_page: scope.current_page,
-          total_pages: scope.total_pages,
-          per_page: scope.limit_value
-        }
       end
     end
   end

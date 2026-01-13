@@ -125,31 +125,6 @@ module Api
         note.trashed_at = truthy_param?(state_params[:trashed]) ? Time.current : nil if state_params.key?(:trashed)
       end
 
-      def paginate(scope)
-        scope.page(page_param).per(per_page_param)
-      end
-
-      def page_param
-        (params[:page] || 1).to_i
-      end
-
-      def per_page_param
-        per_page = (params[:per_page] || 20).to_i
-        return 1 if per_page < 1
-        return 100 if per_page > 100
-
-        per_page
-      end
-
-      def pagination_meta(scope)
-        {
-          total: scope.total_count,
-          current_page: scope.current_page,
-          total_pages: scope.total_pages,
-          per_page: scope.limit_value
-        }
-      end
-
       def filter_meta
         {
           archived: truthy_param?(params[:archived]) || false,

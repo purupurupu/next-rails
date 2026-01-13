@@ -108,6 +108,32 @@ module Api
           'Request processed'
         end
       end
+
+      # Pagination helpers
+      def page_param
+        (params[:page] || 1).to_i
+      end
+
+      def per_page_param(default: 20, max: 100)
+        per_page = (params[:per_page] || default).to_i
+        return 1 if per_page < 1
+        return max if per_page > max
+
+        per_page
+      end
+
+      def paginate(scope, default_per_page: 20, max_per_page: 100)
+        scope.page(page_param).per(per_page_param(default: default_per_page, max: max_per_page))
+      end
+
+      def pagination_meta(scope)
+        {
+          total: scope.total_count,
+          current_page: scope.current_page,
+          total_pages: scope.total_pages,
+          per_page: scope.limit_value
+        }
+      end
     end
   end
 end
