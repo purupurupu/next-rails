@@ -41,5 +41,6 @@ module App
     
     # Ensure custom error classes are loaded
     config.autoload_paths += %W(#{config.root}/app/errors)
+    config.autoload_paths += %W(#{config.root}/app/serializers/concerns)
   end
 end
