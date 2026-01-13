@@ -369,32 +369,32 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  bootsnap
-  database_cleaner-active_record
-  debug
-  devise
-  devise-jwt
-  dotenv-rails
-  factory_bot_rails
-  faker
+  bootsnap (~> 1.18)
+  database_cleaner-active_record (~> 2.2)
+  debug (~> 1.11)
+  devise (~> 4.9)
+  devise-jwt (~> 0.12)
+  dotenv-rails (~> 3.1)
+  factory_bot_rails (~> 6.5)
+  faker (~> 3.5)
   image_processing (~> 1.2)
-  jsonapi-serializer
-  kaminari
-  mcp
+  jsonapi-serializer (~> 2.2)
+  kaminari (~> 1.2)
+  mcp (~> 0.4)
   pg (~> 1.1)
   puma (>= 5.0)
-  rack-cors
+  rack-cors (~> 3.0)
   rails (~> 8.0.0)
   redis (>= 4.0.1)
-  rspec-rails
-  rubocop
-  rubocop-performance
-  rubocop-rails
-  rubocop-rspec
-  shoulda-matchers
-  sidekiq
-  simplecov
-  simplecov-json
+  rspec-rails (~> 8.0)
+  rubocop (~> 1.80)
+  rubocop-performance (~> 1.26)
+  rubocop-rails (~> 2.33)
+  rubocop-rspec (~> 3.7)
+  shoulda-matchers (~> 6.5)
+  sidekiq (~> 8.0)
+  simplecov (~> 0.22)
+  simplecov-json (~> 0.2)
   tzinfo-data
 
 RUBY VERSION
