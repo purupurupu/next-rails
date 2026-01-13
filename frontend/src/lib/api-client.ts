@@ -104,6 +104,11 @@ class HttpClient {
     return this.request<T>(endpoint);
   }
 
+  async getList<T>(endpoint: string): Promise<T[]> {
+    const response = await this.request<T[]>(endpoint);
+    return Array.isArray(response) ? response : [];
+  }
+
   async post<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: "POST",
