@@ -23,24 +23,24 @@ RSpec.describe 'Api::V1::TodoHistories', type: :request do
 
         expect(response).to have_http_status(:ok)
         json = response.parsed_body
-        expect(json.length).to eq(3)
+        expect(json['data'].length).to eq(3)
         # 新しい履歴が最初に来ることを確認
-        expect(json.first['action']).to eq('priority_changed')
+        expect(json['data'].first['action']).to eq('priority_changed')
       end
 
       it 'includes user information' do
         get "/api/v1/todos/#{todo.id}/histories", headers: auth_headers
 
         json = response.parsed_body
-        expect(json.first['user']).to be_present
-        expect(json.first['user']['id']).to eq(user.id)
+        expect(json['data'].first['user']).to be_present
+        expect(json['data'].first['user']['id']).to eq(user.id)
       end
 
       it 'includes human readable change description' do
         get "/api/v1/todos/#{todo.id}/histories", headers: auth_headers
 
         json = response.parsed_body
-        expect(json.first['human_readable_change']).to be_present
+        expect(json['data'].first['human_readable_change']).to be_present
       end
     end
 
