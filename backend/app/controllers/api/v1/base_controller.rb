@@ -46,7 +46,7 @@ module Api
           }
         }
 
-        if options[:data].present?
+        unless options[:data].nil?
           serialized_data = if options[:serializer] || options[:each_serializer]
                               serialize_data(options[:data], options[:serializer], options[:each_serializer], options)
                             else
