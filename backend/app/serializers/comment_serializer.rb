@@ -3,13 +3,9 @@
 # 学習ポイント：jsonapi-serializerを使用したレスポンスのカスタマイズ
 class CommentSerializer
   include JSONAPI::Serializer
+  include UserSerializable
 
   attributes :id, :content, :created_at, :updated_at
-
-  # 学習ポイント：関連モデルの情報も含める
-  attribute :user do |object|
-    UserSerializer.new(object.user).serializable_hash[:data][:attributes]
-  end
 
   # 学習ポイント：カスタム属性の追加
   # 現在のユーザーがコメントを編集できるかどうかを返す
