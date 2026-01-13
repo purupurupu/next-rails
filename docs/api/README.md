@@ -119,6 +119,10 @@ See [Error Handling](./errors.md) for complete error documentation.
   - Advanced search and filtering (GET /api/todos/search)
   - Bulk position updates for drag-and-drop
   - File attachments support
+- [Notes API](./notes.md) - Markdown notes with revision history
+  - CRUD operations with soft delete (archive/trash)
+  - Full revision history with restore functionality
+  - Search and filtering (active/archived/trashed)
 - [Categories API](./categories.md) - Category CRUD operations
 - [Tags API](./tags.md) - Tag CRUD operations for flexible todo organization
 - [Comments API](./comments.md) - Comment functionality for todos
