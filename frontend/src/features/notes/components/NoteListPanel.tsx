@@ -2,7 +2,7 @@ import { SearchBar } from "@/features/todo/components/SearchBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Note } from "../types";
+import type { Note } from "../types/note";
 
 type ViewFilter = "active" | "archived" | "trashed";
 

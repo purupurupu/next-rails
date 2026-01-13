@@ -1,6 +1,7 @@
 import type { BaseEntity, ValidationErrors } from "@/types/common";
 import type { Category } from "@/features/category/types/category";
 import type { Tag } from "@/features/tag/types/tag";
+import type { Comment } from "@/features/comment/types/comment";
 
 /**
  * Todo domain types
@@ -43,7 +44,7 @@ export interface Todo extends BaseEntity {
   tags: TodoTagRef[];
   files: TodoFile[];
   comments_count: number;
-  latest_comments: unknown[]; // 最新のコメント（詳細表示用）
+  latest_comments: Comment[];
   history_count: number;
   highlights?: {
     title?: Array<{ start: number; end: number; matched_text: string }>;
@@ -80,22 +81,6 @@ export interface UpdateOrderData {
 
 // Error types
 export type TodoValidationErrors = ValidationErrors;
-
-// For backward compatibility (can be removed after migration)
-export interface TodoCategory {
-  id: number;
-  name: string;
-  color: string;
-}
-
-export interface TodoError {
-  title?: string[];
-  priority?: string[];
-  status?: string[];
-  description?: string[];
-  due_date?: string[];
-  base?: string[];
-}
 
 // Search and filter types
 export interface TodoSearchParams {

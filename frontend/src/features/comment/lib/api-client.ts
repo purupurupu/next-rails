@@ -3,9 +3,7 @@ import { Comment, CreateCommentData, UpdateCommentData } from "../types/comment"
 
 export class CommentApiClient extends HttpClient {
   async getComments(todoId: number): Promise<Comment[]> {
-    const response = await this.get<Comment[]>(`/api/v1/todos/${todoId}/comments`);
-    // 配列であることを保証
-    return Array.isArray(response) ? response : [];
+    return this.getList<Comment>(`/api/v1/todos/${todoId}/comments`);
   }
 
   async createComment(todoId: number, data: CreateCommentData): Promise<Comment> {

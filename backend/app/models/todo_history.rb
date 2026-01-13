@@ -27,7 +27,7 @@
 
 class TodoHistory < ApplicationRecord
   # 学習ポイント：変更履歴の追跡
-  belongs_to :todo
+  belongs_to :todo, counter_cache: :todo_histories_count
   belongs_to :user
 
   # バリデーション

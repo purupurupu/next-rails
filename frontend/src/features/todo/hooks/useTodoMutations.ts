@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { todoApiClient, ApiError } from "@/features/todo/lib/api-client";
 import type { Todo, CreateTodoData, UpdateTodoData, UpdateOrderData } from "../types/todo";
@@ -36,6 +36,11 @@ export function useTodoMutations({
   setAllTodos,
   setError,
 }: TodoMutationsParams): UseTodoMutationsReturn {
+  // useRefで最新のallTodosを参照（依存配列の最適化のため）
+  const allTodosRef = useRef(allTodos);
+  useEffect(() => {
+    allTodosRef.current = allTodos;
+  }, [allTodos]);
   const refreshTodos = useCallback(async () => {
     setError(null);
 
@@ -57,7 +62,7 @@ export function useTodoMutations({
     setError(null);
 
     // Optimistic update
-    const optimisticTodo = createOptimisticTodo(data, allTodos.length);
+    const optimisticTodo = createOptimisticTodo(data, allTodosRef.current.length);
     setAllTodos((prev) => addOptimisticTodo(prev, optimisticTodo));
 
     try {
@@ -76,13 +81,13 @@ export function useTodoMutations({
         description: errorMessage,
       });
     }
-  }, [allTodos.length, setAllTodos, setError]);
+  }, [setAllTodos, setError]);
 
   const updateTodo = useCallback(async (id: number, data: UpdateTodoData, files?: File[]) => {
     setError(null);
 
     // Optimistic update
-    const originalTodos = allTodos;
+    const originalTodos = allTodosRef.current;
     setAllTodos((prev) => applyOptimisticUpdate(prev, id, data));
 
     try {
@@ -101,13 +106,13 @@ export function useTodoMutations({
         description: errorMessage,
       });
     }
-  }, [allTodos, setAllTodos, setError]);
+  }, [setAllTodos, setError]);
 
   const deleteTodo = useCallback(async (id: number) => {
     setError(null);
 
     // Optimistic update
-    const originalTodos = allTodos;
+    const originalTodos = allTodosRef.current;
     setAllTodos((prev) => removeOptimisticTodo(prev, id));
 
     try {
@@ -125,13 +130,13 @@ export function useTodoMutations({
         description: errorMessage,
       });
     }
-  }, [allTodos, setAllTodos, setError]);
+  }, [setAllTodos, setError]);
 
   const updateTodoOrder = useCallback(async (reorderedTodos: UpdateOrderData[]) => {
     setError(null);
 
     // Optimistic update
-    const originalTodos = allTodos;
+    const originalTodos = allTodosRef.current;
     setAllTodos((prev) => applyOptimisticOrder(prev, reorderedTodos));
 
     try {
@@ -149,20 +154,20 @@ export function useTodoMutations({
         description: errorMessage,
       });
     }
-  }, [allTodos, setAllTodos, setError]);
+  }, [setAllTodos, setError]);
 
   const toggleTodoComplete = useCallback(async (id: number) => {
-    const todo = allTodos.find((t) => t.id === id);
+    const todo = allTodosRef.current.find((t) => t.id === id);
     if (!todo) return;
 
     await updateTodo(id, { completed: !todo.completed });
-  }, [allTodos, updateTodo]);
+  }, [updateTodo]);
 
   const deleteTodoFile = useCallback(async (todoId: number, fileId: string | number) => {
     setError(null);
 
     // Store original todos for rollback
-    const originalTodos = allTodos;
+    const originalTodos = allTodosRef.current;
 
     try {
       // Optimistic update: remove file from the todo
@@ -197,7 +202,7 @@ export function useTodoMutations({
         description: errorMessage,
       });
     }
-  }, [allTodos, setAllTodos, setError]);
+  }, [setAllTodos, setError]);
 
   return {
     createTodo,

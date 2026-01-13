@@ -14,6 +14,7 @@ Welcome to the Todo API documentation. This API provides a comprehensive set of 
 
 ### 📋 Resources
 - **[Todos](./todos.md)** - Core todo management functionality
+- **[Notes](./notes.md)** - Markdown notes with revision history
 - **[Categories](./categories.md)** - Organize todos by categories
 - **[Tags](./tags.md)** - Flexible tagging system
 - **[Comments](./comments.md)** - Add comments to todos

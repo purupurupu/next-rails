@@ -1,62 +1,21 @@
-#.env
-#/backend/config/master.key
-
-# Project-wide ignores
+# Environment files
 .env
+.env.*
+!.env.example
+
+# OS files
 .DS_Store
+
+# Editor/IDE files
 *.log
 *.swp
 .idea/
 .vscode/
 
-# Frontend ignores
-/frontend/node_modules/
-/frontend/.next/
-/frontend/out/
-/frontend/build/
-/frontend/.cache/
-/frontend/.env*.local
-/frontend/.vercel/
-
-# Backend ignores
-/backend/.bundle/
-/backend/log/*
-/backend/tmp/*
-!/backend/log/.keep
-!/backend/tmp/.keep
-/backend/storage/*
-!/backend/storage/.keep
-/backend/tmp/storage/*
-!/backend/tmp/storage/
-!/backend/tmp/storage/.keep
-/backend/public/assets
-/backend/.byebug_history
-
-# Ignore master key for decrypting credentials and more
-/backend/config/master.key
-
-# Ignore coverage reports
-/backend/coverage/
-
-# Ignore uploaded files in development
-/backend/storage/*
-!/backend/storage/.keep
-
-# Ignore Bundler config
-/backend/.bundle
-
-# Ignore all environment files (except templates)
-/backend/.env*
-!/backend/.env*.example
-
-# Ignore database dumps
-*.dump
-
 # Docker
-*.env
 .dockerignore
 
-# Ignore any compiled binaries
+# Compiled binaries
 *.com
 *.class
 *.dll
@@ -64,17 +23,13 @@
 *.o
 *.so
 
-# Ignore package-lock.json for npm
-package-lock.json
+# Database dumps
+*.dump
 
-# Ignore yarn.lock for Yarn
+# Lock files (pnpm-lock.yaml is tracked)
+package-lock.json
 yarn.lock
 
-# Ignore .env files
-.env
-.env.*
-!.env.example
-
-# Ignore Coding Agent Files
+# Coding Agent Files
 PLAN.md
 .serena/

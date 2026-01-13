@@ -4,9 +4,7 @@ import type { Tag, CreateTagData, UpdateTagData } from "../types/tag";
 
 export class TagApiClient extends HttpClient {
   async getTags(): Promise<Tag[]> {
-    const response = await this.get<Tag[]>(API_ENDPOINTS.TAGS);
-    // 配列であることを保証
-    return Array.isArray(response) ? response : [];
+    return this.getList<Tag>(API_ENDPOINTS.TAGS);
   }
 
   async getTag(id: number): Promise<Tag> {

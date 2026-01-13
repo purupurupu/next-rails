@@ -12,20 +12,20 @@ gem 'pg', '~> 1.1'
 gem 'puma', '>= 5.0'
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
-gem 'rack-cors'
+gem 'rack-cors', '~> 3.0'
 
 # Authentication
-gem 'devise'
-gem 'devise-jwt'
+gem 'devise', '~> 4.9'
+gem 'devise-jwt', '~> 0.12'
 
 # MCP Server
-gem 'mcp'
+gem 'mcp', '~> 0.4'
 
 # API serialization
-gem 'jsonapi-serializer'
+gem 'jsonapi-serializer', '~> 2.2'
 
 # Background jobs
-gem 'sidekiq'
+gem 'sidekiq', '~> 8.0'
 
 # Redis for caching and background jobs
 gem 'redis', '>= 4.0.1'
@@ -43,35 +43,35 @@ gem 'image_processing', '~> 1.2'
 # gem "bcrypt", "~> 3.1.7"
 
 # Pagination
-gem 'kaminari'
+gem 'kaminari', '~> 1.2'
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: %i[windows jruby]
 
 # Reduces boot times through caching; required in config/boot.rb
-gem 'bootsnap', require: false
+gem 'bootsnap', '~> 1.18', require: false
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
-  gem 'debug', platforms: %i[mri windows]
+  gem 'debug', '~> 1.11', platforms: %i[mri windows]
 
   # Environment variables loading
-  gem 'dotenv-rails'
+  gem 'dotenv-rails', '~> 3.1'
 
   # Testing framework
-  gem 'factory_bot_rails'
-  gem 'faker'
-  gem 'rspec-rails'
+  gem 'factory_bot_rails', '~> 6.5'
+  gem 'faker', '~> 3.5'
+  gem 'rspec-rails', '~> 8.0'
 end
 
 group :test do
   # Additional testing gems
-  gem 'database_cleaner-active_record'
-  gem 'shoulda-matchers'
+  gem 'database_cleaner-active_record', '~> 2.2'
+  gem 'shoulda-matchers', '~> 6.5'
 
   # Code coverage
-  gem 'simplecov', require: false
-  gem 'simplecov-json', require: false
+  gem 'simplecov', '~> 0.22', require: false
+  gem 'simplecov-json', '~> 0.2', require: false
 end
 
 group :development do
@@ -79,8 +79,8 @@ group :development do
   # gem "spring"
 
   # Code analysis and linting
-  gem 'rubocop', require: false
-  gem 'rubocop-performance', require: false
-  gem 'rubocop-rails', require: false
-  gem 'rubocop-rspec', require: false
+  gem 'rubocop', '~> 1.80', require: false
+  gem 'rubocop-performance', '~> 1.26', require: false
+  gem 'rubocop-rails', '~> 2.33', require: false
+  gem 'rubocop-rspec', '~> 3.7', require: false
 end

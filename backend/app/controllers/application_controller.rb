@@ -2,6 +2,7 @@ class ApplicationController < ActionController::API
   before_action :authenticate_user!, unless: :devise_registration_or_session_controller?
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :set_request_id
+  before_action :set_current_user
 
   # Unified error handling using custom error classes
   rescue_from ::ApiError, with: :handle_api_error
@@ -27,6 +28,11 @@ class ApplicationController < ActionController::API
   # Set request ID for tracking
   def set_request_id
     response.headers['X-Request-Id'] = request.request_id
+  end
+
+  # Set Current.user for use in models and services
+  def set_current_user
+    Current.user = current_user if user_signed_in?
   end
 
   # Error handlers

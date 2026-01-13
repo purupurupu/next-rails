@@ -4,9 +4,7 @@ import type { Category, CreateCategoryData, UpdateCategoryData } from "../types/
 
 class CategoryApiClient extends HttpClient {
   async getCategories(): Promise<Category[]> {
-    const response = await this.get<Category[]>(API_ENDPOINTS.CATEGORIES);
-    // 配列であることを保証
-    return Array.isArray(response) ? response : [];
+    return this.getList<Category>(API_ENDPOINTS.CATEGORIES);
   }
 
   async getCategory(id: number): Promise<Category> {

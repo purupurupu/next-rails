@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Pre-commit hook for running linters
+# To enable: git config core.hooksPath .githooks
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Check if Docker is running
+if ! docker info > /dev/null 2>&1; then
+    echo "Warning: Docker is not running. Skipping linter checks."
+    exit 0
+fi
+
+# Check if containers are running
+if ! docker compose ps --status running | grep -q "frontend"; then
+    echo "Warning: Frontend container is not running. Skipping frontend checks."
+else
+    echo "Running frontend lint..."
+    docker compose exec -T frontend pnpm run lint || {
+        echo "Frontend lint failed. Please fix the errors before committing."
+        exit 1
+    }
+
+    echo "Running frontend typecheck..."
+    docker compose exec -T frontend pnpm run typecheck || {
+        echo "Frontend typecheck failed. Please fix the errors before committing."
+        exit 1
+    }
+fi
+
+if ! docker compose ps --status running | grep -q "backend"; then
+    echo "Warning: Backend container is not running. Skipping backend checks."
+else
+    echo "Running backend rubocop..."
+    docker compose exec -T backend bundle exec rubocop --parallel || {
+        echo "Backend rubocop failed. Please fix the errors before committing."
+        exit 1
+    }
+fi
+
+echo "All pre-commit checks passed!"

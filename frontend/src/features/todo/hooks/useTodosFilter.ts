@@ -35,12 +35,19 @@ export function useTodosFilter({ allTodos, filter }: UseTodosFilterParams): UseT
     });
   }, [allTodos, filter]);
 
-  // Calculate counts for all filter types
-  const counts = useMemo(() => ({
-    all: allTodos.length,
-    active: allTodos.filter((todo) => !todo.completed).length,
-    completed: allTodos.filter((todo) => todo.completed).length,
-  }), [allTodos]);
+  // Calculate counts for all filter types (single loop)
+  const counts = useMemo(() => {
+    let active = 0;
+    let completed = 0;
+    for (const todo of allTodos) {
+      if (todo.completed) {
+        completed++;
+      } else {
+        active++;
+      }
+    }
+    return { all: allTodos.length, active, completed };
+  }, [allTodos]);
 
   return {
     todos,

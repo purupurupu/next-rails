@@ -274,6 +274,8 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 4. **Commits**: Small, frequent commits with clear messages
 5. **Code Style**: Follow existing patterns in the codebase
 6. **Docker Dependencies**: After adding new packages to package.json or Gemfile, always rebuild the Docker image
+7. **No Nested Classes**: クラス内にクラスを定義しない（ネストしたクラスは別ファイルに分離する）
+8. **RuboCop Disable禁止**: コード内でのrubocop:disableコメントは極力使用しない。必要な場合は.rubocop.ymlで設定する
 
 ### Git Commit Best Practices
 
