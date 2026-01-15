@@ -8,10 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useSearchParams } from "../hooks/useSearchParams";
-import { useTodoSearch } from "../hooks/useTodoSearch";
+import { useTodoListData } from "../hooks/useTodoListData";
 import { useTodoMutations } from "../hooks/useTodoMutations";
-import { useCategories } from "@/features/category/hooks/useCategories";
-import { useTags } from "@/features/tag/hooks/useTags";
 
 import { TodoItem } from "./TodoItem";
 import { SearchBar } from "./SearchBar";
@@ -52,12 +50,18 @@ export function TodoListWithSearch() {
     clearSingleFilter,
   } = useSearchParams();
 
-  // Fetch todos with search
-  const { todos, loading, error, searchResponse, refreshSearch } = useTodoSearch(searchParams);
-
-  // Categories and Tags for filters
-  const { categories } = useCategories();
-  const { tags } = useTags();
+  // 並列データフェッチ (async-parallel ルール適用)
+  // useTodoSearch, useCategories, useTags を統合し、
+  // Promise.all() で並列実行することでWaterfallsを解消
+  const {
+    todos,
+    loading,
+    error,
+    searchResponse,
+    categories,
+    tags,
+    refresh,
+  } = useTodoListData(searchParams);
 
   // Todo mutations
   const mutations = useTodoMutations({
@@ -68,29 +72,29 @@ export function TodoListWithSearch() {
 
   const handleCreateTodo = async (data: CreateTodoData, files?: File[]) => {
     await mutations.createTodo(data, files);
-    await refreshSearch();
+    await refresh();
   };
 
   const handleUpdateTodo = async (data: UpdateTodoData, files?: File[]) => {
     if (!editingTodo) return;
     await mutations.updateTodo(editingTodo.id, data, files);
     setEditingTodo(null);
-    await refreshSearch();
+    await refresh();
   };
 
   const handleDeleteTodo = async (id: number) => {
     await mutations.deleteTodo(id);
-    await refreshSearch();
+    await refresh();
   };
 
   const handleToggleComplete = async (id: number) => {
     await mutations.toggleTodoComplete(id);
-    await refreshSearch();
+    await refresh();
   };
 
   const handleDeleteFile = async (todoId: number, fileId: string | number) => {
     await mutations.deleteTodoFile(todoId, fileId);
-    await refreshSearch();
+    await refresh();
   };
 
   if (loading && !todos.length) {
