@@ -43,7 +43,8 @@
     "sonner": "^2.0.6",
     "swr": "^2.3.8",
     "tailwind-merge": "^3.3.1",
-    "unified": "^11.0.5"
+    "unified": "^11.0.5",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
