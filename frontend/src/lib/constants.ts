@@ -1,6 +1,5 @@
-export const API_BASE_URL = process.env.NODE_ENV === "production"
-  ? "https://your-production-api.com"
-  : "http://localhost:3001";
+// BFF経由でAPIを呼び出すため、空文字（同一オリジン）
+export const API_BASE_URL = "";
 
 export const API_ENDPOINTS = {
   TODOS: "/api/v1/todos",
