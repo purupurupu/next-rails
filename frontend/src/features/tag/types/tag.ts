@@ -1,17 +1,17 @@
-export interface Tag {
-  id: number;
+import type { BaseEntity, CreateData, UpdateData, ValidationErrors } from "@/types/common";
+
+/**
+ * Tag domain types
+ */
+
+export interface Tag extends BaseEntity {
   name: string;
   color: string;
-  created_at: string;
-  updated_at: string;
 }
 
-export interface CreateTagData {
-  name: string;
-  color?: string;
-}
+// Tag operations
+export type CreateTagData = CreateData<Pick<Tag, "name" | "color">>;
+export type UpdateTagData = UpdateData<Pick<Tag, "name" | "color">>;
 
-export interface UpdateTagData {
-  name?: string;
-  color?: string;
-}
+// Error types
+export type TagValidationErrors = ValidationErrors;
