@@ -18,13 +18,13 @@ import { FilterBadges } from "./FilterBadges";
 // モーダル内で使用されるため遅延ロード (bundle-dynamic-imports)
 const TodoForm = dynamic(
   () => import("./TodoForm").then((m) => m.TodoForm),
-  { ssr: false }
+  { ssr: false },
 );
 
 // Collapsible内で使用されるため遅延ロード (bundle-dynamic-imports)
 const AdvancedFilters = dynamic(
   () => import("./AdvancedFilters").then((m) => m.AdvancedFilters),
-  { ssr: false }
+  { ssr: false },
 );
 
 import type { Todo, CreateTodoData, UpdateTodoData } from "../types/todo";

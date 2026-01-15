@@ -21,7 +21,7 @@ export function useCategories(fetchOnMount = true) {
     {
       dedupingInterval: 60000, // 1分間の重複排除
       revalidateOnFocus: false,
-    }
+    },
   );
 
   const createCategory = useCallback(async (categoryData: CreateCategoryData) => {
@@ -44,7 +44,7 @@ export function useCategories(fetchOnMount = true) {
       // 楽観的更新: キャッシュ内のカテゴリーを更新
       await mutate(
         (prev) => prev?.map((cat) => (cat.id === id ? updatedCategory : cat)) || [],
-        false
+        false,
       );
       toast.success("カテゴリーを更新しました");
       return updatedCategory;

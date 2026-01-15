@@ -21,7 +21,7 @@ export function useTags(fetchOnMount = true) {
     {
       dedupingInterval: 60000, // 1分間の重複排除
       revalidateOnFocus: false,
-    }
+    },
   );
 
   const createTag = useCallback(async (tagData: CreateTagData) => {
@@ -44,7 +44,7 @@ export function useTags(fetchOnMount = true) {
       // 楽観的更新: キャッシュ内のタグを更新
       await mutate(
         (prev) => prev?.map((tag) => (tag.id === id ? updatedTag : tag)) || [],
-        false
+        false,
       );
       toast.success("タグを更新しました");
       return updatedTag;
