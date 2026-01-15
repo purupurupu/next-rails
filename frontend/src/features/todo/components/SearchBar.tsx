@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,16 @@ export function SearchBar({
   const [localValue, setLocalValue] = useState(value);
   const debouncedValue = useDebounce(localValue, debounceDelay);
 
+  // advanced-event-handler-refs: コールバックをrefで安定化
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
   // Update parent when debounced value changes
   useEffect(() => {
-    onChange(debouncedValue);
-  }, [debouncedValue, onChange]);
+    onChangeRef.current(debouncedValue);
+  }, [debouncedValue]);
 
   // Update local value when parent value changes (e.g., from clear filters)
   useEffect(() => {
