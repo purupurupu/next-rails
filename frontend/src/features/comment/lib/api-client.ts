@@ -1,21 +1,61 @@
 import { HttpClient } from "@/lib/api-client";
-import { Comment, CreateCommentData, UpdateCommentData } from "../types/comment";
+import { API_ENDPOINTS } from "@/lib/constants";
+import type { Comment, CreateCommentData, UpdateCommentData } from "../types/comment";
 
+/**
+ * コメント機能のAPIクライアント
+ *
+ * @remarks
+ * Todo に紐づくコメントの CRUD 操作を提供する
+ */
 export class CommentApiClient extends HttpClient {
+  /**
+   * 指定したTodoのコメント一覧を取得する
+   *
+   * @param todoId - コメントを取得するTodoのID
+   * @returns コメントの配列
+   */
   async getComments(todoId: number): Promise<Comment[]> {
-    return this.getList<Comment>(`/api/v1/todos/${todoId}/comments`);
+    return this.getList<Comment>(API_ENDPOINTS.TODO_COMMENTS(todoId));
   }
 
+  /**
+   * 新しいコメントを作成する
+   *
+   * @param todoId - コメントを追加するTodoのID
+   * @param data - コメントの作成データ
+   * @returns 作成されたコメント
+   */
   async createComment(todoId: number, data: CreateCommentData): Promise<Comment> {
-    return this.post<Comment>(`/api/v1/todos/${todoId}/comments`, { comment: data });
+    return this.post<Comment>(API_ENDPOINTS.TODO_COMMENTS(todoId), { comment: data });
   }
 
-  async updateComment(todoId: number, commentId: number, data: UpdateCommentData): Promise<Comment> {
-    return this.patch<Comment>(`/api/v1/todos/${todoId}/comments/${commentId}`, { comment: data });
+  /**
+   * コメントを更新する
+   *
+   * @param todoId - コメントが属するTodoのID
+   * @param commentId - 更新するコメントのID
+   * @param data - コメントの更新データ
+   * @returns 更新されたコメント
+   */
+  async updateComment(
+    todoId: number,
+    commentId: number,
+    data: UpdateCommentData,
+  ): Promise<Comment> {
+    return this.patch<Comment>(API_ENDPOINTS.TODO_COMMENT_BY_ID(todoId, commentId), {
+      comment: data,
+    });
   }
 
+  /**
+   * コメントを削除する（ソフトデリート）
+   *
+   * @param todoId - コメントが属するTodoのID
+   * @param commentId - 削除するコメントのID
+   */
   async deleteComment(todoId: number, commentId: number): Promise<void> {
-    await this.delete(`/api/v1/todos/${todoId}/comments/${commentId}`);
+    await this.delete(API_ENDPOINTS.TODO_COMMENT_BY_ID(todoId, commentId));
   }
 }
 
