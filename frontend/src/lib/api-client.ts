@@ -18,18 +18,8 @@ class HttpClient {
     this.baseUrl = baseUrl;
   }
 
-  private getAuthToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("authToken");
-  }
-
-  private getAuthHeaders(): Record<string, string> {
-    const token = this.getAuthToken();
-    if (token) {
-      return { Authorization: `Bearer ${token}` };
-    }
-    return {};
-  }
+  // BFF経由で認証されるため、クライアント側での認証ヘッダー処理は不要
+  // Cookieは自動的に送信される（credentials: "include"）
 
   private async request<T>(
     endpoint: string,
@@ -40,7 +30,6 @@ class HttpClient {
     const config: RequestInit = {
       headers: {
         "Content-Type": "application/json",
-        ...this.getAuthHeaders(),
         ...options?.headers,
       },
       credentials: "include",
@@ -141,10 +130,8 @@ class HttpClient {
 
     const config: RequestInit = {
       method,
-      headers: {
-        ...this.getAuthHeaders(),
-        // Don't set Content-Type - let browser set it with boundary for multipart/form-data
-      },
+      // Don't set Content-Type - let browser set it with boundary for multipart/form-data
+      // BFF経由で認証されるため、認証ヘッダーは不要
       credentials: "include",
       body: formData,
     };

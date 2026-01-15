@@ -1,22 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useSearchParams } from "../hooks/useSearchParams";
-import { useTodoSearch } from "../hooks/useTodoSearch";
+import { useTodoListData } from "../hooks/useTodoListData";
 import { useTodoMutations } from "../hooks/useTodoMutations";
-import { useCategories } from "@/features/category/hooks/useCategories";
-import { useTags } from "@/features/tag/hooks/useTags";
 
 import { TodoItem } from "./TodoItem";
-import { TodoForm } from "./TodoForm";
 import { SearchBar } from "./SearchBar";
-import { AdvancedFilters } from "./AdvancedFilters";
 import { FilterBadges } from "./FilterBadges";
+
+// モーダル内で使用されるため遅延ロード (bundle-dynamic-imports)
+const TodoForm = dynamic(
+  () => import("./TodoForm").then((m) => m.TodoForm),
+  { ssr: false },
+);
+
+// Collapsible内で使用されるため遅延ロード (bundle-dynamic-imports)
+const AdvancedFilters = dynamic(
+  () => import("./AdvancedFilters").then((m) => m.AdvancedFilters),
+  { ssr: false },
+);
 
 import type { Todo, CreateTodoData, UpdateTodoData } from "../types/todo";
 
@@ -41,12 +50,18 @@ export function TodoListWithSearch() {
     clearSingleFilter,
   } = useSearchParams();
 
-  // Fetch todos with search
-  const { todos, loading, error, searchResponse, refreshSearch } = useTodoSearch(searchParams);
-
-  // Categories and Tags for filters
-  const { categories } = useCategories();
-  const { tags } = useTags();
+  // 並列データフェッチ (async-parallel ルール適用)
+  // useTodoSearch, useCategories, useTags を統合し、
+  // Promise.all() で並列実行することでWaterfallsを解消
+  const {
+    todos,
+    loading,
+    error,
+    searchResponse,
+    categories,
+    tags,
+    refresh,
+  } = useTodoListData(searchParams);
 
   // Todo mutations
   const mutations = useTodoMutations({
@@ -55,32 +70,34 @@ export function TodoListWithSearch() {
     setError: () => {},
   });
 
-  const handleCreateTodo = async (data: CreateTodoData, files?: File[]) => {
+  // ハンドラー関数を useCallback でラップ (rerender-functional-setstate ルール)
+  // 安定したコールバック参照で子コンポーネント (TodoItem) の再レンダリングを防止
+  const handleCreateTodo = useCallback(async (data: CreateTodoData, files?: File[]) => {
     await mutations.createTodo(data, files);
-    await refreshSearch();
-  };
+    await refresh();
+  }, [mutations, refresh]);
 
-  const handleUpdateTodo = async (data: UpdateTodoData, files?: File[]) => {
+  const handleUpdateTodo = useCallback(async (data: UpdateTodoData, files?: File[]) => {
     if (!editingTodo) return;
     await mutations.updateTodo(editingTodo.id, data, files);
     setEditingTodo(null);
-    await refreshSearch();
-  };
+    await refresh();
+  }, [editingTodo, mutations, refresh]);
 
-  const handleDeleteTodo = async (id: number) => {
+  const handleDeleteTodo = useCallback(async (id: number) => {
     await mutations.deleteTodo(id);
-    await refreshSearch();
-  };
+    await refresh();
+  }, [mutations, refresh]);
 
-  const handleToggleComplete = async (id: number) => {
+  const handleToggleComplete = useCallback(async (id: number) => {
     await mutations.toggleTodoComplete(id);
-    await refreshSearch();
-  };
+    await refresh();
+  }, [mutations, refresh]);
 
-  const handleDeleteFile = async (todoId: number, fileId: string | number) => {
+  const handleDeleteFile = useCallback(async (todoId: number, fileId: string | number) => {
     await mutations.deleteTodoFile(todoId, fileId);
-    await refreshSearch();
-  };
+    await refresh();
+  }, [mutations, refresh]);
 
   if (loading && !todos.length) {
     return (

@@ -179,27 +179,28 @@ The Rails backend provides:
 - TodoHistory model attributes: `todo_id`, `user_id`, `action`, `changes` (JSONB), `created_at`
 - User model attributes: `email`, `name`, `created_at`
 
-Frontend should make API calls to:
+Frontend makes API calls via BFF (same origin):
 
-- `http://localhost:3001/api/v1/todos` - Basic todo operations
-- `http://localhost:3001/api/v1/todos/search` - Search and filtering
-- `http://localhost:3001/api/v1/categories` - Category management
-- `http://localhost:3001/api/v1/tags` - Tag management
-- `http://localhost:3001/api/v1/todos/:id/comments` - Comment management
-- `http://localhost:3001/api/v1/todos/:id/histories` - View history
-- `http://localhost:3001/auth/*` - Authentication
+- `/api/v1/todos` - Basic todo operations (proxied to Rails)
+- `/api/v1/todos/search` - Search and filtering (proxied to Rails)
+- `/api/v1/categories` - Category management (proxied to Rails)
+- `/api/v1/tags` - Tag management (proxied to Rails)
+- `/api/v1/todos/:id/comments` - Comment management (proxied to Rails)
+- `/api/v1/todos/:id/histories` - View history (proxied to Rails)
+- `/api/auth/*` - Authentication (BFF handles token in httpOnly Cookie)
 
 ## Key Implementation Details
 
-1. **Authentication System**:
+1. **Authentication System (BFF Architecture)**:
 
-   - Devise + Devise-JWT for user authentication
-   - JWT tokens returned in Authorization header and stored in localStorage on frontend
-   - Token-based API authentication with Bearer tokens
+   - Devise + Devise-JWT for backend authentication
+   - JWT tokens managed via httpOnly Cookie (not localStorage) for XSS protection
+   - Next.js BFF (Route Handlers) proxies all API requests to Rails backend
+   - BFF extracts token from Cookie and adds Authorization header to Rails API requests
    - JWT denylist for secure logout
    - User-scoped todos (each user sees only their own todos)
 
-2. **CORS Configuration**: Backend is configured to accept requests from `localhost:3000` (frontend) with credentials support and Authorization header exposure
+2. **CORS Configuration**: Backend accepts requests from `localhost:3000` with credentials support (required for file downloads from Active Storage which bypass BFF)
 
 3. **Database Migrations**: Always run migrations after pulling new changes
 
@@ -221,13 +222,13 @@ Frontend should make API calls to:
 
 The project has successfully transitioned from Nuxt.js to Next.js and now includes full user authentication. The backend API is fully functional with complete CRUD operations, validation, and drag-and-drop reordering support. The frontend is a Next.js application with a complete todo feature implementation including:
 
-**Authentication Features**:
+**Authentication Features (BFF)**:
 
-- User registration and login
-- JWT token-based authentication
+- User registration and login via BFF endpoints
+- JWT token stored in httpOnly Cookie (XSS protection)
 - Protected routes with authentication guards
-- Persistent authentication state
-- Secure logout with token invalidation
+- Persistent authentication via server-side Cookie validation
+- Secure logout with Cookie deletion and token invalidation
 
 **Todo Features**:
 
@@ -276,6 +277,7 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 6. **Docker Dependencies**: After adding new packages to package.json or Gemfile, always rebuild the Docker image
 7. **No Nested Classes**: クラス内にクラスを定義しない（ネストしたクラスは別ファイルに分離する）
 8. **RuboCop Disable禁止**: コード内でのrubocop:disableコメントは極力使用しない。必要な場合は.rubocop.ymlで設定する
+9. **開発中のビルド禁止**: 開発中は`pnpm run build`を実行しない（型チェックは`pnpm run typecheck`で行う）
 
 ### Git Commit Best Practices
 
@@ -379,7 +381,8 @@ frontend/src/
 ├── hooks/             # ドメインに依存しない、横断的なhooks
 ├── lib/               # ライブラリの処理や標準処理を共通化したコード
 │   ├── api-client.ts     # Base HTTP client
-│   ├── auth-client.ts    # Authentication API client
+│   ├── auth/             # BFF authentication configuration
+│   │   └── config.ts     # Cookie settings and backend URL
 │   ├── constants.ts      # API endpoints and constants
 │   └── utils.ts          # Utility functions
 ├── styles/            # スタイリング（css）に関するファイル
@@ -403,9 +406,13 @@ frontend/src/
 
 ### Key Files
 
-**Authentication**:
+**Authentication (BFF)**:
 
-- `lib/auth-client.ts` - Authentication API client with login/register/logout
+- `lib/auth/config.ts` - Cookie settings and backend URL configuration
+- `app/api/auth/login/route.ts` - BFF login endpoint (sets httpOnly Cookie)
+- `app/api/auth/register/route.ts` - BFF registration endpoint
+- `app/api/auth/logout/route.ts` - BFF logout endpoint (clears Cookie)
+- `app/api/auth/me/route.ts` - BFF auth status endpoint
 - `contexts/auth-context.tsx` - Authentication context provider
 - `components/auth/login-form.tsx` - Login form component
 - `components/auth/register-form.tsx` - Registration form component
@@ -452,21 +459,21 @@ frontend/src/
 
 4. **Reusability**: Common UI components and hooks are shared across features
 
-5. **Authentication Architecture**:
+5. **Authentication Architecture (BFF)**:
 
-   - JWT token-based authentication
+   - JWT token stored in httpOnly Cookie (not accessible from JavaScript)
+   - Next.js Route Handlers act as BFF proxy for all API calls
    - Auth context for global authentication state
    - Protected routes with authentication guards
-   - Persistent authentication with localStorage
-   - Separate auth client for authentication API calls
+   - Persistent authentication via server-side Cookie validation
 
-6. **API Client Pattern**:
+6. **API Client Pattern (BFF)**:
 
-   - Base `HttpClient` provides common HTTP methods (GET, POST, PUT, PATCH, DELETE)
-   - Separate `AuthClient` for authentication operations
+   - Base `HttpClient` provides common HTTP methods with `credentials: "include"`
+   - All API calls go through BFF proxy (`/api/v1/*` Route Handlers)
    - Feature-specific API clients extend `HttpClient` and implement domain-specific methods
    - Hooks use feature API clients for data fetching and state management
-   - Automatic JWT token injection for authenticated requests
+   - BFF handles JWT token injection (client sends Cookie, BFF adds Authorization header)
 
 7. **Error Handling**: Consistent error handling with `ApiError` class and proper user feedback
 

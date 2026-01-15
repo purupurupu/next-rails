@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Calendar, Clock, Edit, Trash2, ChevronDown, ChevronUp, MessageSquare, History } from "lucide-react";
@@ -17,6 +17,60 @@ import { TagBadge } from "@/features/tag/components/TagBadge";
 import { AttachmentList } from "@/features/todo/components/AttachmentList";
 import { HighlightedText } from "@/features/todo/components/HighlightedText";
 
+// ユーティリティ関数をコンポーネント外に移動 (rendering-hoist-jsx ルール)
+// 毎回の再レンダリングで関数が再生成されるのを防ぐ
+const getPriorityColor = (priority: string) => {
+  switch (priority) {
+    case "high":
+      return "destructive";
+    case "medium":
+      return "default";
+    case "low":
+      return "secondary";
+    default:
+      return "outline";
+  }
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "completed":
+      return "default";
+    case "in_progress":
+      return "secondary";
+    case "pending":
+      return "outline";
+    default:
+      return "outline";
+  }
+};
+
+const getPriorityLabel = (priority: string) => {
+  switch (priority) {
+    case "high":
+      return "高";
+    case "medium":
+      return "中";
+    case "low":
+      return "低";
+    default:
+      return priority;
+  }
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case "completed":
+      return "完了";
+    case "in_progress":
+      return "進行中";
+    case "pending":
+      return "未着手";
+    default:
+      return status;
+  }
+};
+
 interface TodoItemProps {
   todo: Todo;
   onToggleComplete: (id: number) => void;
@@ -24,7 +78,17 @@ interface TodoItemProps {
   onDelete: (id: number) => void;
 }
 
-export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemProps) {
+/**
+ * Todoアイテムコンポーネント (rerender-memo ルール適用)
+ *
+ * memo化によりリスト内での不要な再レンダリングを防止
+ */
+export const TodoItem = memo(function TodoItem({
+  todo,
+  onToggleComplete,
+  onEdit,
+  onDelete,
+}: TodoItemProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
 
@@ -34,58 +98,6 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
       onDelete(todo.id);
     } finally {
       setIsDeleting(false);
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "destructive";
-      case "medium":
-        return "default";
-      case "low":
-        return "secondary";
-      default:
-        return "outline";
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "default";
-      case "in_progress":
-        return "secondary";
-      case "pending":
-        return "outline";
-      default:
-        return "outline";
-    }
-  };
-
-  const getPriorityLabel = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "高";
-      case "medium":
-        return "中";
-      case "low":
-        return "低";
-      default:
-        return priority;
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "完了";
-      case "in_progress":
-        return "進行中";
-      case "pending":
-        return "未着手";
-      default:
-        return status;
     }
   };
 
@@ -276,4 +288,4 @@ export function TodoItem({ todo, onToggleComplete, onEdit, onDelete }: TodoItemP
       </CardContent>
     </Card>
   );
-}
+});

@@ -13,6 +13,16 @@ class Users::SessionsController < Devise::SessionsController
     render_error_response(error: error, status: :unauthorized)
   end
 
+  # GET /auth/me - 現在の認証済みユーザー情報を返す
+  def show
+    if current_user
+      success_response(message: 'Authenticated.', data: user_data(current_user))
+    else
+      error = ::AuthenticationError.new('Not authenticated')
+      render_error_response(error: error, status: :unauthorized)
+    end
+  end
+
   private
 
   def respond_with(resource, _opts = {})

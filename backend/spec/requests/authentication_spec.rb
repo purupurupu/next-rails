@@ -223,6 +223,58 @@ RSpec.describe 'Authentication', type: :request do
     end
   end
 
+  describe 'GET /auth/me' do
+    let!(:user) { create(:user, email: 'me@example.com', name: 'Me User') }
+
+    context 'with valid token' do
+      it 'returns current user information' do
+        post '/auth/sign_in', params: { user: { email: user.email, password: user.password } }, as: :json, headers: headers
+        auth_token = response.headers['Authorization']
+
+        get '/auth/me', headers: headers.merge({ 'Authorization' => auth_token }), as: :json
+
+        expect(response).to have_http_status(:ok)
+
+        json_response = response.parsed_body
+        expect(json_response['status']['code']).to eq(200)
+        expect(json_response['data']['id']).to eq(user.id)
+        expect(json_response['data']['email']).to eq('me@example.com')
+        expect(json_response['data']['name']).to eq('Me User')
+      end
+    end
+
+    context 'without token' do
+      it 'returns unauthorized response' do
+        get '/auth/me', as: :json, headers: headers
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'with invalid token' do
+      it 'returns unauthorized response' do
+        get '/auth/me', headers: headers.merge({ 'Authorization' => 'Bearer invalid_token' }), as: :json
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'with revoked token' do
+      it 'returns unauthorized response' do
+        post '/auth/sign_in', params: { user: { email: user.email, password: user.password } }, as: :json, headers: headers
+        auth_token = response.headers['Authorization']
+
+        # Sign out (revoke token)
+        delete '/auth/sign_out', headers: headers.merge({ 'Authorization' => auth_token }), as: :json
+
+        # Try to access /auth/me with revoked token
+        get '/auth/me', headers: headers.merge({ 'Authorization' => auth_token }), as: :json
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
   describe 'JWT Token Flow' do
     let!(:user) { create(:user) }
 

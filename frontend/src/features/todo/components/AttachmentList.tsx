@@ -54,8 +54,10 @@ export function AttachmentList({
     try {
       setDownloadingIds((prev) => new Set(prev).add(file.id));
 
-      // Use the file URL directly for download
-      const response = await fetch(file.url);
+      // Use the file URL directly for download with cookie authentication
+      const response = await fetch(file.url, {
+        credentials: "include",
+      });
       const blob = await response.blob();
 
       // Create a download link
