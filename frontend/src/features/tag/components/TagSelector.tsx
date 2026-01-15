@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -33,10 +33,19 @@ export function TagSelector({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const selectedTags = tags?.filter((tag) => selectedTagIds.includes(tag.id)) || [];
+  // js-set-map-lookups: O(1)ルックアップのためSetを使用
+  const selectedTagIdsSet = useMemo(
+    () => new Set(selectedTagIds),
+    [selectedTagIds],
+  );
+
+  const selectedTags = useMemo(
+    () => tags?.filter((tag) => selectedTagIdsSet.has(tag.id)) || [],
+    [tags, selectedTagIdsSet],
+  );
 
   const toggleTag = (tagId: number) => {
-    if (selectedTagIds.includes(tagId)) {
+    if (selectedTagIdsSet.has(tagId)) {
       onSelectionChange(selectedTagIds.filter((id) => id !== tagId));
     } else {
       onSelectionChange([...selectedTagIds, tagId]);
@@ -112,7 +121,7 @@ export function TagSelector({
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0",
+                            selectedTagIdsSet.has(tag.id) ? "opacity-100" : "opacity-0",
                           )}
                         />
                         <TagBadge

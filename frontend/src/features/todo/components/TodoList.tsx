@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -31,12 +31,19 @@ export function TodoList() {
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 
-  // Calculate counts based on all todos (not filtered)
-  const counts = {
-    all: allTodos.length,
-    active: allTodos.filter((todo) => !todo.completed).length,
-    completed: allTodos.filter((todo) => todo.completed).length,
-  };
+  // js-combine-iterations: 複数のfilter()を1ループに統合
+  const counts = useMemo(() => {
+    let active = 0;
+    let completed = 0;
+    for (const todo of allTodos) {
+      if (todo.completed) {
+        completed++;
+      } else {
+        active++;
+      }
+    }
+    return { all: allTodos.length, active, completed };
+  }, [allTodos]);
 
   const handleCreateTodo = async (data: CreateTodoData, files?: File[]) => {
     await createTodo(data, files);
