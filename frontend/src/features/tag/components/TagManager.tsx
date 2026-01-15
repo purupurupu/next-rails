@@ -65,38 +65,40 @@ export function TagManager() {
       </div>
 
       <div className="space-y-2">
-        {tags.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            タグがありません。最初のタグを作成しましょう！
-          </p>
-        ) : (
-          <div className="grid gap-2">
-            {tags.map((tag) => (
-              <div
-                key={tag.id}
-                className="flex items-center justify-between rounded-lg border p-3"
-              >
-                <TagBadge name={tag.name} color={tag.color} />
-                <div className="flex gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setEditingTag(tag)}
+        {tags.length === 0
+          ? (
+              <p className="text-sm text-muted-foreground">
+                タグがありません。最初のタグを作成しましょう！
+              </p>
+            )
+          : (
+              <div className="grid gap-2">
+                {tags.map((tag) => (
+                  <div
+                    key={tag.id}
+                    className="flex items-center justify-between rounded-lg border p-3"
                   >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setDeletingTag(tag)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                    <TagBadge name={tag.name} color={tag.color} />
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEditingTag(tag)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setDeletingTag(tag)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
       </div>
 
       {/* 作成ダイアログ */}
@@ -142,7 +144,8 @@ export function TagManager() {
           <AlertDialogHeader>
             <AlertDialogTitle>タグを削除</AlertDialogTitle>
             <AlertDialogDescription>
-              タグ「{deletingTag?.name}
+              タグ「
+              {deletingTag?.name}
               」を削除してもよろしいですか？このタグはすべてのTodoから削除されます。
             </AlertDialogDescription>
           </AlertDialogHeader>
