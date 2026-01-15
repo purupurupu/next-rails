@@ -35,4 +35,5 @@ export const AUTH_ENDPOINTS = {
   SIGN_IN: "/auth/sign_in",
   SIGN_UP: "/auth/sign_up",
   SIGN_OUT: "/auth/sign_out",
+  ME: "/auth/me",
 } as const;

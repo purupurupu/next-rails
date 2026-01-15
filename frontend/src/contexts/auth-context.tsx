@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { AUTH_CONFIG } from "@/lib/auth/config";
 import type { User, LoginRequest, RegisterRequest } from "@/types/auth";
 
 interface AuthContextType {
@@ -15,25 +14,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Cookie からユーザー情報を取得するヘルパー
-function getUserFromCookie(): User | null {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const cookies = document.cookie.split("; ");
-    const userCookie = cookies.find((c) =>
-      c.startsWith(`${AUTH_CONFIG.USER_COOKIE_NAME}=`),
-    );
-    if (userCookie) {
-      const value = decodeURIComponent(userCookie.split("=")[1]);
-      return JSON.parse(value);
-    }
-  } catch {
-    return null;
-  }
-  return null;
-}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -54,13 +34,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // 初期化時にCookieからユーザー情報を取得
-    const userFromCookie = getUserFromCookie();
-    if (userFromCookie) {
-      setUser(userFromCookie);
-    }
-    setIsLoading(false);
-  }, []);
+    // 初期化時にサーバー側でトークンを検証
+    refreshAuth().finally(() => setIsLoading(false));
+  }, [refreshAuth]);
 
   const login = async (credentials: LoginRequest) => {
     setIsLoading(true);
