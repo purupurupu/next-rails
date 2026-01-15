@@ -15,6 +15,13 @@ export const API_ENDPOINTS = {
   CATEGORY_BY_ID: (id: number) => `/api/v1/categories/${id}`,
   TAGS: "/api/v1/tags",
   TAG_BY_ID: (id: number) => `/api/v1/tags/${id}`,
+  // Comment endpoints
+  TODO_COMMENTS: (todoId: number) => `/api/v1/todos/${todoId}/comments`,
+  TODO_COMMENT_BY_ID: (todoId: number, commentId: number) =>
+    `/api/v1/todos/${todoId}/comments/${commentId}`,
+  // History endpoints
+  TODO_HISTORIES: (todoId: number) => `/api/v1/todos/${todoId}/histories`,
+  // Notes endpoints
   NOTES: "/api/v1/notes",
   NOTE_BY_ID: (id: number) => `/api/v1/notes/${id}`,
   NOTE_REVISIONS: (noteId: number) => `/api/v1/notes/${noteId}/revisions`,

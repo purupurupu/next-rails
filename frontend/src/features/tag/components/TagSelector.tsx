@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -27,16 +27,25 @@ export function TagSelector({
   selectedTagIds,
   onSelectionChange,
   onCreateTag,
-  placeholder = "Select tags...",
+  placeholder = "タグを選択...",
   className,
 }: TagSelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const selectedTags = tags?.filter((tag) => selectedTagIds.includes(tag.id)) || [];
+  // js-set-map-lookups: O(1)ルックアップのためSetを使用
+  const selectedTagIdsSet = useMemo(
+    () => new Set(selectedTagIds),
+    [selectedTagIds],
+  );
+
+  const selectedTags = useMemo(
+    () => tags?.filter((tag) => selectedTagIdsSet.has(tag.id)) || [],
+    [tags, selectedTagIdsSet],
+  );
 
   const toggleTag = (tagId: number) => {
-    if (selectedTagIds.includes(tagId)) {
+    if (selectedTagIdsSet.has(tagId)) {
       onSelectionChange(selectedTagIds.filter((id) => id !== tagId));
     } else {
       onSelectionChange([...selectedTagIds, tagId]);
@@ -59,7 +68,7 @@ export function TagSelector({
           >
             <span className="truncate">
               {selectedTags.length > 0
-                ? `${selectedTags.length} tag${selectedTags.length > 1 ? "s" : ""} selected`
+                ? `${selectedTags.length}件選択中`
                 : placeholder}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -68,7 +77,7 @@ export function TagSelector({
         <PopoverContent className="w-full p-2">
           <div className="space-y-2">
             <Input
-              placeholder="Search tags..."
+              placeholder="タグを検索..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full"
@@ -82,7 +91,7 @@ export function TagSelector({
                 if (filteredTags.length === 0) {
                   return (
                     <div className="p-4 text-center text-sm text-muted-foreground">
-                      No tags found.
+                      タグが見つかりません
                       {onCreateTag && (
                         <Button
                           size="sm"
@@ -94,7 +103,7 @@ export function TagSelector({
                           className="mt-2 w-full"
                         >
                           <Plus className="mr-2 h-4 w-4" />
-                          Create new tag
+                          新規タグを作成
                         </Button>
                       )}
                     </div>
@@ -112,7 +121,7 @@ export function TagSelector({
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0",
+                            selectedTagIdsSet.has(tag.id) ? "opacity-100" : "opacity-0",
                           )}
                         />
                         <TagBadge

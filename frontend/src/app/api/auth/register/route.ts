@@ -20,18 +20,18 @@ export async function POST(request: NextRequest) {
       },
     );
 
+    // async-api-routes: response.json()は1回のみ呼び出し
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
         {
-          error: errorData.status?.message || "登録に失敗しました",
-          details: errorData.error?.details,
+          error: data.status?.message || "登録に失敗しました",
+          details: data.error?.details,
         },
         { status: response.status },
       );
     }
-
-    const data = await response.json();
     const authHeader = response.headers.get("Authorization");
 
     if (!authHeader) {

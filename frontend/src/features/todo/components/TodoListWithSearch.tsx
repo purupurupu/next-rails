@@ -27,9 +27,27 @@ const AdvancedFilters = dynamic(
   { ssr: false },
 );
 
-import type { Todo, CreateTodoData, UpdateTodoData } from "../types/todo";
+import type { Todo, CreateTodoData, UpdateTodoData, TodoSearchResponse } from "../types/todo";
+import type { Category } from "@/features/category/types/category";
+import type { Tag } from "@/features/tag/types/tag";
 
-export function TodoListWithSearch() {
+/**
+ * Props for TodoListWithSearch
+ * initialData can be provided from Server Component for SSR
+ */
+interface TodoListWithSearchProps {
+  initialTodos?: Todo[];
+  initialCategories?: Category[];
+  initialTags?: Tag[];
+  initialSearchResponse?: TodoSearchResponse | null;
+}
+
+export function TodoListWithSearch({
+  initialTodos,
+  initialCategories,
+  initialTags,
+  initialSearchResponse,
+}: TodoListWithSearchProps = {}) {
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 
@@ -53,6 +71,7 @@ export function TodoListWithSearch() {
   // 並列データフェッチ (async-parallel ルール適用)
   // useTodoSearch, useCategories, useTags を統合し、
   // Promise.all() で並列実行することでWaterfallsを解消
+  // SSR時はinitialDataを使用してFirst Contentful Paintを高速化
   const {
     todos,
     loading,
@@ -61,7 +80,12 @@ export function TodoListWithSearch() {
     categories,
     tags,
     refresh,
-  } = useTodoListData(searchParams);
+  } = useTodoListData(searchParams, {
+    initialTodos,
+    initialCategories,
+    initialTags,
+    initialSearchResponse,
+  });
 
   // Todo mutations
   const mutations = useTodoMutations({

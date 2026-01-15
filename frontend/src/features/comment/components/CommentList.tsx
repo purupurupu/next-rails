@@ -52,14 +52,17 @@ export function CommentList({ todoId }: CommentListProps) {
                     )
                   : (
                       <div className="space-y-4 mb-4">
-                        {Array.isArray(comments) && comments.map((comment) => (
-                          <CommentItem
-                            key={comment.id}
-                            comment={comment}
-                            onUpdate={handleUpdateComment}
-                            onDelete={deleteComment}
-                          />
-                        ))}
+                        {/* rendering-conditional-render: &&ではなく三項演算子を使用 */}
+                        {Array.isArray(comments)
+                          ? comments.map((comment) => (
+                              <CommentItem
+                                key={comment.id}
+                                comment={comment}
+                                onUpdate={handleUpdateComment}
+                                onDelete={deleteComment}
+                              />
+                            ))
+                          : null}
                       </div>
                     )}
 

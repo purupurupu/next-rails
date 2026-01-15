@@ -43,15 +43,21 @@ export function applyOptimisticUpdate(
 
 /**
  * Applies optimistic order update to todo list
+ * js-index-maps: Map構築でO(n²)→O(n log n)に最適化
  */
 export function applyOptimisticOrder(
   todos: Todo[],
   reorderedTodos: UpdateOrderData[],
 ): Todo[] {
+  // Map構築 O(n)
+  const orderMap = new Map(
+    reorderedTodos.map((item) => [item.id, item.position]),
+  );
+  // ソート O(n log n)
   return [...todos].sort((a, b) => {
-    const aData = reorderedTodos.find((item) => item.id === a.id);
-    const bData = reorderedTodos.find((item) => item.id === b.id);
-    return (aData?.position || 0) - (bData?.position || 0);
+    const aPos = orderMap.get(a.id) ?? 0;
+    const bPos = orderMap.get(b.id) ?? 0;
+    return aPos - bPos;
   });
 }
 

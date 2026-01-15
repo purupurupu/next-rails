@@ -8,7 +8,7 @@ export class TagApiClient extends HttpClient {
   }
 
   async getTag(id: number): Promise<Tag> {
-    return this.get<Tag>(`${API_ENDPOINTS.TAGS}/${id}`);
+    return this.get<Tag>(API_ENDPOINTS.TAG_BY_ID(id));
   }
 
   async createTag(data: CreateTagData): Promise<Tag> {
@@ -16,11 +16,11 @@ export class TagApiClient extends HttpClient {
   }
 
   async updateTag(id: number, data: UpdateTagData): Promise<Tag> {
-    return this.patch<Tag>(`${API_ENDPOINTS.TAGS}/${id}`, { tag: data });
+    return this.patch<Tag>(API_ENDPOINTS.TAG_BY_ID(id), { tag: data });
   }
 
   async deleteTag(id: number): Promise<void> {
-    return this.delete(`${API_ENDPOINTS.TAGS}/${id}`);
+    return this.delete(API_ENDPOINTS.TAG_BY_ID(id));
   }
 }
 

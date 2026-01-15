@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ChevronDown, ChevronUp, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -61,11 +61,21 @@ export function AdvancedFilters({
 }: AdvancedFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Extract current values
-  const currentStatus = Array.isArray(searchParams.status) ? searchParams.status : searchParams.status ? [searchParams.status] : [];
-  const currentPriority = Array.isArray(searchParams.priority) ? searchParams.priority : searchParams.priority ? [searchParams.priority] : [];
+  // Extract current values with useMemo for stable references
+  const currentStatus = useMemo(
+    () => Array.isArray(searchParams.status) ? searchParams.status : searchParams.status ? [searchParams.status] : [],
+    [searchParams.status],
+  );
+  const currentPriority = useMemo(
+    () => Array.isArray(searchParams.priority) ? searchParams.priority : searchParams.priority ? [searchParams.priority] : [],
+    [searchParams.priority],
+  );
   const currentTagIds = searchParams.tag_ids || [];
   const currentTagMode = searchParams.tag_mode || "any";
+
+  // js-set-map-lookups: O(1)ルックアップのためSetを使用
+  const currentStatusSet = useMemo(() => new Set(currentStatus), [currentStatus]);
+  const currentPrioritySet = useMemo(() => new Set(currentPriority), [currentPriority]);
 
   const handleStatusChange = (status: TodoStatus, checked: boolean) => {
     const newStatus = checked
@@ -151,7 +161,7 @@ export function AdvancedFilters({
                 <div key={option.value} className="flex items-center space-x-2">
                   <Checkbox
                     id={`status-${option.value}`}
-                    checked={currentStatus.includes(option.value)}
+                    checked={currentStatusSet.has(option.value)}
                     onCheckedChange={(checked) => handleStatusChange(option.value, checked as boolean)}
                   />
                   <Label
@@ -173,7 +183,7 @@ export function AdvancedFilters({
                 <div key={option.value} className="flex items-center space-x-2">
                   <Checkbox
                     id={`priority-${option.value}`}
-                    checked={currentPriority.includes(option.value)}
+                    checked={currentPrioritySet.has(option.value)}
                     onCheckedChange={(checked) => handlePriorityChange(option.value, checked as boolean)}
                   />
                   <Label

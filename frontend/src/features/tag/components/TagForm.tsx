@@ -24,11 +24,19 @@ interface TagFormProps {
   submitLabel?: string;
 }
 
+/**
+ * タグ作成・編集フォーム
+ *
+ * @param onSubmit - フォーム送信時のコールバック
+ * @param onCancel - キャンセル時のコールバック
+ * @param initialData - 編集時の初期データ
+ * @param submitLabel - 送信ボタンのラベル
+ */
 export function TagForm({
   onSubmit,
   onCancel,
   initialData,
-  submitLabel = "Create Tag",
+  submitLabel = "作成",
 }: TagFormProps) {
   const [name, setName] = useState(initialData?.name || "");
   const [color, setColor] = useState(initialData?.color || DEFAULT_COLORS[0]);
@@ -49,13 +57,13 @@ export function TagForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="tag-name">Tag Name</Label>
+        <Label htmlFor="tag-name">タグ名</Label>
         <Input
           id="tag-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Enter tag name"
+          placeholder="タグ名を入力"
           required
           maxLength={30}
           disabled={isSubmitting}
@@ -63,7 +71,7 @@ export function TagForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="tag-color">Color</Label>
+        <Label htmlFor="tag-color">色</Label>
         <div className="flex items-center gap-2">
           <Input
             id="tag-color"
@@ -81,7 +89,7 @@ export function TagForm({
                 onClick={() => setColor(defaultColor)}
                 className="h-8 w-8 rounded border-2 border-transparent hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2"
                 style={{ backgroundColor: defaultColor }}
-                aria-label={`Select color ${defaultColor}`}
+                aria-label={`色 ${defaultColor} を選択`}
                 disabled={isSubmitting}
               />
             ))}
@@ -96,10 +104,10 @@ export function TagForm({
           onClick={onCancel}
           disabled={isSubmitting}
         >
-          Cancel
+          キャンセル
         </Button>
         <Button type="submit" disabled={isSubmitting || !name.trim()}>
-          {isSubmitting ? "Saving..." : submitLabel}
+          {isSubmitting ? "保存中..." : submitLabel}
         </Button>
       </div>
     </form>

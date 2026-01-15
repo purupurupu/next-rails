@@ -1,8 +1,7 @@
-import { useEffect } from "react";
-import { useTodosState } from "./useTodosState";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useTodoMutations } from "./useTodoMutations";
-import { useTodosFilter } from "./useTodosFilter";
 import type { Todo, CreateTodoData, UpdateTodoData, UpdateOrderData, TodoFilter } from "../types/todo";
+import { TODO_FILTERS } from "@/lib/constants";
 
 interface UseTodosReturn {
   // State
@@ -30,19 +29,15 @@ interface UseTodosReturn {
 /**
  * Main todos hook that combines all todo-related functionality
  * Integrates: state management, CRUD operations, filtering, and initial loading
+ *
+ * Refactored to integrate useTodosState and useTodosFilter directly
  */
 export function useTodos(): UseTodosReturn {
-  // State management
-  const {
-    allTodos,
-    loading,
-    error,
-    filter,
-    setAllTodos,
-    setLoading,
-    setError,
-    setFilter,
-  } = useTodosState();
+  // State management (integrated from useTodosState)
+  const [allTodos, setAllTodos] = useState<Todo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<TodoFilter>(TODO_FILTERS.ALL);
 
   // CRUD operations with optimistic updates
   const mutations = useTodoMutations({
@@ -51,24 +46,52 @@ export function useTodos(): UseTodosReturn {
     setError,
   });
 
-  // Filtering and counts
-  const { todos, counts } = useTodosFilter({ allTodos, filter });
+  // Filtering (integrated from useTodosFilter)
+  const todos = useMemo(() => {
+    return allTodos.filter((todo) => {
+      switch (filter) {
+        case TODO_FILTERS.ACTIVE:
+          return !todo.completed;
+        case TODO_FILTERS.COMPLETED:
+          return todo.completed;
+        default:
+          return true;
+      }
+    });
+  }, [allTodos, filter]);
+
+  // Calculate counts (integrated from useTodosFilter)
+  const counts = useMemo(() => {
+    let active = 0;
+    let completed = 0;
+    for (const todo of allTodos) {
+      if (todo.completed) {
+        completed++;
+      } else {
+        active++;
+      }
+    }
+    return { all: allTodos.length, active, completed };
+  }, [allTodos]);
 
   // Enhanced refresh function with loading state
-  const refreshTodos = async () => {
+  const refreshTodos = useCallback(async () => {
     setLoading(true);
     try {
       await mutations.refreshTodos();
     } finally {
       setLoading(false);
     }
-  };
+  }, [mutations]);
 
-  // Initial load
+  // Initial load with useRef pattern (eliminates eslint-disable)
+  const didInit = useRef(false);
   useEffect(() => {
-    refreshTodos();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // We want this to run only once on mount
+    if (!didInit.current) {
+      didInit.current = true;
+      refreshTodos();
+    }
+  }, [refreshTodos]);
 
   return {
     // State

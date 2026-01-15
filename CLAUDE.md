@@ -278,6 +278,43 @@ The project has successfully transitioned from Nuxt.js to Next.js and now includ
 7. **No Nested Classes**: クラス内にクラスを定義しない（ネストしたクラスは別ファイルに分離する）
 8. **RuboCop Disable禁止**: コード内でのrubocop:disableコメントは極力使用しない。必要な場合は.rubocop.ymlで設定する
 9. **開発中のビルド禁止**: 開発中は`pnpm run build`を実行しない（型チェックは`pnpm run typecheck`で行う）
+10. **TSDoc**: TypeScriptのドキュメントコメントはTSDoc形式で記述する
+
+### TSDoc Guidelines
+
+TypeScriptコードのドキュメントコメントは[TSDoc](https://tsdoc.org/)形式で記述してください。
+
+**基本的なTSDocタグ**:
+
+```typescript
+/**
+ * 関数やクラスの説明を記述
+ *
+ * @param paramName - パラメータの説明
+ * @returns 戻り値の説明
+ * @throws エラーが発生する条件
+ * @example
+ * ```typescript
+ * const result = myFunction("test");
+ * ```
+ */
+```
+
+**使用するタグ**:
+
+- `@param` - 関数のパラメータを説明
+- `@returns` - 戻り値を説明
+- `@throws` - スローされる可能性のあるエラーを説明
+- `@example` - 使用例を示す
+- `@remarks` - 追加の詳細情報
+- `@see` - 関連するドキュメントへの参照
+- `@deprecated` - 非推奨であることを示す
+
+**ドキュメント対象**:
+
+- エクスポートされる関数、クラス、インターフェース、型
+- 複雑なロジックを持つ内部関数
+- 公開APIとなるhooks
 
 ### Git Commit Best Practices
 

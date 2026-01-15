@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -63,13 +63,28 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit, onFileDelet
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
 
+  // js-index-maps: カテゴリをMapで索引化してO(1)ルックアップ
+  const categoryMap = useMemo(
+    () => new Map(categories.map((c) => [c.id, c])),
+    [categories],
+  );
+  const selectedCategory = categoryId ? categoryMap.get(categoryId) : undefined;
+
+  // advanced-event-handler-refs: コールバックをrefで安定化
+  const fetchCategoriesRef = useRef(fetchCategories);
+  const fetchTagsRef = useRef(fetchTags);
+  useEffect(() => {
+    fetchCategoriesRef.current = fetchCategories;
+    fetchTagsRef.current = fetchTags;
+  }, [fetchCategories, fetchTags]);
+
   // Fetch categories and tags when form opens
   useEffect(() => {
     if (open) {
-      fetchCategories();
-      fetchTags();
+      fetchCategoriesRef.current();
+      fetchTagsRef.current();
     }
-  }, [open, fetchCategories, fetchTags]);
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -196,14 +211,14 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit, onFileDelet
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="カテゴリーを選択">
-                    {categoryId
+                    {selectedCategory
                       ? (
                           <div className="flex items-center gap-2">
                             <div
                               className="h-3 w-3 rounded"
-                              style={{ backgroundColor: categories.find((c) => c.id === categoryId)?.color }}
+                              style={{ backgroundColor: selectedCategory.color }}
                             />
-                            {categories.find((c) => c.id === categoryId)?.name}
+                            {selectedCategory.name}
                           </div>
                         )
                       : (
