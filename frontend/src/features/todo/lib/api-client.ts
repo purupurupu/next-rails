@@ -152,11 +152,8 @@ class TodoApiClient extends HttpClient {
   }
 
   async downloadFile(url: string): Promise<Blob> {
-    // For file downloads, we need to handle the response differently
-    const token = localStorage.getItem("authToken");
-
+    // BFF経由で認証されるため、Cookieを自動送信
     const response = await fetch(url, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
       credentials: "include",
     });
 
