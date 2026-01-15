@@ -70,32 +70,34 @@ export function TodoListWithSearch() {
     setError: () => {},
   });
 
-  const handleCreateTodo = async (data: CreateTodoData, files?: File[]) => {
+  // ハンドラー関数を useCallback でラップ (rerender-functional-setstate ルール)
+  // 安定したコールバック参照で子コンポーネント (TodoItem) の再レンダリングを防止
+  const handleCreateTodo = useCallback(async (data: CreateTodoData, files?: File[]) => {
     await mutations.createTodo(data, files);
     await refresh();
-  };
+  }, [mutations, refresh]);
 
-  const handleUpdateTodo = async (data: UpdateTodoData, files?: File[]) => {
+  const handleUpdateTodo = useCallback(async (data: UpdateTodoData, files?: File[]) => {
     if (!editingTodo) return;
     await mutations.updateTodo(editingTodo.id, data, files);
     setEditingTodo(null);
     await refresh();
-  };
+  }, [editingTodo, mutations, refresh]);
 
-  const handleDeleteTodo = async (id: number) => {
+  const handleDeleteTodo = useCallback(async (id: number) => {
     await mutations.deleteTodo(id);
     await refresh();
-  };
+  }, [mutations, refresh]);
 
-  const handleToggleComplete = async (id: number) => {
+  const handleToggleComplete = useCallback(async (id: number) => {
     await mutations.toggleTodoComplete(id);
     await refresh();
-  };
+  }, [mutations, refresh]);
 
-  const handleDeleteFile = async (todoId: number, fileId: string | number) => {
+  const handleDeleteFile = useCallback(async (todoId: number, fileId: string | number) => {
     await mutations.deleteTodoFile(todoId, fileId);
     await refresh();
-  };
+  }, [mutations, refresh]);
 
   if (loading && !todos.length) {
     return (
