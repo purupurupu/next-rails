@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -13,10 +14,20 @@ import { useCategories } from "@/features/category/hooks/useCategories";
 import { useTags } from "@/features/tag/hooks/useTags";
 
 import { TodoItem } from "./TodoItem";
-import { TodoForm } from "./TodoForm";
 import { SearchBar } from "./SearchBar";
-import { AdvancedFilters } from "./AdvancedFilters";
 import { FilterBadges } from "./FilterBadges";
+
+// モーダル内で使用されるため遅延ロード (bundle-dynamic-imports)
+const TodoForm = dynamic(
+  () => import("./TodoForm").then((m) => m.TodoForm),
+  { ssr: false }
+);
+
+// Collapsible内で使用されるため遅延ロード (bundle-dynamic-imports)
+const AdvancedFilters = dynamic(
+  () => import("./AdvancedFilters").then((m) => m.AdvancedFilters),
+  { ssr: false }
+);
 
 import type { Todo, CreateTodoData, UpdateTodoData } from "../types/todo";
 
