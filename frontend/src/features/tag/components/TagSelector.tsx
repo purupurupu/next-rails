@@ -27,7 +27,7 @@ export function TagSelector({
   selectedTagIds,
   onSelectionChange,
   onCreateTag,
-  placeholder = "Select tags...",
+  placeholder = "タグを選択...",
   className,
 }: TagSelectorProps) {
   const [open, setOpen] = useState(false);
@@ -59,7 +59,7 @@ export function TagSelector({
           >
             <span className="truncate">
               {selectedTags.length > 0
-                ? `${selectedTags.length} tag${selectedTags.length > 1 ? "s" : ""} selected`
+                ? `${selectedTags.length}件選択中`
                 : placeholder}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -68,7 +68,7 @@ export function TagSelector({
         <PopoverContent className="w-full p-2">
           <div className="space-y-2">
             <Input
-              placeholder="Search tags..."
+              placeholder="タグを検索..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full"
@@ -82,7 +82,7 @@ export function TagSelector({
                 if (filteredTags.length === 0) {
                   return (
                     <div className="p-4 text-center text-sm text-muted-foreground">
-                      No tags found.
+                      タグが見つかりません
                       {onCreateTag && (
                         <Button
                           size="sm"
@@ -94,7 +94,7 @@ export function TagSelector({
                           className="mt-2 w-full"
                         >
                           <Plus className="mr-2 h-4 w-4" />
-                          Create new tag
+                          新規タグを作成
                         </Button>
                       )}
                     </div>
