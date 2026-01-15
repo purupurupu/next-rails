@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { serverGet } from "@/lib/server/api-client";
 import type { Todo, TodoSearchResponse } from "../types/todo";
 import type { Category } from "@/features/category/types/category";
@@ -21,6 +22,22 @@ interface ApiListResponse<T> {
 }
 
 /**
+ * server-cache-react: React.cache()でリクエスト内重複排除
+ * 同一リクエスト内で複数回呼ばれても1回のみフェッチ
+ */
+const getCachedTodosSearch = cache(async () => {
+  return serverGet<TodoSearchResponse>("/api/v1/todos/search");
+});
+
+const getCachedCategories = cache(async () => {
+  return serverGet<ApiListResponse<Category>>("/api/v1/categories");
+});
+
+const getCachedTags = cache(async () => {
+  return serverGet<ApiListResponse<Tag>>("/api/v1/tags");
+});
+
+/**
  * Fetch initial todo data from server
  * Used in Server Components for SSR
  *
@@ -28,11 +45,11 @@ interface ApiListResponse<T> {
  */
 export async function fetchInitialTodoData(): Promise<InitialTodoData> {
   try {
-    // Promise.all for parallel fetching
+    // Promise.all for parallel fetching with React.cache() deduplication
     const [searchResult, categoriesResult, tagsResult] = await Promise.all([
-      serverGet<TodoSearchResponse>("/api/v1/todos/search"),
-      serverGet<ApiListResponse<Category>>("/api/v1/categories"),
-      serverGet<ApiListResponse<Tag>>("/api/v1/tags"),
+      getCachedTodosSearch(),
+      getCachedCategories(),
+      getCachedTags(),
     ]);
 
     // Parse search result
@@ -75,11 +92,11 @@ export async function fetchInitialTodoData(): Promise<InitialTodoData> {
 }
 
 /**
- * Fetch categories from server
+ * Fetch categories from server (with React.cache() deduplication)
  */
 export async function fetchCategories(): Promise<Category[]> {
   try {
-    const result = await serverGet<ApiListResponse<Category>>("/api/v1/categories");
+    const result = await getCachedCategories();
     return result?.data || [];
   } catch (error) {
     console.error("Failed to fetch categories:", error);
@@ -88,11 +105,11 @@ export async function fetchCategories(): Promise<Category[]> {
 }
 
 /**
- * Fetch tags from server
+ * Fetch tags from server (with React.cache() deduplication)
  */
 export async function fetchTags(): Promise<Tag[]> {
   try {
-    const result = await serverGet<ApiListResponse<Tag>>("/api/v1/tags");
+    const result = await getCachedTags();
     return result?.data || [];
   } catch (error) {
     console.error("Failed to fetch tags:", error);
