@@ -24,18 +24,36 @@ interface UseTodoListDataReturn extends TodoListData {
 }
 
 /**
+ * Options for useTodoListData
+ * Can provide initial data from Server Component for SSR
+ */
+interface UseTodoListDataOptions {
+  initialTodos?: Todo[];
+  initialCategories?: Category[];
+  initialTags?: Tag[];
+  initialSearchResponse?: TodoSearchResponse | null;
+}
+
+/**
  * 並列データフェッチ hook (async-parallel ルール適用)
  *
  * useTodoSearch, useCategories, useTags を統合し、
  * Promise.all() で並列実行することでWaterfallsを解消
+ *
+ * Supports initial data from Server Component for SSR
  */
-export function useTodoListData(searchParams: TodoSearchParams): UseTodoListDataReturn {
+export function useTodoListData(
+  searchParams: TodoSearchParams,
+  options: UseTodoListDataOptions = {},
+): UseTodoListDataReturn {
+  const hasInitialData = options.initialTodos !== undefined && options.initialTodos.length > 0;
+
   const [data, setData] = useState<TodoListData>({
-    todos: [],
-    searchResponse: null,
-    categories: [],
-    tags: [],
-    loading: true,
+    todos: options.initialTodos ?? [],
+    searchResponse: options.initialSearchResponse ?? null,
+    categories: options.initialCategories ?? [],
+    tags: options.initialTags ?? [],
+    loading: !hasInitialData,
     error: null,
   });
 
@@ -48,14 +66,15 @@ export function useTodoListData(searchParams: TodoSearchParams): UseTodoListData
     q: debouncedSearchQuery,
   }), [searchParams, debouncedSearchQuery]);
 
-  const fetchAll = useCallback(async () => {
+  // fetchAll receives params as argument to avoid dependency issues
+  const fetchAll = useCallback(async (params: TodoSearchParams) => {
     setData((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
       // Promise.all で並列実行 (async-parallel ルール)
       // 3つの独立したAPIコールを同時に開始
       const [searchResult, categoriesResult, tagsResult] = await Promise.all([
-        todoApiClient.searchTodos(debouncedSearchParams),
+        todoApiClient.searchTodos(params),
         categoryApiClient.getCategories(),
         tagApiClient.getTags(),
       ]);
@@ -74,7 +93,7 @@ export function useTodoListData(searchParams: TodoSearchParams): UseTodoListData
             current_page: 1,
             total_pages: 1,
             per_page: searchResult.length,
-            search_query: debouncedSearchParams.q,
+            search_query: params.q,
             filters_applied: {},
           },
           suggestions: [],
@@ -89,7 +108,7 @@ export function useTodoListData(searchParams: TodoSearchParams): UseTodoListData
             current_page: 1,
             total_pages: 1,
             per_page: todos.length,
-            search_query: debouncedSearchParams.q,
+            search_query: params.q,
             filters_applied: {},
           },
           suggestions: searchResult.suggestions || [],
@@ -122,7 +141,7 @@ export function useTodoListData(searchParams: TodoSearchParams): UseTodoListData
       }));
       toast.error(errorMessage);
     }
-  }, [debouncedSearchParams]);
+  }, []);
 
   // Automatically fetch when params change
   useEffect(() => {
@@ -131,11 +150,16 @@ export function useTodoListData(searchParams: TodoSearchParams): UseTodoListData
       return;
     }
 
-    fetchAll();
-  }, [debouncedSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+    fetchAll(debouncedSearchParams);
+  }, [debouncedSearchParams, fetchAll, searchParams.q, debouncedSearchQuery]);
+
+  // refresh function that uses current debounced params
+  const refresh = useCallback(() => {
+    return fetchAll(debouncedSearchParams);
+  }, [fetchAll, debouncedSearchParams]);
 
   return {
     ...data,
-    refresh: fetchAll,
+    refresh,
   };
 }
