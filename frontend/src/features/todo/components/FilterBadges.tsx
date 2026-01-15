@@ -74,8 +74,10 @@ export function FilterBadges({
   }
 
   // Tag filter
+  // js-set-map-lookups: Setで O(1) ルックアップ
   if (activeFilters.tag_ids?.length) {
-    const selectedTags = tags.filter((t) => activeFilters.tag_ids?.includes(t.id));
+    const tagIdSet = new Set(activeFilters.tag_ids);
+    const selectedTags = tags.filter((t) => tagIdSet.has(t.id));
     filterBadges.push({
       key: "tag_ids",
       label: "タグ",
