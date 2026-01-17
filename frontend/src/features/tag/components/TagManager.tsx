@@ -25,14 +25,18 @@ import { TagBadge } from "./TagBadge";
 import { useTags } from "../hooks/useTags";
 import type { Tag, CreateTagData, UpdateTagData } from "../types/tag";
 
+interface TagManagerProps {
+  initialTags?: Tag[];
+}
+
 /**
  * タグ管理コンポーネント
  *
  * @remarks
  * タグの一覧表示、作成、編集、削除を管理する
  */
-export function TagManager() {
-  const { tags, createTag, updateTag, deleteTag } = useTags();
+export function TagManager({ initialTags }: TagManagerProps = {}) {
+  const { tags, createTag, updateTag, deleteTag } = useTags(true, { initialData: initialTags });
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [deletingTag, setDeletingTag] = useState<Tag | null>(null);

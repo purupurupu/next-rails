@@ -1,14 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
-import { format } from "date-fns";
-import { ja } from "date-fns/locale";
-import { Calendar as CalendarIcon } from "lucide-react";
-
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -16,24 +9,18 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-
-import type { CreateTodoData, Todo, TodoPriority, TodoStatus } from "@/features/todo/types/todo";
+import type { CreateTodoData, Todo } from "@/features/todo/types/todo";
 import { useCategories } from "@/features/category/hooks/useCategories";
 import { useTags } from "@/features/tag/hooks/useTags";
 import { TagSelector } from "@/features/tag/components/TagSelector";
-import { FileUpload } from "@/features/todo/components/FileUpload";
-import { AttachmentList } from "@/features/todo/components/AttachmentList";
-import { CommentList } from "@/features/comment/components/CommentList";
-import { HistoryList } from "@/features/history/components/HistoryList";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTodoFormState } from "@/features/todo/hooks/useTodoFormState";
+import {
+  TodoBasicFields,
+  TodoCategoryField,
+  TodoDueDateField,
+  TodoAttachmentField,
+  TodoDetailsSection,
+} from "./form";
 import { cn } from "@/lib/utils";
 
 interface TodoFormProps {
@@ -48,102 +35,60 @@ interface TodoFormProps {
 export function TodoForm({ mode, todo, open, onOpenChange, onSubmit, onFileDelete }: TodoFormProps) {
   const { categories, fetchCategories } = useCategories(false);
   const { tags, fetchTags } = useTags(false);
-  const [title, setTitle] = useState(todo?.title || "");
-  const [dueDate, setDueDate] = useState<Date | undefined>(
-    todo?.due_date ? new Date(todo.due_date) : undefined,
-  );
-  const [priority, setPriority] = useState<TodoPriority>(todo?.priority || "medium");
-  const [status, setStatus] = useState<TodoStatus>(todo?.status || "pending");
-  const [description, setDescription] = useState(todo?.description || "");
-  const [categoryId, setCategoryId] = useState<number | undefined>(todo?.category?.id);
-  const [selectedTagIds, setSelectedTagIds] = useState<number[]>(
-    todo?.tags?.map((tag) => tag.id) || [],
-  );
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
 
-  // js-index-maps: カテゴリをMapで索引化してO(1)ルックアップ
-  const categoryMap = useMemo(
-    () => new Map(categories.map((c) => [c.id, c])),
-    [categories],
-  );
-  const selectedCategory = categoryId ? categoryMap.get(categoryId) : undefined;
+  const form = useTodoFormState();
+  const { state, isValid } = form;
 
-  // advanced-event-handler-refs: コールバックをrefで安定化
+  // コールバックをrefで安定化
   const fetchCategoriesRef = useRef(fetchCategories);
   const fetchTagsRef = useRef(fetchTags);
+  const initializeFromTodoRef = useRef(form.initializeFromTodo);
   useEffect(() => {
     fetchCategoriesRef.current = fetchCategories;
     fetchTagsRef.current = fetchTags;
-  }, [fetchCategories, fetchTags]);
+    initializeFromTodoRef.current = form.initializeFromTodo;
+  }, [fetchCategories, fetchTags, form.initializeFromTodo]);
 
-  // Fetch categories and tags when form opens
+  // フォームが開いたときにカテゴリーとタグを取得し、編集モードなら初期化
   useEffect(() => {
     if (open) {
       fetchCategoriesRef.current();
       fetchTagsRef.current();
+      if (mode === "edit" && todo) {
+        initializeFromTodoRef.current(todo);
+      }
     }
-  }, [open]);
+  }, [open, mode, todo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!isValid) return;
 
-    setIsSubmitting(true);
+    form.setIsSubmitting(true);
     try {
-      const data = {
-        title: title.trim(),
-        due_date: dueDate ? format(dueDate, "yyyy-MM-dd") : null,
-        priority,
-        status,
-        description: description.trim() || null,
-        category_id: categoryId || null,
-        tag_ids: selectedTagIds,
-      };
+      const data = form.getSubmitData();
 
-      // Submit with files if any are selected
-      if (selectedFiles.length > 0) {
-        await onSubmit(data, selectedFiles);
+      if (state.selectedFiles.length > 0) {
+        await onSubmit(data, state.selectedFiles);
       } else {
         await onSubmit(data);
       }
 
-      // Reset form for create mode
       if (mode === "create") {
-        setTitle("");
-        setDueDate(undefined);
-        setPriority("medium");
-        setStatus("pending");
-        setDescription("");
-        setCategoryId(undefined);
-        setSelectedTagIds([]);
-        setSelectedFiles([]);
+        form.resetForm();
       }
 
       onOpenChange(false);
     } finally {
-      setIsSubmitting(false);
+      form.setIsSubmitting(false);
     }
   };
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && mode === "create") {
-      setTitle("");
-      setDueDate(undefined);
-      setPriority("medium");
-      setStatus("pending");
-      setDescription("");
-      setCategoryId(undefined);
-      setSelectedTagIds([]);
-      setSelectedFiles([]);
+      form.resetForm();
     }
     onOpenChange(newOpen);
-  };
-
-  const clearDueDate = () => {
-    setDueDate(undefined);
-    setShowCalendar(false);
   };
 
   return (
@@ -162,211 +107,51 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit, onFileDelet
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
           <div className="flex-1 overflow-y-auto px-1 py-4 space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="title" className="text-sm font-medium">
-                タスク名
-              </label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="タスクを入力してください"
-                required
-              />
-            </div>
+            <TodoBasicFields
+              title={state.title}
+              onTitleChange={form.setTitle}
+              description={state.description}
+              onDescriptionChange={form.setDescription}
+              priority={state.priority}
+              onPriorityChange={form.setPriority}
+              status={state.status}
+              onStatusChange={form.setStatus}
+            />
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">優先度</label>
-              <Select value={priority} onValueChange={(value: TodoPriority) => setPriority(value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="優先度を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">低</SelectItem>
-                  <SelectItem value="medium">中</SelectItem>
-                  <SelectItem value="high">高</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">ステータス</label>
-              <Select value={status} onValueChange={(value: TodoStatus) => setStatus(value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="ステータスを選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">未着手</SelectItem>
-                  <SelectItem value="in_progress">進行中</SelectItem>
-                  <SelectItem value="completed">完了</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">カテゴリー（任意）</label>
-              <Select
-                value={categoryId?.toString() || "none"}
-                onValueChange={(value) => setCategoryId(value === "none" ? undefined : parseInt(value))}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="カテゴリーを選択">
-                    {selectedCategory
-                      ? (
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="h-3 w-3 rounded"
-                              style={{ backgroundColor: selectedCategory.color }}
-                            />
-                            {selectedCategory.name}
-                          </div>
-                        )
-                      : (
-                          "カテゴリーなし"
-                        )}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">カテゴリーなし</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="h-3 w-3 rounded"
-                          style={{ backgroundColor: category.color }}
-                        />
-                        {category.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <TodoCategoryField
+              categoryId={state.categoryId}
+              onCategoryChange={form.setCategoryId}
+              categories={categories}
+            />
 
             <div className="space-y-2">
               <label className="text-sm font-medium">タグ（任意）</label>
               <TagSelector
                 tags={tags}
-                selectedTagIds={selectedTagIds}
-                onSelectionChange={setSelectedTagIds}
+                selectedTagIds={state.selectedTagIds}
+                onSelectionChange={form.setSelectedTagIds}
                 placeholder="タグを選択..."
               />
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="description" className="text-sm font-medium">
-                説明（任意）
-              </label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="タスクの詳細説明を入力してください"
-                rows={3}
-              />
-            </div>
+            <TodoDueDateField
+              dueDate={state.dueDate}
+              onDueDateChange={form.setDueDate}
+              showCalendar={state.showCalendar}
+              onShowCalendarChange={form.setShowCalendar}
+            />
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">期限日</label>
-              <div className="space-y-2">
-                {dueDate
-                  ? (
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <CalendarIcon className="h-3 w-3" />
-                          {format(dueDate, "yyyy年M月d日", { locale: ja })}
-                        </Badge>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={clearDueDate}
-                        >
-                          クリア
-                        </Button>
-                      </div>
-                    )
-                  : null}
+            <TodoAttachmentField
+              todoId={todo?.id}
+              existingFiles={todo?.files}
+              selectedFiles={state.selectedFiles}
+              onFilesChange={form.setSelectedFiles}
+              onFileDelete={onFileDelete}
+              disabled={state.isSubmitting}
+            />
 
-                <Select
-                  value={showCalendar ? "custom" : ""}
-                  onValueChange={(value) => {
-                    if (value === "today") {
-                      setDueDate(new Date());
-                    } else if (value === "tomorrow") {
-                      const tomorrow = new Date();
-                      tomorrow.setDate(tomorrow.getDate() + 1);
-                      setDueDate(tomorrow);
-                    } else if (value === "week") {
-                      const nextWeek = new Date();
-                      nextWeek.setDate(nextWeek.getDate() + 7);
-                      setDueDate(nextWeek);
-                    } else if (value === "custom") {
-                      setShowCalendar(true);
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="期限日を設定" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="today">今日</SelectItem>
-                    <SelectItem value="tomorrow">明日</SelectItem>
-                    <SelectItem value="week">1週間後</SelectItem>
-                    <SelectItem value="custom">日付を選択</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {showCalendar && (
-                  <div className="border rounded-md p-3">
-                    <Calendar
-                      mode="single"
-                      selected={dueDate}
-                      onSelect={(date) => {
-                        setDueDate(date);
-                        setShowCalendar(false);
-                      }}
-                      disabled={(date) => date < new Date()}
-                      className="mx-auto"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">添付ファイル</label>
-              {mode === "edit" && todo && todo.files && todo.files.length > 0 && (
-                <AttachmentList
-                  todoId={todo.id}
-                  files={todo.files}
-                  onDelete={onFileDelete}
-                  disabled={isSubmitting}
-                />
-              )}
-              <FileUpload
-                onFileSelect={setSelectedFiles}
-                existingFiles={selectedFiles}
-                disabled={isSubmitting}
-              />
-            </div>
-
-            {/* 編集モードでのみコメントと履歴を表示 */}
             {mode === "edit" && todo && (
-              <div className="mt-6">
-                <Tabs defaultValue="comments" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="comments">コメント</TabsTrigger>
-                    <TabsTrigger value="history">変更履歴</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="comments" className="mt-4">
-                    <CommentList todoId={todo.id} />
-                  </TabsContent>
-                  <TabsContent value="history" className="mt-4">
-                    <HistoryList todoId={todo.id} />
-                  </TabsContent>
-                </Tabs>
-              </div>
+              <TodoDetailsSection todoId={todo.id} />
             )}
           </div>
 
@@ -375,12 +160,12 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit, onFileDelet
               type="button"
               variant="outline"
               onClick={() => handleOpenChange(false)}
-              disabled={isSubmitting}
+              disabled={state.isSubmitting}
             >
               キャンセル
             </Button>
-            <Button type="submit" disabled={isSubmitting || !title.trim()}>
-              {isSubmitting ? "処理中..." : mode === "create" ? "追加" : "更新"}
+            <Button type="submit" disabled={state.isSubmitting || !isValid}>
+              {state.isSubmitting ? "処理中..." : mode === "create" ? "追加" : "更新"}
             </Button>
           </DialogFooter>
         </form>

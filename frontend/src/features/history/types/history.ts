@@ -1,5 +1,7 @@
 // Todo History type definitions
 
+import type { UserRef } from "@/types/user";
+
 export interface TodoHistory {
   id: number;
   field_name: string;
@@ -8,9 +10,5 @@ export interface TodoHistory {
   action: "created" | "updated" | "deleted" | "status_changed" | "priority_changed";
   created_at: string;
   human_readable_change: string;
-  user: {
-    id: number;
-    name: string;
-    email: string;
-  };
+  user: UserRef;
 }
