@@ -70,6 +70,14 @@ async function proxyRequest(
       }
     });
 
+    // 204 No Content の場合はbodyなしで返す
+    if (response.status === 204) {
+      return new NextResponse(null, {
+        status: 204,
+        headers: responseHeaders,
+      });
+    }
+
     // レスポンスボディを取得
     const responseContentType = response.headers.get("content-type");
 
