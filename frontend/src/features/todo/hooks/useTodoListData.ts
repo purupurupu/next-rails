@@ -156,6 +156,7 @@ export function useTodoListData(
   );
 
   // Categories (独立したSWR)
+  // SSRで初期データを取得済みなので、マウント時の再フェッチをスキップ
   const {
     data: categories,
     error: categoriesError,
@@ -166,6 +167,8 @@ export function useTodoListData(
     {
       ...defaultSWRConfig,
       fallbackData: options.initialCategories,
+      revalidateIfStale: false,
+      revalidateOnMount: false,
     },
   );
 
@@ -180,10 +183,13 @@ export function useTodoListData(
     {
       ...defaultSWRConfig,
       fallbackData: options.initialTags,
+      revalidateIfStale: false,
+      revalidateOnMount: false,
     },
   );
 
   // Todos (検索パラメータに依存したSWR)
+  // SSRで初期データを取得済みなので、マウント時の再フェッチをスキップ
   const {
     data: searchData,
     error: searchError,
@@ -201,6 +207,8 @@ export function useTodoListData(
         options.initialTodos && options.initialSearchResponse
           ? { todos: options.initialTodos, searchResponse: options.initialSearchResponse }
           : undefined,
+      revalidateIfStale: false,
+      revalidateOnMount: false,
     },
   );
 
