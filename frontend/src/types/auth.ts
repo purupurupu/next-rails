@@ -1,13 +1,11 @@
-import type { BaseEntity } from "./common";
-
 /**
  * Authentication and user related types
  */
 
-export interface User extends BaseEntity {
-  email: string;
-  name: string;
-}
+import type { User } from "./user";
+
+// Re-export User from user.ts for backward compatibility
+export type { User } from "./user";
 
 // API request types
 export interface LoginRequest {

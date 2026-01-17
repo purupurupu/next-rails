@@ -1,10 +1,6 @@
 // Comment type definitions
 
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-}
+import type { UserRef } from "@/types/user";
 
 export interface Comment {
   id: number;
@@ -12,7 +8,7 @@ export interface Comment {
   created_at: string;
   updated_at: string;
   editable: boolean;
-  user: User;
+  user: UserRef;
 }
 
 export interface CreateCommentData {
