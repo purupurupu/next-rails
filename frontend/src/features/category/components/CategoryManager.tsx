@@ -24,15 +24,19 @@ import { CategoryForm } from "./CategoryForm";
 import { useCategories } from "../hooks/useCategories";
 import type { Category, CreateCategoryData, UpdateCategoryData } from "../types/category";
 
+interface CategoryManagerProps {
+  initialCategories?: Category[];
+}
+
 /**
  * カテゴリー管理コンポーネント
  *
  * @remarks
  * カテゴリーの一覧表示、作成、編集、削除を管理する
  */
-export function CategoryManager() {
+export function CategoryManager({ initialCategories }: CategoryManagerProps = {}) {
   const { categories, isLoading, createCategory, updateCategory, deleteCategory }
-    = useCategories();
+    = useCategories(true, { initialData: initialCategories });
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);

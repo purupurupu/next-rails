@@ -12,6 +12,10 @@ import { getErrorMessage, normalizeError } from "@/lib/error-utils";
 // SWR fetcher
 const fetcher = () => categoryApiClient.getCategories();
 
+interface UseCategoriesOptions {
+  initialData?: Category[];
+}
+
 /**
  * カテゴリー管理 hook
  *
@@ -19,6 +23,7 @@ const fetcher = () => categoryApiClient.getCategories();
  * SWRによる自動リクエスト重複排除とキャッシュ管理を提供
  *
  * @param fetchOnMount - マウント時にデータを取得するかどうか（デフォルト: true）
+ * @param options - 初期データなどのオプション
  * @returns カテゴリーデータと CRUD 操作関数
  *
  * @example
@@ -27,11 +32,18 @@ const fetcher = () => categoryApiClient.getCategories();
  * await createCategory({ name: "仕事", color: "#0000ff" });
  * ```
  */
-export function useCategories(fetchOnMount = true) {
+export function useCategories(fetchOnMount = true, options: UseCategoriesOptions = {}) {
+  const hasInitialData = options.initialData !== undefined;
+
   const { data, error, isLoading, mutate } = useSWR<Category[]>(
     fetchOnMount ? API_ENDPOINTS.CATEGORIES : null,
     fetcher,
-    defaultSWRConfig,
+    {
+      ...defaultSWRConfig,
+      fallbackData: options.initialData,
+      revalidateIfStale: !hasInitialData,
+      revalidateOnMount: !hasInitialData,
+    },
   );
 
   /**
