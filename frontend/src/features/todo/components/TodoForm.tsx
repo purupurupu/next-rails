@@ -42,10 +42,12 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit, onFileDelet
   // コールバックをrefで安定化
   const fetchCategoriesRef = useRef(fetchCategories);
   const fetchTagsRef = useRef(fetchTags);
+  const initializeFromTodoRef = useRef(form.initializeFromTodo);
   useEffect(() => {
     fetchCategoriesRef.current = fetchCategories;
     fetchTagsRef.current = fetchTags;
-  }, [fetchCategories, fetchTags]);
+    initializeFromTodoRef.current = form.initializeFromTodo;
+  }, [fetchCategories, fetchTags, form.initializeFromTodo]);
 
   // フォームが開いたときにカテゴリーとタグを取得し、編集モードなら初期化
   useEffect(() => {
@@ -53,10 +55,10 @@ export function TodoForm({ mode, todo, open, onOpenChange, onSubmit, onFileDelet
       fetchCategoriesRef.current();
       fetchTagsRef.current();
       if (mode === "edit" && todo) {
-        form.initializeFromTodo(todo);
+        initializeFromTodoRef.current(todo);
       }
     }
-  }, [open, mode, todo, form]);
+  }, [open, mode, todo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
