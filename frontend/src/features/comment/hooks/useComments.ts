@@ -1,97 +1,118 @@
-import { useState, useCallback, useEffect } from "react";
-import { Comment, CreateCommentData, UpdateCommentData } from "../types/comment";
-import { commentApiClient } from "../lib/api-client";
+"use client";
+
+import useSWR from "swr";
+import { useCallback } from "react";
 import { toast } from "sonner";
+import type { Comment, CreateCommentData, UpdateCommentData } from "../types/comment";
+import { commentApiClient } from "../lib/api-client";
+import { shortCacheSWRConfig } from "@/lib/swr-config";
+import { getErrorMessage, normalizeError } from "@/lib/error-utils";
 
+/**
+ * SWRのキーを生成
+ */
+const getCommentsKey = (todoId: number | null) =>
+  todoId ? `/api/v1/todos/${todoId}/comments` : null;
+
+/**
+ * コメント管理 hook
+ *
+ * @remarks
+ * SWRによる自動リクエスト重複排除とキャッシュ管理を提供。
+ * コメントは頻繁に更新される可能性があるため、短いキャッシュ設定を使用。
+ *
+ * @param todoId - コメントを取得するTodoのID（nullの場合はフェッチしない）
+ * @returns コメントデータとCRUD操作関数
+ *
+ * @example
+ * ```typescript
+ * const { comments, createComment, deleteComment } = useComments(todoId);
+ * await createComment({ content: "新しいコメント" });
+ * ```
+ */
 export function useComments(todoId: number | null) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error, isLoading, mutate } = useSWR<Comment[]>(
+    getCommentsKey(todoId),
+    () => (todoId ? commentApiClient.getComments(todoId) : Promise.resolve([])),
+    shortCacheSWRConfig,
+  );
 
-  // コメント一覧の取得
-  const fetchComments = useCallback(async () => {
-    if (!todoId) return;
+  /**
+   * コメントを作成する
+   */
+  const createComment = useCallback(
+    async (commentData: CreateCommentData) => {
+      if (!todoId) return;
 
-    setIsLoading(true);
-    setError(null);
+      try {
+        const newComment = await commentApiClient.createComment(todoId, commentData);
+        // 楽観的更新: キャッシュに新しいコメントを追加
+        await mutate((prev) => [...(prev || []), newComment], false);
+        toast.success("コメントを追加しました");
+        return newComment;
+      } catch (err) {
+        const message = getErrorMessage(err, "コメントの作成に失敗しました");
+        toast.error(message);
+        throw normalizeError(err, message);
+      }
+    },
+    [todoId, mutate],
+  );
 
-    try {
-      const data = await commentApiClient.getComments(todoId);
-      setComments(data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "コメントの取得に失敗しました";
-      setError(message);
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [todoId]);
+  /**
+   * コメントを更新する
+   */
+  const updateComment = useCallback(
+    async (commentId: number, commentData: UpdateCommentData) => {
+      if (!todoId) return;
 
-  // コメントの作成
-  const createComment = useCallback(async (data: CreateCommentData) => {
-    if (!todoId) return;
+      try {
+        const updatedComment = await commentApiClient.updateComment(todoId, commentId, commentData);
+        // 楽観的更新: キャッシュ内のコメントを更新
+        await mutate(
+          (prev) => prev?.map((c) => (c.id === commentId ? updatedComment : c)) || [],
+          false,
+        );
+        toast.success("コメントを更新しました");
+        return updatedComment;
+      } catch (err) {
+        const message = getErrorMessage(err, "コメントの更新に失敗しました");
+        toast.error(message);
+        throw normalizeError(err, message);
+      }
+    },
+    [todoId, mutate],
+  );
 
-    try {
-      const newComment = await commentApiClient.createComment(todoId, data);
-      setComments((prev) => [...prev, newComment]);
-      toast.success("コメントを追加しました");
-      return newComment;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "コメントの作成に失敗しました";
-      toast.error(message);
-      throw err;
-    }
-  }, [todoId]);
+  /**
+   * コメントを削除する
+   */
+  const deleteComment = useCallback(
+    async (commentId: number) => {
+      if (!todoId) return;
 
-  // コメントの更新
-  const updateComment = useCallback(async (commentId: number, data: UpdateCommentData) => {
-    if (!todoId) return;
-
-    try {
-      const updatedComment = await commentApiClient.updateComment(todoId, commentId, data);
-      setComments((prev) => prev.map((comment) =>
-        comment.id === commentId ? updatedComment : comment,
-      ));
-      toast.success("コメントを更新しました");
-      return updatedComment;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "コメントの更新に失敗しました";
-      toast.error(message);
-      throw err;
-    }
-  }, [todoId]);
-
-  // コメントの削除
-  const deleteComment = useCallback(async (commentId: number) => {
-    if (!todoId) return;
-
-    try {
-      await commentApiClient.deleteComment(todoId, commentId);
-      setComments((prev) => prev.filter((comment) => comment.id !== commentId));
-      toast.success("コメントを削除しました");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "コメントの削除に失敗しました";
-      toast.error(message);
-      throw err;
-    }
-  }, [todoId]);
-
-  // todoIdが変更されたらコメントを再取得
-  useEffect(() => {
-    if (todoId) {
-      fetchComments();
-    } else {
-      setComments([]);
-    }
-  }, [todoId, fetchComments]);
+      try {
+        await commentApiClient.deleteComment(todoId, commentId);
+        // 楽観的更新: キャッシュからコメントを削除
+        await mutate((prev) => prev?.filter((c) => c.id !== commentId) || [], false);
+        toast.success("コメントを削除しました");
+      } catch (err) {
+        const message = getErrorMessage(err, "コメントの削除に失敗しました");
+        toast.error(message);
+        throw normalizeError(err, message);
+      }
+    },
+    [todoId, mutate],
+  );
 
   return {
-    comments,
+    comments: data ?? [],
     isLoading,
-    error,
-    fetchComments,
+    error: error instanceof Error ? error : null,
     createComment,
     updateComment,
     deleteComment,
+    fetchComments: mutate,
+    refetch: mutate,
   };
 }

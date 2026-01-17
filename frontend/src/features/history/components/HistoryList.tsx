@@ -36,7 +36,7 @@ export function HistoryList({ todoId }: HistoryListProps) {
           )
         : error
           ? (
-              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-sm text-red-600">{error.message}</p>
             )
           : histories.length === 0
             ? (
