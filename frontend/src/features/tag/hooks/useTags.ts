@@ -12,6 +12,10 @@ import { getErrorMessage, normalizeError } from "@/lib/error-utils";
 // SWR fetcher
 const fetcher = () => tagApiClient.getTags();
 
+interface UseTagsOptions {
+  initialData?: Tag[];
+}
+
 /**
  * タグ管理 hook
  *
@@ -19,6 +23,7 @@ const fetcher = () => tagApiClient.getTags();
  * SWRによる自動リクエスト重複排除とキャッシュ管理を提供
  *
  * @param fetchOnMount - マウント時にデータを取得するかどうか（デフォルト: true）
+ * @param options - 初期データなどのオプション
  * @returns タグデータと CRUD 操作関数
  *
  * @example
@@ -27,11 +32,18 @@ const fetcher = () => tagApiClient.getTags();
  * await createTag({ name: "重要", color: "#ff0000" });
  * ```
  */
-export function useTags(fetchOnMount = true) {
+export function useTags(fetchOnMount = true, options: UseTagsOptions = {}) {
+  const hasInitialData = options.initialData !== undefined;
+
   const { data, error, isLoading, mutate } = useSWR<Tag[]>(
     fetchOnMount ? API_ENDPOINTS.TAGS : null,
     fetcher,
-    defaultSWRConfig,
+    {
+      ...defaultSWRConfig,
+      fallbackData: options.initialData,
+      revalidateIfStale: !hasInitialData,
+      revalidateOnMount: !hasInitialData,
+    },
   );
 
   /**
