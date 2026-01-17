@@ -134,6 +134,7 @@ export const TodoItem = memo(function TodoItem({
             checked={todo.completed}
             onCheckedChange={() => onToggleComplete(todo.id)}
             className="mt-0.5 flex-shrink-0"
+            aria-label={`${todo.title}を${todo.completed ? "未完了" : "完了"}にする`}
           />
 
           <div className="flex-1 min-w-0 w-full">

@@ -116,16 +116,26 @@ export function FileUpload({
   return (
     <div className="space-y-4">
       <div
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-label="ファイルをアップロード。ドラッグ&ドロップまたはクリックしてファイルを選択"
+        aria-disabled={disabled}
         className={cn(
           "relative rounded-lg border-2 border-dashed p-8 text-center transition-colors",
           isDragging && "border-primary bg-primary/5",
           disabled && "opacity-50 cursor-not-allowed",
-          !disabled && "hover:border-primary/50 cursor-pointer",
+          !disabled && "hover:border-primary/50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => !disabled && fileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (!disabled && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
       >
         <input
           ref={fileInputRef}
@@ -191,6 +201,7 @@ export function FileUpload({
                     removeFile(index);
                   }}
                   disabled={disabled}
+                  aria-label={`${file.name}を削除`}
                 >
                   <X className="h-4 w-4" />
                 </Button>
