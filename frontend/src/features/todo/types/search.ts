@@ -1,19 +1,12 @@
-import type { Todo } from "./todo";
+import type { Todo, TodoSearchParams } from "./todo";
 
-export interface SearchParams {
-  q?: string;
-  category_id?: number | -1;
-  status?: string[];
-  priority?: string[];
-  tag_ids?: number[];
-  tag_mode?: "any" | "all";
-  due_date_from?: string;
-  due_date_to?: string;
-  sort_by?: "created_at" | "updated_at" | "due_date" | "title" | "priority" | "position";
-  sort_order?: "asc" | "desc";
-  page?: number;
-  per_page?: number;
-}
+/**
+ * @deprecated Use TodoSearchParams from "./todo" instead
+ */
+export type SearchParams = TodoSearchParams;
+
+// Re-export TodoSearchParams for convenience
+export type { TodoSearchParams } from "./todo";
 
 export interface SearchMeta {
   total: number;
