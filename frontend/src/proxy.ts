@@ -11,13 +11,13 @@ const PUBLIC_PATHS = ["/auth"];
 const API_PATHS = ["/api/"];
 
 /**
- * Middleware for authentication check
+ * Proxy for authentication check
  *
- * Runs on Edge Runtime for fast authentication checks.
+ * Runs on Node.js Runtime for authentication checks.
  * Only checks token existence, not validity.
  * Full token validation happens in Server Components or BFF.
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip API routes (handled by BFF Route Handlers)
