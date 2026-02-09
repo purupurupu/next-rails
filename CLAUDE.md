@@ -6,545 +6,194 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-This is a full-stack Todo application with user authentication using:
+Full-stack Todo + Notes application with user authentication:
 
-- **Frontend**: Next.js 15.4.1 with TypeScript, React 19, and Tailwind CSS v4
-- **Package Manager**: pnpm (NOT npm)
-- **Backend**: Rails 7.1.3+ API-only application with Devise + JWT authentication
+- **Frontend**: Next.js 16.1.3 with TypeScript, React 19, Tailwind CSS v4, SWR
+- **Package Manager**: pnpm（npmは使用禁止）
+- **Backend**: Rails 8.0.0 API-only (Ruby 3.4.5) with Devise + JWT
 - **Database**: PostgreSQL 15
-- **Infrastructure**: Docker Compose orchestrating three services
+- **Cache/Jobs**: Redis 7 + Sidekiq
+- **Infrastructure**: Docker Compose (frontend, backend, db, redis)
 
-Services run on:
+Services: Frontend `:3000` / Backend API `:3001` / PostgreSQL `:5432` / Redis `:6379`
 
-- Frontend: <http://localhost:3000>
-- Backend API: <http://localhost:3001>
-- PostgreSQL: localhost:5432
-
-## 📚 Documentation
-
-For detailed technical documentation, see the [docs directory](./docs/):
-
-- [Architecture Details](./docs/architecture/) - System design and technical decisions
-- [API Documentation](./docs/api/) - Complete API reference
-- [Development Guides](./docs/guides/) - Setup, coding standards, and workflows
-- [Feature Specifications](./docs/features/) - Detailed feature documentation
+詳細な技術ドキュメントは [docs/](./docs/) を参照。
 
 ## Common Development Commands
 
 ### Docker Operations
 
 ```bash
-# Start all services
-docker compose up -d
+docker compose up -d                    # Start all services
+docker compose logs -f backend          # View backend logs
+docker compose logs -f frontend         # View frontend logs
+docker compose exec backend rails console  # Rails console
 
-# Database operations (run after services are up)
+# Database
 docker compose exec backend bundle exec rails db:create
 docker compose exec backend bundle exec rails db:migrate
 docker compose exec backend bundle exec rails db:seed
+docker compose exec backend bash -c "RESET_DB=true bundle exec rails db:seed"  # Reset and seed
 
-# Database seed options
-docker compose exec backend bundle exec rails db:seed                    # Normal seed (preserves existing data)
-docker compose exec backend bash -c "RESET_DB=true bundle exec rails db:seed"  # Reset and seed (clears all data first)
-
-# Access Rails console
-docker compose exec backend rails console
-
-# View logs
-docker compose logs -f backend
-docker compose logs -f frontend
-
-# IMPORTANT: Rebuild after package updates
-# When you add new dependencies to package.json or Gemfile, you MUST rebuild the Docker image:
-docker compose build frontend    # After updating frontend/package.json
-docker compose build backend     # After updating backend/Gemfile
-# Or rebuild without cache if you encounter dependency issues:
-docker compose build --no-cache frontend
+# IMPORTANT: Rebuild after dependency changes
+docker compose build frontend           # After package.json changes
+docker compose build backend            # After Gemfile changes
+docker compose build --no-cache frontend # If dependency issues persist
 ```
 
-### Frontend Development
+### Frontend (inside container)
 
 ```bash
-# All commands run inside the frontend container
-docker compose exec frontend pnpm run dev        # Development server
-docker compose exec frontend pnpm run build      # Production build
-docker compose exec frontend pnpm run start      # Production server
-docker compose exec frontend pnpm run lint       # ESLint
-docker compose exec frontend pnpm run lint:fix   # ESLint with auto-fix
-docker compose exec frontend pnpm run typecheck  # TypeScript type checking
-docker compose exec frontend pnpm run typecheck:full  # Full TypeScript check
+docker compose exec frontend pnpm run lint        # ESLint
+docker compose exec frontend pnpm run lint:fix    # ESLint auto-fix
+docker compose exec frontend pnpm run typecheck   # TypeScript check
 ```
 
-### Frontend Technical Details
+**開発中は `pnpm run build` を実行しない**（型チェックは `pnpm run typecheck` で行う）
 
-**Stack**: Next.js 15.4.1, React 19.1.0, TypeScript 5, Tailwind CSS v4
-
-**Key Dependencies**: Radix UI, date-fns, lucide-react, sonner
-
-### Backend Development
+### Backend (inside container)
 
 ```bash
-# Run tests with RSpec (recommended for clean output)
+# Tests (always use RAILS_ENV=test)
 docker compose exec backend env RAILS_ENV=test bundle exec rspec
-
-# Run specific test file
 docker compose exec backend env RAILS_ENV=test bundle exec rspec spec/models/todo_spec.rb
-
-# Run tests with documentation format
 docker compose exec backend env RAILS_ENV=test bundle exec rspec --format documentation
-
-# Run tests with code coverage
 docker compose exec backend env COVERAGE=true RAILS_ENV=test bundle exec rspec
 
-# Run tests with coverage using rake task
-docker compose exec backend bundle exec rake coverage
-
-# Note: Always use RAILS_ENV=test when running tests to ensure test database is used
-
-# Run authentication tests
-docker compose exec backend env RAILS_ENV=test bundle exec rspec spec/requests/authentication_spec.rb
-
-
-# Run RuboCop (code linter)
-docker compose exec backend bundle exec rubocop                    # Check all files
-docker compose exec backend bundle exec rubocop -a                 # Auto-correct safe offenses
-docker compose exec backend bundle exec rubocop -A                 # Auto-correct all offenses (unsafe)
-docker compose exec backend bundle exec rubocop path/to/file.rb    # Check specific file
-
-# View coverage report (macOS)
-open backend/coverage/index.html
-
-# Quick coverage check
-cat backend/coverage/.last_run.json
-
-# Generate new resources
-docker compose exec backend rails generate model ModelName
-docker compose exec backend rails generate controller ControllerName
-
-# Database operations
-docker compose exec backend bundle exec rails db:drop
-docker compose exec backend bundle exec rails db:create
-docker compose exec backend bundle exec rails db:migrate
-docker compose exec backend bundle exec rails db:seed
-docker compose exec backend bundle exec rails db:reset  # drop + create + migrate + seed
+# Linter
+docker compose exec backend bundle exec rubocop
+docker compose exec backend bundle exec rubocop -a    # Auto-correct safe
+docker compose exec backend bundle exec rubocop -A    # Auto-correct all
 ```
 
-### Backend Technical Details
+### Pre-PR Checklist
 
-**Stack**: Ruby 3.2.5, Rails 7.1.3+, PostgreSQL 15
+```bash
+docker compose exec frontend pnpm run lint
+docker compose exec frontend pnpm run typecheck
+docker compose exec backend env RAILS_ENV=test bundle exec rspec
+docker compose exec backend bundle exec rubocop
+```
 
-**Key Gems**: Devise + JWT, Sidekiq, RSpec
+## Key Architecture Decisions
 
-**Core Models**:
+### BFF (Backend for Frontend) Pattern
 
-- **User**: Authentication with email/password
-- **Todo**: User's tasks with title, completion status, position, priority (low/medium/high), status (pending/in_progress/completed), optional description, due date, category association, tag associations, file attachments, comments, and history tracking
-- **Category**: User-scoped organization categories with name and color for grouping todos
-- **Tag**: User-scoped flexible tags with name and color for labeling todos (many-to-many relationship)
-- **TodoTag**: Junction table for the many-to-many relationship between todos and tags
-- **Comment**: Polymorphic comments on todos with soft delete and edit time limits
-- **TodoHistory**: Automatic audit trail for all todo changes
-- **JwtDenylist**: Revoked tokens for secure logout
+All API calls from the browser go through Next.js Route Handlers, never directly to Rails:
 
-See [Database Architecture](./docs/architecture/database.md) for detailed schema.
+```
+Browser → Next.js BFF (/api/v1/[...path]/route.ts) → Rails API (:3001)
+         ↓ Cookie → Authorization header injection
+```
 
-**API Endpoints**:
+- **汎用プロキシ**: `app/api/v1/[...path]/route.ts` が全 `/api/v1/*` リクエストをRailsに転送
+- **認証フロー**: JWT token は httpOnly Cookie に保存（XSS対策）。BFF が Cookie から token を取り出し、Authorization ヘッダーとして Rails に送信
+- **ファイルアップロード**: multipart/form-data をそのまま転送
+- **認証用BFFエンドポイント**: `app/api/auth/login|register|logout|me/route.ts`
 
-- Authentication: `/auth/*` (login, register, logout)
-- Todos: `/api/v1/todos/*` (CRUD + bulk reorder + tag assignment + file attachments)
-- Todo Search: `/api/v1/todos/search` (advanced search and filtering)
-- Categories: `/api/v1/categories/*` (CRUD operations)
-- Tags: `/api/v1/tags/*` (CRUD operations)
-- Comments: `/api/v1/todos/:todo_id/comments/*` (CRUD with soft delete)
-- History: `/api/v1/todos/:todo_id/histories` (view todo change history)
+### Feature-based Frontend Architecture
 
-See [API Documentation](./docs/api/) for details.
+```
+frontend/src/
+├── app/                  # Next.js App Router（ルーティングのみ）
+├── components/           # 横断的UIコンポーネント（shadcn/ui含む）
+├── contexts/             # React Contexts（auth-context）
+├── features/             # ドメイン別機能モジュール
+│   ├── todo/             # Todo機能（components, hooks, lib, types）
+│   ├── notes/            # Notes機能（components, hooks, lib, types）
+│   ├── category/         # Category機能
+│   └── tag/              # Tag機能
+├── hooks/                # 横断的hooks（useDebounce, useFocusTrap）
+├── lib/                  # 共通ライブラリ
+│   ├── api-client.ts     # Base HttpClient（全API clientの基底クラス）
+│   ├── server/api-client.ts  # サーバーサイドAPI client
+│   ├── auth/config.ts    # Cookie設定・バックエンドURL
+│   ├── swr-config.ts     # SWR設定（default/shortCache/longCache）
+│   ├── validation-utils.ts   # Zod検証ヘルパー
+│   └── error-utils.ts    # エラーメッセージ抽出
+├── styles/               # CSS
+└── types/                # 横断的型定義
+```
 
-## API Structure
+各featureは `components/`, `hooks/`, `lib/`, `types/` を持ち、feature-specific API clientは `HttpClient` を継承する。
 
-The Rails backend provides:
+### API Client Hierarchy
 
-- **Authentication API** at `/auth/*` with user registration, login, and logout
-- **Todo API** at `/api/v1/todos` with user-scoped CRUD operations
-- **Category API** at `/api/v1/categories` with user-scoped CRUD operations
-- **Tag API** at `/api/v1/tags` with user-scoped CRUD operations
-- **Comment API** at `/api/v1/todos/:todo_id/comments` for todo discussions
-- **History API** at `/api/v1/todos/:todo_id/histories` for audit trail
-- **JWT Authentication** for API access with token-based authentication
-- Standard CRUD endpoints (GET, POST, PUT, DELETE)
-- Bulk update endpoint: `PATCH /api/v1/todos/update_order` for drag-and-drop reordering
-- Todo model attributes: `title`, `completed`, `position`, `priority`, `status`, `description`, `due_date`, `category_id`, `tag_ids`, `user_id`, `files` (attachments)
-- Category model attributes: `name`, `color`, `user_id`, `todos_count` (counter cache), `created_at`, `updated_at`
-- Tag model attributes: `name`, `color`, `user_id`, `created_at`, `updated_at`
-- Comment model attributes: `content`, `user_id`, `commentable_type`, `commentable_id`, `deleted_at`, `created_at`, `updated_at`
-- TodoHistory model attributes: `todo_id`, `user_id`, `action`, `changes` (JSONB), `created_at`
-- User model attributes: `email`, `name`, `created_at`
+```
+HttpClient (lib/api-client.ts) ← credentials: "include" で Cookie 自動送信
+  ├── TodoApiClient (features/todo/lib/api-client.ts)
+  ├── NotesApiClient (features/notes/lib/api-client.ts)
+  ├── CategoryApiClient (features/category/lib/api-client.ts)
+  └── TagApiClient (features/tag/lib/api-client.ts)
+```
 
-Frontend makes API calls via BFF (same origin):
+### Backend Models
 
-- `/api/v1/todos` - Basic todo operations (proxied to Rails)
-- `/api/v1/todos/search` - Search and filtering (proxied to Rails)
-- `/api/v1/categories` - Category management (proxied to Rails)
-- `/api/v1/tags` - Tag management (proxied to Rails)
-- `/api/v1/todos/:id/comments` - Comment management (proxied to Rails)
-- `/api/v1/todos/:id/histories` - View history (proxied to Rails)
-- `/api/auth/*` - Authentication (BFF handles token in httpOnly Cookie)
+- **User**: Devise認証（email/password）
+- **Todo**: title, completed, position, priority(low/medium/high), status(pending/in_progress/completed), description, due_date, category_id, tag_ids, files(Active Storage)
+- **Note**: title, body(Markdown), pinned, archived, trashed + NoteRevision（リビジョン履歴、最新50件保持）
+- **Category/Tag**: User-scoped、name + color。TodoとTagはmany-to-many（TodoTag中間テーブル）
+- **Comment**: Polymorphic、soft delete、15分間の編集制限
+- **TodoHistory**: 全Todo変更の自動監査ログ（JSONB）
 
-## Key Implementation Details
+### API Endpoints
 
-1. **Authentication System (BFF Architecture)**:
-
-   - Devise + Devise-JWT for backend authentication
-   - JWT tokens managed via httpOnly Cookie (not localStorage) for XSS protection
-   - Next.js BFF (Route Handlers) proxies all API requests to Rails backend
-   - BFF extracts token from Cookie and adds Authorization header to Rails API requests
-   - JWT denylist for secure logout
-   - User-scoped todos (each user sees only their own todos)
-
-2. **CORS Configuration**: Backend accepts requests from `localhost:3000` with credentials support (required for file downloads from Active Storage which bypass BFF)
-
-3. **Database Migrations**: Always run migrations after pulling new changes
-
-4. **Hot Reloading**: Both frontend and backend support hot reloading in development
-
-5. **TypeScript Path Aliases**: Use `@/*` for imports from the `src` directory in frontend
-
-6. **Docker Compose**: Three services (frontend, backend, db) with proper dependency management
-
-7. **Environment Variables**: Database credentials and Rails secrets managed via environment variables
-
-8. **API Error Handling**: Consistent error responses with proper HTTP status codes
-
-9. **State Management**: React hooks with optimistic updates for better UX
-
-10. **Testing**: RSpec for backend testing with dedicated test service in Docker Compose
-
-## Current State
-
-The project has successfully transitioned from Nuxt.js to Next.js and now includes full user authentication. The backend API is fully functional with complete CRUD operations, validation, and drag-and-drop reordering support. The frontend is a Next.js application with a complete todo feature implementation including:
-
-**Authentication Features (BFF)**:
-
-- User registration and login via BFF endpoints
-- JWT token stored in httpOnly Cookie (XSS protection)
-- Protected routes with authentication guards
-- Persistent authentication via server-side Cookie validation
-- Secure logout with Cookie deletion and token invalidation
-
-**Todo Features**:
-
-- User-scoped todos (each user sees only their own)
-- Todo creation with due dates
-- Todo editing and deletion
-- Status completion toggle
-- Drag-and-drop reordering (API ready, UI pending)
-- Basic filtering (all, active, completed)
-- Category assignment (one-to-many)
-- Tag assignment (many-to-many)
-- File attachments with Active Storage
-- Comments with soft delete and 15-minute edit window
-- Complete audit history tracking
-- Optimistic updates for better UX
-- Error handling and validation
-- Responsive design with Tailwind CSS
-- shadcn/ui components for consistent UI
-
-**Search and Filtering Features**:
-
-- Full-text search in title and description
-- Advanced filtering by category, status, priority, tags
-- Date range filtering for due dates
-- Multi-criteria sorting (7+ fields)
-- Pagination with customizable page size
-- Search result highlighting
-- Empty state with helpful suggestions
-- Real-time search with debouncing
-
-**Additional Features**:
-
-- **Comments**: Add discussions to todos with soft delete and edit time limits
-- **File Attachments**: Upload multiple files per todo (10MB limit per file)
-- **History Tracking**: Complete audit trail of all todo changes
-- **Counter Cache**: Efficient todo counting for categories
-- **Performance**: Optimized queries with proper indexing
+- `/auth/*` - 認証（login, register, logout）
+- `/api/v1/todos/*` - Todo CRUD + bulk reorder + search + file attachments
+- `/api/v1/notes/*` - Notes CRUD + revisions + restore
+- `/api/v1/categories/*`, `/api/v1/tags/*` - CRUD
+- `/api/v1/todos/:id/comments/*` - コメント（soft delete付き）
+- `/api/v1/todos/:id/histories` - 変更履歴
 
 ## Development Guidelines
 
-1. **Package Manager**: Always use pnpm, NOT npm
-2. **API Calls**: Use the provided API clients, not direct fetch
-3. **Authentication**: Check auth state before protected features
-4. **Commits**: Small, frequent commits with clear messages
-5. **Code Style**: Follow existing patterns in the codebase
-6. **Docker Dependencies**: After adding new packages to package.json or Gemfile, always rebuild the Docker image
-7. **No Nested Classes**: クラス内にクラスを定義しない（ネストしたクラスは別ファイルに分離する）
-8. **RuboCop Disable禁止**: コード内でのrubocop:disableコメントは極力使用しない。必要な場合は.rubocop.ymlで設定する
-9. **開発中のビルド禁止**: 開発中は`pnpm run build`を実行しない（型チェックは`pnpm run typecheck`で行う）
-10. **TSDoc**: TypeScriptのドキュメントコメントはTSDoc形式で記述する
+### コーディング規約
 
-### TSDoc Guidelines
+- **No Nested Classes**: クラス内にクラスを定義しない（別ファイルに分離）
+- **RuboCop Disable禁止**: コード内での `rubocop:disable` コメントは使用しない。必要なら `.rubocop.yml` で設定
+- **API Calls**: 直接 `fetch` を使わず、提供されている API client を使用
+- **TypeScript Path Aliases**: `@/*` で `src/` ディレクトリからインポート
+- **TSDoc**: エクスポートされる関数・クラス・インターフェース・型にはTSDoc形式でドキュメントコメントを記述
 
-TypeScriptコードのドキュメントコメントは[TSDoc](https://tsdoc.org/)形式で記述してください。
+### ESLint Rules (frontend)
 
-**基本的なTSDocタグ**:
+- ダブルクォート、セミコロン必須、2スペースインデント
+- アロー関数の括弧は常に使用、1TBS braceスタイル
+- 最大行長: 100文字
 
-```typescript
-/**
- * 関数やクラスの説明を記述
- *
- * @param paramName - パラメータの説明
- * @returns 戻り値の説明
- * @throws エラーが発生する条件
- * @example
- * ```typescript
- * const result = myFunction("test");
- * ```
- */
-```
+### Naming Conventions
 
-**使用するタグ**:
+| 対象 | 規則 | 例 |
+|------|------|-----|
+| Components | PascalCase | `TodoItem.tsx` |
+| Hooks | camelCase + `use` prefix | `useTodos.ts` |
+| Utilities/Types | kebab-case | `api-client.ts` |
+| React components | PascalCase | `TodoItem` |
+| Functions/variables | camelCase | `fetchTodos` |
+| Constants | UPPER_SNAKE_CASE | `API_ENDPOINTS` |
+| Interfaces | PascalCase + descriptive suffix | `TodoItemProps` |
 
-- `@param` - 関数のパラメータを説明
-- `@returns` - 戻り値を説明
-- `@throws` - スローされる可能性のあるエラーを説明
-- `@example` - 使用例を示す
-- `@remarks` - 追加の詳細情報
-- `@see` - 関連するドキュメントへの参照
-- `@deprecated` - 非推奨であることを示す
+### Git Commits
 
-**ドキュメント対象**:
+Conventional commits: `type(scope): description`（50文字以内）
 
-- エクスポートされる関数、クラス、インターフェース、型
-- 複雑なロジックを持つ内部関数
-- 公開APIとなるhooks
+Types: feat, fix, docs, style, refactor, test, chore
 
-### Git Commit Best Practices
+## Docker Environment
 
-**Commit Size and Scope**:
-
-- Keep commits small and focused on a single logical change
-- Each commit should represent a complete, working state
-- Avoid mixing unrelated changes in a single commit
-
-**Recommended Commit Granularity**:
-
-1. **Model/Migration Changes**: Create model with migration and validations
-2. **API Endpoints**: Controller actions with routing changes
-3. **Frontend Components**: Component with its types and styles
-4. **Integration Changes**: Updates that connect different parts
-5. **Test Additions**: Tests for specific features
-6. **Documentation Updates**: Separate from code changes
-
-**Example Commit Sequence for a Feature**:
-
-```
-1. feat(backend): Add Category model with validations
-2. feat(backend): Add category association to Todo model
-3. feat(backend): Add Category API controller
-4. feat(backend): Add serializers for Category and Todo
-5. feat(frontend): Add Category types and interfaces
-6. feat(frontend): Add Category API client
-7. feat(frontend): Add Category management components
-8. feat(frontend): Update Todo components to support categories
-9. test(backend): Add Category model and controller tests
-10. docs: Update API documentation for categories
-```
-
-**Commit Message Format**:
-
-- Use conventional commits: `type(scope): description`
-- Types: feat, fix, docs, style, refactor, test, chore
-- Keep the first line under 50 characters
-- Add detailed description if needed
-
-**Before Creating Pull Requests**:
-
-- Run frontend checks: `pnpm run lint`, `pnpm run typecheck`
-- Run backend tests: `docker compose exec backend env RAILS_ENV=test bundle exec rspec`
-- Run backend linter: `docker compose exec backend bundle exec rubocop`
-- Update documentation if APIs or architecture changed
-- Ensure all checks pass before pushing
-
-See [Development Guide](./docs/guides/development.md) for detailed guidelines.
+- Backend内部URL: `BACKEND_URL=http://backend:3000`（コンテナ間通信）
+- 外部ポートマッピング: backend `:3001` → container `:3000`
+- Test DB: `todo_app_test`、Dev DB: `todo_next`
+- `.env` ファイルに `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `RAILS_MASTER_KEY`, `SECRET_KEY_BASE` を設定
 
 ## Troubleshooting
 
 ### Node modules issues in Docker
 
-If you encounter errors like "Module not found" after adding new packages:
+`Module not found` / pnpm store mismatch / Turbopack panic が出た場合:
 
-1. **Symptoms:**
-
-   - `Module not found: Can't resolve '@some-package'`
-   - pnpm store location mismatch errors
-   - Turbopack panic errors
-
-2. **Solution:**
-
-   ```bash
-   # Stop and rebuild the container
-   docker compose down
-   docker compose build --no-cache frontend
-   docker compose up -d
-   ```
-
-3. **Prevention:**
-   - Always rebuild Docker images after updating package.json
-   - Use `docker compose build frontend` after adding new npm packages
-   - Use `docker compose build backend` after adding new gems
-
-## Frontend Architecture
-
-### Directory Structure
-
+```bash
+docker compose down
+docker compose build --no-cache frontend
+docker compose up -d
 ```
-frontend/src/
-├── app/               # Next.js App Router pages (routing files)
-│   ├── auth/         # Authentication pages
-│   ├── layout.tsx    # Root layout with auth provider
-│   └── page.tsx      # Main todo page
-├── components/        # 横断的（ドメインに依存しない）なUIコンポーネント
-│   ├── auth/         # Authentication components
-│   ├── layouts/      # Layout components
-│   ├── ui/           # shadcn/ui components
-│   ├── navigation.tsx        # Navigation component
-│   └── protected-route.tsx   # Authentication guard
-├── contexts/          # React contexts
-│   └── auth-context.tsx     # Authentication context
-├── features/          # 特定のドメイン・機能に関係するコンポーネント
-│   └── todo/         # Todo feature
-│       ├── components/   # Todo-specific components
-│       ├── hooks/        # Todo-specific hooks
-│       ├── lib/          # Todo-specific API client
-│       └── types/        # Todo-specific types
-├── hooks/             # ドメインに依存しない、横断的なhooks
-├── lib/               # ライブラリの処理や標準処理を共通化したコード
-│   ├── api-client.ts     # Base HTTP client
-│   ├── auth/             # BFF authentication configuration
-│   │   └── config.ts     # Cookie settings and backend URL
-│   ├── constants.ts      # API endpoints and constants
-│   └── utils.ts          # Utility functions
-├── styles/            # スタイリング（css）に関するファイル
-└── types/             # 横断的な型定義
-```
-
-### Naming Conventions
-
-1. **Files and Directories**:
-
-   - Components: PascalCase (e.g., `TodoItem.tsx`, `TodoForm.tsx`)
-   - Hooks: camelCase with `use` prefix (e.g., `useTodos.ts`)
-   - Utilities: kebab-case (e.g., `api-client.ts`, `constants.ts`)
-   - Types: kebab-case (e.g., `todo.ts`)
-
-2. **Code Naming**:
-   - React components: PascalCase
-   - Functions/variables: camelCase
-   - Constants: UPPER_SNAKE_CASE
-   - Interfaces: PascalCase with descriptive suffix (e.g., `TodoItemProps`, `CreateTodoData`)
-
-### Key Files
-
-**Authentication (BFF)**:
-
-- `lib/auth/config.ts` - Cookie settings and backend URL configuration
-- `app/api/auth/login/route.ts` - BFF login endpoint (sets httpOnly Cookie)
-- `app/api/auth/register/route.ts` - BFF registration endpoint
-- `app/api/auth/logout/route.ts` - BFF logout endpoint (clears Cookie)
-- `app/api/auth/me/route.ts` - BFF auth status endpoint
-- `contexts/auth-context.tsx` - Authentication context provider
-- `components/auth/login-form.tsx` - Login form component
-- `components/auth/register-form.tsx` - Registration form component
-- `components/protected-route.tsx` - Route protection component
-- `app/auth/page.tsx` - Authentication page
-
-**API & Core**:
-
-- `lib/api-client.ts` - Base HttpClient with common HTTP methods (GET, POST, PUT, PATCH, DELETE)
-- `lib/constants.ts` - API endpoints and configuration constants
-- `lib/utils.ts` - Utility functions (date formatting, validation, etc.)
-
-**Todo Feature**:
-
-- `features/todo/lib/api-client.ts` - Todo-specific API client extending HttpClient
-- `features/todo/types/todo.ts` - Todo-related TypeScript interfaces and types
-- `features/todo/hooks/useTodos.ts` - Todo state management with optimistic updates
-- `features/todo/components/TodoList.tsx` - Main todo list component with drag-and-drop
-- `features/todo/components/TodoItem.tsx` - Individual todo item component
-- `features/todo/components/TodoForm.tsx` - Todo creation and editing form
-- `features/todo/components/TodoFilters.tsx` - Filter controls (all, active, completed)
-
-**Category Feature**:
-
-- `features/category/lib/api-client.ts` - Category-specific API client extending HttpClient
-- `features/category/types/category.ts` - Category-related TypeScript interfaces and types
-- `features/category/hooks/useCategories.ts` - Category state management
-- `features/category/components/CategoryManager.tsx` - Main category management component
-- `features/category/components/CategoryForm.tsx` - Category creation and editing form
-- `features/category/components/CategorySelector.tsx` - Category selection dropdown
-
-**UI Components**:
-
-- `components/ui/` - Shared UI components (shadcn/ui based)
-- `components/navigation.tsx` - Navigation with authentication state
-
-### Architecture Principles
-
-1. **Feature-based organization**: Domain-specific code lives in `features/[domain]/`
-
-2. **Cross-cutting concerns**: Shared utilities, types, and components live in root-level directories
-
-3. **Separation of concerns**: Each feature has its own components, hooks, types, and utilities
-
-4. **Reusability**: Common UI components and hooks are shared across features
-
-5. **Authentication Architecture (BFF)**:
-
-   - JWT token stored in httpOnly Cookie (not accessible from JavaScript)
-   - Next.js Route Handlers act as BFF proxy for all API calls
-   - Auth context for global authentication state
-   - Protected routes with authentication guards
-   - Persistent authentication via server-side Cookie validation
-
-6. **API Client Pattern (BFF)**:
-
-   - Base `HttpClient` provides common HTTP methods with `credentials: "include"`
-   - All API calls go through BFF proxy (`/api/v1/*` Route Handlers)
-   - Feature-specific API clients extend `HttpClient` and implement domain-specific methods
-   - Hooks use feature API clients for data fetching and state management
-   - BFF handles JWT token injection (client sends Cookie, BFF adds Authorization header)
-
-7. **Error Handling**: Consistent error handling with `ApiError` class and proper user feedback
-
-8. **Optimistic Updates**: UI updates immediately with rollback on API failure
-
-9. **Type Safety**: Full TypeScript coverage with proper interfaces and type definitions
-
-10. **Component Composition**: Small, focused components that compose well together
-
-11. **State Management**: Local state with React hooks, avoiding external state management libraries
-
-## Docker Environment Variables
-
-The application uses environment variables for configuration:
-
-**Backend Services**:
-
-- `DATABASE_URL` - Full database connection string
-- `RAILS_ENV` - Rails environment (development/production/test)
-- `RAILS_MASTER_KEY` - Rails master key for encrypted credentials
-- `SECRET_KEY_BASE` - Secret key for Rails session encryption
-
-**Database (compose.yml)**:
-
-- `POSTGRES_DB` - Database name
-- `POSTGRES_USER` - Database user
-- `POSTGRES_PASSWORD` - Database password
-
-**Testing**:
-
-- Test database: `todo_app_test`
-- Development database: `todo_next`
-- Test database is automatically selected when `RAILS_ENV=test` is specified
-- The test_database.rb initializer ensures the correct database is used in test environment
-
-**Note**: Create a `.env` file in the root directory with these variables for Docker Compose.
-
