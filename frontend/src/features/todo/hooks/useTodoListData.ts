@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { useMemo, useCallback, useRef } from "react";
+import { useMemo, useCallback, useRef, useEffect } from "react";
 import { todoApiClient } from "../lib/api-client";
 import { categoryApiClient } from "@/features/category/lib/api-client";
 import { tagApiClient } from "@/features/tag/lib/api-client";
@@ -217,11 +217,15 @@ export function useTodoListData(
 
   // fallbackData はSWRキャッシュに格納されないため、ref 経由で最新値を参照する
   const searchDataRef = useRef(searchData);
-  searchDataRef.current = searchData;
+  useEffect(() => {
+    searchDataRef.current = searchData;
+  }, [searchData]);
 
   // refresh で最新の検索パラメータを使うための ref
   const debouncedSearchParamsRef = useRef(debouncedSearchParams);
-  debouncedSearchParamsRef.current = debouncedSearchParams;
+  useEffect(() => {
+    debouncedSearchParamsRef.current = debouncedSearchParams;
+  }, [debouncedSearchParams]);
 
   // エラーメッセージを統合
   const error = useMemo(() => {
