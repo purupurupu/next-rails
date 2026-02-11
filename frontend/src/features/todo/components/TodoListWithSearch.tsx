@@ -3,13 +3,14 @@
 import { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useSearchParams } from "../hooks/useSearchParams";
 import { useTodoListData } from "../hooks/useTodoListData";
-import { useTodoMutations } from "../hooks/useTodoMutations";
+import { todoApiClient } from "../lib/api-client";
 
 import { TodoItem } from "./TodoItem";
 import { SearchBar } from "./SearchBar";
@@ -80,6 +81,7 @@ export function TodoListWithSearch({
     categories,
     tags,
     refresh,
+    mutateOptimistic,
   } = useTodoListData(searchParams, {
     initialTodos,
     initialCategories,
@@ -87,41 +89,85 @@ export function TodoListWithSearch({
     initialSearchResponse,
   });
 
-  // Todo mutations
-  const mutations = useTodoMutations({
-    allTodos: todos,
-    setAllTodos: () => {}, // We'll refresh search instead
-    setError: () => {},
-  });
-
-  // ハンドラー関数を useCallback でラップ (rerender-functional-setstate ルール)
-  // 安定したコールバック参照で子コンポーネント (TodoItem) の再レンダリングを防止
-  const handleCreateTodo = useCallback(async (data: CreateTodoData, files?: File[]) => {
-    await mutations.createTodo(data, files);
+  // ハンドラー関数: mutateOptimistic でUI即時更新 → API → refresh で再検証
+  const handleCreateTodo = useCallback(async (
+    data: CreateTodoData,
+    files?: File[],
+  ) => {
+    try {
+      const created = await todoApiClient.createTodo(data, files);
+      await mutateOptimistic((prev) => [...prev, created]);
+      toast.success("タスクを作成しました");
+    } catch {
+      toast.error("タスクの作成に失敗しました");
+    }
     await refresh();
-  }, [mutations, refresh]);
+  }, [mutateOptimistic, refresh]);
 
-  const handleUpdateTodo = useCallback(async (data: UpdateTodoData, files?: File[]) => {
+  const handleUpdateTodo = useCallback(async (
+    data: UpdateTodoData,
+    files?: File[],
+  ) => {
     if (!editingTodo) return;
-    await mutations.updateTodo(editingTodo.id, data, files);
+    const id = editingTodo.id;
     setEditingTodo(null);
+    await mutateOptimistic((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...data } : t)),
+    );
+    try {
+      await todoApiClient.updateTodo(id, data, files);
+      toast.success("タスクを更新しました");
+    } catch {
+      toast.error("タスクの更新に失敗しました");
+    }
     await refresh();
-  }, [editingTodo, mutations, refresh]);
+  }, [editingTodo, mutateOptimistic, refresh]);
 
   const handleDeleteTodo = useCallback(async (id: number) => {
-    await mutations.deleteTodo(id);
+    await mutateOptimistic((prev) => prev.filter((t) => t.id !== id));
+    try {
+      await todoApiClient.deleteTodo(id);
+      toast.success("タスクを削除しました");
+    } catch {
+      toast.error("タスクの削除に失敗しました");
+    }
     await refresh();
-  }, [mutations, refresh]);
+  }, [mutateOptimistic, refresh]);
 
   const handleToggleComplete = useCallback(async (id: number) => {
-    await mutations.toggleTodoComplete(id);
+    await mutateOptimistic((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
+    );
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+    try {
+      await todoApiClient.updateTodo(id, { completed: !todo.completed });
+      toast.success("タスクを更新しました");
+    } catch {
+      toast.error("タスクの更新に失敗しました");
+    }
     await refresh();
-  }, [mutations, refresh]);
+  }, [todos, mutateOptimistic, refresh]);
 
-  const handleDeleteFile = useCallback(async (todoId: number, fileId: string | number) => {
-    await mutations.deleteTodoFile(todoId, fileId);
+  const handleDeleteFile = useCallback(async (
+    todoId: number,
+    fileId: string | number,
+  ) => {
+    await mutateOptimistic((prev) =>
+      prev.map((t) =>
+        t.id === todoId
+          ? { ...t, files: t.files.filter((f) => f.id !== fileId) }
+          : t,
+      ),
+    );
+    try {
+      await todoApiClient.deleteTodoFile(todoId, fileId);
+      toast.success("ファイルを削除しました");
+    } catch {
+      toast.error("ファイルの削除に失敗しました");
+    }
     await refresh();
-  }, [mutations, refresh]);
+  }, [mutateOptimistic, refresh]);
 
   if (loading && !todos.length) {
     return (
