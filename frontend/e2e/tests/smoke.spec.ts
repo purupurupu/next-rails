@@ -19,9 +19,9 @@ test.describe("スモークテスト", () => {
     await page.waitForURL("/tags");
     await expect(page.getByRole("heading", { name: "タグ" })).toBeVisible();
 
-    // ノートページ（見出し要素なし、テキストで確認）
+    // ノートページ
     await nav.notesLink.click();
     await page.waitForURL("/notes");
-    await expect(page.getByText("ノート", { exact: true })).toBeVisible();
+    await expect(page.locator("p").filter({ hasText: /^ノート$/ })).toBeVisible();
   });
 });

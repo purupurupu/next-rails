@@ -25,7 +25,8 @@ test.describe("Todo CRUD", () => {
 
     // クリーンアップ用にIDを取得
     const response = await request.get("/api/v1/todos");
-    const todos = await response.json();
+    const body = await response.json();
+    const todos = Array.isArray(body) ? body : body.data ?? [];
     const created = todos.find(
       (t: { title: string }) => t.title === title,
     );
@@ -44,14 +45,16 @@ test.describe("Todo CRUD", () => {
     await todoPage.toggleTodo(title);
 
     // チェックボックスがチェックされることを確認
+    const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const checkbox = page.getByRole("checkbox", {
-      name: new RegExp(`${title}を`),
+      name: new RegExp(`${escaped}を`),
     });
     await expect(checkbox).toBeChecked({ timeout: 5_000 });
 
     // クリーンアップ
     const response = await request.get("/api/v1/todos");
-    const todos = await response.json();
+    const body = await response.json();
+    const todos = Array.isArray(body) ? body : body.data ?? [];
     const created = todos.find(
       (t: { title: string }) => t.title === title,
     );

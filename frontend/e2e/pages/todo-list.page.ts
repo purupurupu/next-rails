@@ -52,8 +52,9 @@ export class TodoListPage {
 
   /** 指定タイトルのTodoアイテムのチェックボックスをクリックする */
   async toggleTodo(title: string) {
+    const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const checkbox = this.page.getByRole("checkbox", {
-      name: new RegExp(`${title}を`),
+      name: new RegExp(`${escaped}を`),
     });
     await checkbox.click();
   }
