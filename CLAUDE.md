@@ -163,15 +163,15 @@ HttpClient (lib/api-client.ts) ← credentials: "include" で Cookie 自動送�
 
 ### Naming Conventions
 
-| 対象 | 規則 | 例 |
-|------|------|-----|
-| Components | PascalCase | `TodoItem.tsx` |
-| Hooks | camelCase + `use` prefix | `useTodos.ts` |
-| Utilities/Types | kebab-case | `api-client.ts` |
-| React components | PascalCase | `TodoItem` |
-| Functions/variables | camelCase | `fetchTodos` |
-| Constants | UPPER_SNAKE_CASE | `API_ENDPOINTS` |
-| Interfaces | PascalCase + descriptive suffix | `TodoItemProps` |
+| 対象                | 規則                            | 例              |
+| ------------------- | ------------------------------- | --------------- |
+| Components          | PascalCase                      | `TodoItem.tsx`  |
+| Hooks               | camelCase + `use` prefix        | `useTodos.ts`   |
+| Utilities/Types     | kebab-case                      | `api-client.ts` |
+| React components    | PascalCase                      | `TodoItem`      |
+| Functions/variables | camelCase                       | `fetchTodos`    |
+| Constants           | UPPER_SNAKE_CASE                | `API_ENDPOINTS` |
+| Interfaces          | PascalCase + descriptive suffix | `TodoItemProps` |
 
 ### Git Commits
 
