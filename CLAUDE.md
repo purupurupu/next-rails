@@ -73,6 +73,22 @@ docker compose exec frontend pnpm run lint
 docker compose exec frontend pnpm run typecheck
 docker compose exec backend env RAILS_ENV=test bundle exec rspec
 docker compose exec backend bundle exec rubocop
+# E2E tests (optional locally, CI runs automatically)
+# cd frontend && pnpm run e2e
+```
+
+### E2E Tests (Playwright)
+
+```bash
+# ブラウザインストール（初回のみ）
+cd frontend && pnpm exec playwright install chromium
+
+# テスト実行（Docker サービス起動済みであること）
+pnpm run e2e                    # ヘッドレス実行
+pnpm run e2e:headed             # ブラウザ表示付き
+pnpm run e2e:ui                 # Playwright UI モード
+pnpm run e2e:codegen            # コード生成ツール
+pnpm run e2e:report             # HTMLレポート表示
 ```
 
 ## Key Architecture Decisions

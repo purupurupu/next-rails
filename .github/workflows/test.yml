@@ -128,9 +128,125 @@ jobs:
           cd frontend
           pnpm run build
 
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: todo_app_e2e
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4.5'
+          bundler-cache: true
+          working-directory: backend
+
+      - name: Setup database and seed
+        env:
+          RAILS_ENV: development
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/todo_app_e2e
+          RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+          SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE || 'test_secret_key_base_for_ci_environment_only_not_for_production' }}
+        run: |
+          cd backend
+          bundle exec rails db:create
+          bundle exec rails db:schema:load
+          bundle exec rails db:seed
+
+      - name: Start Rails server
+        env:
+          RAILS_ENV: development
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/todo_app_e2e
+          RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+          SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE || 'test_secret_key_base_for_ci_environment_only_not_for_production' }}
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          cd backend
+          bundle exec rails server -p 3001 -d
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          pnpm install
+
+      - name: Install Playwright browsers
+        run: |
+          cd frontend
+          pnpm exec playwright install --with-deps chromium
+
+      - name: Build and start Next.js
+        env:
+          BACKEND_URL: http://localhost:3001
+        run: |
+          cd frontend
+          pnpm run build
+          pnpm run start &
+          npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: Run E2E tests
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+          CI: true
+        run: |
+          cd frontend
+          pnpm run e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/e2e/playwright-report/
+          retention-days: 14
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: frontend/e2e/test-results/
+          retention-days: 7
+
   all-tests:
     name: All Tests Passed
-    needs: [backend-tests, frontend-tests]
+    needs: [backend-tests, frontend-tests, e2e-tests]
     runs-on: ubuntu-latest
     steps:
       - name: All tests completed
