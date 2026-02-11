@@ -68,11 +68,12 @@ frontend/src/
 │       │   ├── TodoItem.tsx
 │       │   ├── TodoForm.tsx       # Now includes comment/history tabs
 │       │   └── TodoFilters.tsx
-│       ├── hooks/       # Todo hooks (REFACTORED)
-│       │   ├── useTodos.ts              # Main hook
-│       │   ├── useTodosState.ts         # State management
-│       │   ├── useTodoMutations.ts      # CRUD operations
-│       │   ├── useTodosFilter.ts        # Filtering logic
+│       ├── hooks/       # Todo hooks (SWR-based)
+│       │   ├── useTodoListData.ts       # SWR並列フェッチ + Optimistic update
+│       │   ├── useTodos.ts              # Legacy main hook
+│       │   ├── useTodoMutations.ts      # CRUD operations (TodoList用)
+│       │   ├── useSearchParams.ts       # 検索パラメータ管理
+│       │   ├── useTodoFormState.ts      # フォーム状態管理
 │       │   └── todo-optimistic-utils.ts # Optimistic update utilities
 │       ├── lib/         # Todo API client
 │       │   └── api-client.ts
@@ -189,39 +190,55 @@ interface Category extends BaseEntity {
 }
 ```
 
-### 6. Hooks Architecture (REFACTORED)
-**Modular Hook Design**: Large hooks split into focused modules
+### 6. Hooks Architecture (SWR-based)
+**SWRベースの並列データフェッチ + Optimistic Update**
 
 ```typescript
-// Responsibility separation
-useTodos.ts (89 lines)
-├── useTodosState.ts (59 lines)      # State management
-├── useTodoMutations.ts (168 lines)  # CRUD + optimistic updates
-├── useTodosFilter.ts (49 lines)     # Filtering & counts
-└── todo-optimistic-utils.ts         # Pure utility functions
+// TodoListWithSearch で使用するhook構成
+useTodoListData.ts          # SWRベースの並列データフェッチ（todos, categories, tags）
+├── useSearchParams.ts      # 検索パラメータ管理
+├── useTodoFormState.ts     # フォーム状態管理
+└── useTodoMutations.ts     # CRUD操作（TodoList用、レガシー）
 
-// Main hook composition
-export function useTodos() {
-  const state = useTodosState();
-  const mutations = useTodoMutations(state);
-  const { todos, counts } = useTodosFilter(state);
-  
-  return { ...state, ...mutations, todos, counts };
+// メインhook（TodoListWithSearchで使用）
+export function useTodoListData(searchParams, options?) {
+  // SWRで categories, tags, todos を独立して並列フェッチ
+  // SSR初期データを fallbackData で受け取り
+  return {
+    todos, searchResponse, categories, tags,
+    loading, error, refresh, mutateOptimistic,
+  };
 }
 ```
 
-### 7. Optimistic Updates (ENHANCED)
-Optimistic updates extracted to pure utility functions:
-```typescript
-// Pure functions for testability
-export function createOptimisticTodo(data: CreateTodoData): Todo;
-export function applyOptimisticUpdate(todos: Todo[], id: number, updates: Partial<Todo>): Todo[];
-export function removeOptimisticTodo(todos: Todo[], id: number): Todo[];
+### 7. Optimistic Updates (SWR Cache-based)
+`TodoListWithSearch`では SWR キャッシュを直接操作する Optimistic Update パターンを採用:
 
-// Usage in hooks
-const optimisticTodo = createOptimisticTodo(data, allTodos.length);
-setAllTodos(prev => addOptimisticTodo(prev, optimisticTodo));
+```typescript
+// useTodoListData が公開する mutateOptimistic
+const mutateOptimistic = async (updater: (current: Todo[]) => Todo[]) => {
+  await mutateSearch((current) => {
+    const base = current ?? searchDataRef.current; // fallbackData対応
+    const newTodos = updater(base.todos);
+    return { todos: newTodos, searchResponse: { ...base.searchResponse, data: newTodos } };
+  }, { revalidate: false });
+};
+
+// TodoListWithSearch での使用パターン
+// 1. mutateOptimistic() でUIを即時更新
+// 2. todoApiClient.xxx() でAPI呼び出し
+// 3. refresh() でサーバーから最新データ再取得
+const handleDeleteTodo = async (id: number) => {
+  await mutateOptimistic((prev) => prev.filter((t) => t.id !== id));
+  try { await todoApiClient.deleteTodo(id); }
+  catch { toast.error("削除に失敗しました"); }
+  await refresh();
+};
 ```
+
+**注意: SWR `fallbackData` の挙動**
+- `fallbackData` は SWR キャッシュに格納されない（表示用フォールバックのみ）
+- `mutate(updaterFn)` の `current` 引数は `undefined` になりうるため、`useRef` で最新値を保持する必要がある
 
 ## Component Architecture
 
@@ -248,7 +265,8 @@ App Layout
 
 ### Local State Strategy
 - **Authentication**: Global context (`AuthContext`)
-- **Todos**: Feature-level hook (`useTodos`)
+- **Todos**: SWRキャッシュ (`useTodoListData`) — SSR初期データを `fallbackData` で受け取り、クライアントで SWR が管理
+- **Categories/Tags**: 独立した SWR キャッシュ（`useTodoListData` 内で並列フェッチ）
 - **UI State**: Component-level `useState`
 - **Form State**: Controlled components with local state
 

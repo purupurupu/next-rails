@@ -27,6 +27,17 @@ The main test workflow runs on:
 4. Runs TypeScript type checking
 5. Builds the frontend application
 
+#### E2E Tests (Playwright)
+1. Sets up PostgreSQL and Redis services
+2. Sets up Rails backend (DB作成、スキーマロード、シードデータ投入)
+3. Railsサーバーをバックグラウンドで起動（port 3001）
+4. Installs Node.js, pnpm, and Playwright browsers (Chromium)
+5. Next.jsをビルド・起動（port 3000, `BACKEND_URL=http://localhost:3001`）
+6. Playwright E2E テスト実行
+7. テストレポート・結果をアーティファクトとしてアップロード（レポートは14日間保持）
+
+#### All Tests Gate
+`all-tests` ジョブが `backend-tests`, `frontend-tests`, `e2e-tests` 全ての完了を待つゲートとして機能。
 
 ## Required Secrets
 
@@ -49,6 +60,14 @@ docker compose exec backend bundle exec rubocop
 ```bash
 docker compose exec frontend pnpm run lint
 docker compose exec frontend pnpm run typecheck
+```
+
+### E2E Tests
+```bash
+cd frontend
+pnpm exec playwright install chromium  # 初回のみ
+pnpm run e2e                           # ヘッドレス実行
+pnpm run e2e:headed                    # ブラウザ表示付き
 ```
 
 ## Coverage Requirements
