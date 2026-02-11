@@ -9,7 +9,12 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
-    "typecheck:full": "tsc --noEmit --skipLibCheck false"
+    "typecheck:full": "tsc --noEmit --skipLibCheck false",
+    "e2e": "playwright test --config=e2e/playwright.config.ts",
+    "e2e:ui": "playwright test --config=e2e/playwright.config.ts --ui",
+    "e2e:headed": "playwright test --config=e2e/playwright.config.ts --headed",
+    "e2e:codegen": "playwright codegen http://localhost:3000",
+    "e2e:report": "playwright show-report e2e/playwright-report"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -48,6 +53,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
+    "@playwright/test": "^1.58.2",
     "@stylistic/eslint-plugin": "^5.7.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.0.9",

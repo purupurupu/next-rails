@@ -2,6 +2,7 @@ import nextConfig from "eslint-config-next";
 import stylistic from "@stylistic/eslint-plugin";
 
 const eslintConfig = [
+  { ignores: ["e2e/"] },
   ...nextConfig,
   stylistic.configs.customize({
     // 基本的な設定

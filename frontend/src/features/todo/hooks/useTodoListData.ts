@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { useMemo } from "react";
+import { useMemo, useCallback, useRef, useEffect } from "react";
 import { todoApiClient } from "../lib/api-client";
 import { categoryApiClient } from "@/features/category/lib/api-client";
 import { tagApiClient } from "@/features/tag/lib/api-client";
@@ -19,6 +19,7 @@ interface UseTodoListDataReturn {
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
+  mutateOptimistic: (updater: (current: Todo[]) => Todo[]) => Promise<void>;
 }
 
 /**
@@ -147,7 +148,9 @@ export function useTodoListData(
   );
 
   // 検索中（デバウンス待ち）かどうか
-  const isDebouncing = searchParams.q !== debouncedSearchQuery;
+  // Note: searchParams.q は未検索時に undefined、useDebounce は "" を返すため、
+  // 比較前に undefined を "" に正規化する
+  const isDebouncing = (searchParams.q ?? "") !== debouncedSearchQuery;
 
   // SWRキーを生成
   const searchKey = useMemo(
@@ -212,6 +215,18 @@ export function useTodoListData(
     },
   );
 
+  // fallbackData はSWRキャッシュに格納されないため、ref 経由で最新値を参照する
+  const searchDataRef = useRef(searchData);
+  useEffect(() => {
+    searchDataRef.current = searchData;
+  }, [searchData]);
+
+  // refresh で最新の検索パラメータを使うための ref
+  const debouncedSearchParamsRef = useRef(debouncedSearchParams);
+  useEffect(() => {
+    debouncedSearchParamsRef.current = debouncedSearchParams;
+  }, [debouncedSearchParams]);
+
   // エラーメッセージを統合
   const error = useMemo(() => {
     if (searchError) return searchError instanceof Error ? searchError.message : "検索に失敗しました";
@@ -221,10 +236,46 @@ export function useTodoListData(
     return null;
   }, [searchError, categoriesError, tagsError]);
 
-  // refresh: すべてのデータを再取得
-  const refresh = async () => {
-    await Promise.all([mutateSearch(), mutateCategories(), mutateTags()]);
-  };
+  // refresh: API を直接呼んで SWR キャッシュに書き込む
+  // SWR の revalidation 機構を経由しないことで、dedupingInterval や
+  // revalidateOnMount: false などの設定に影響されず確実に最新データを取得する
+  const refresh = useCallback(async () => {
+    const params = debouncedSearchParamsRef.current;
+    const [searchResult] = await Promise.all([
+      todoApiClient.searchTodos(params),
+      mutateCategories(),
+      mutateTags(),
+    ]);
+    const parsed = parseSearchResult(searchResult, params.q);
+    await mutateSearch(parsed, { revalidate: false });
+  }, [mutateSearch, mutateCategories, mutateTags]);
+
+  // SWRキャッシュを直接更新する Optimistic update 関数
+  // Note: fallbackData はSWRキャッシュに入らないため、
+  // updater の current が undefined の場合は searchDataRef から取得する
+  const mutateOptimistic = useCallback(async (
+    updater: (current: Todo[]) => Todo[],
+  ) => {
+    await mutateSearch(
+      (current) => {
+        const base = current ?? searchDataRef.current;
+        if (!base) return current;
+        const newTodos = updater(base.todos);
+        return {
+          todos: newTodos,
+          searchResponse: {
+            ...base.searchResponse,
+            data: newTodos,
+            meta: {
+              ...base.searchResponse.meta,
+              total: newTodos.length,
+            },
+          },
+        };
+      },
+      { revalidate: false },
+    );
+  }, [mutateSearch]);
 
   return {
     todos: searchData?.todos ?? options.initialTodos ?? [],
@@ -234,5 +285,6 @@ export function useTodoListData(
     loading: searchLoading || isDebouncing,
     error,
     refresh,
+    mutateOptimistic,
   };
 }

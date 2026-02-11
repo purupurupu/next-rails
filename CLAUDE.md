@@ -13,7 +13,7 @@ Full-stack Todo + Notes application with user authentication:
 - **Backend**: Rails 8.0.0 API-only (Ruby 3.4.5) with Devise + JWT
 - **Database**: PostgreSQL 15
 - **Cache/Jobs**: Redis 7 + Sidekiq
-- **Infrastructure**: Docker Compose (frontend, backend, db, redis)
+- **Infrastructure**: Docker Compose via `compose.yml` (frontend, backend, db, redis)
 
 Services: Frontend `:3000` / Backend API `:3001` / PostgreSQL `:5432` / Redis `:6379`
 
@@ -73,6 +73,22 @@ docker compose exec frontend pnpm run lint
 docker compose exec frontend pnpm run typecheck
 docker compose exec backend env RAILS_ENV=test bundle exec rspec
 docker compose exec backend bundle exec rubocop
+# E2E tests (optional locally, CI runs automatically)
+# cd frontend && pnpm run e2e
+```
+
+### E2E Tests (Playwright)
+
+```bash
+# ブラウザインストール（初回のみ）
+cd frontend && pnpm exec playwright install chromium
+
+# テスト実行（Docker サービス起動済みであること）
+pnpm run e2e                    # ヘッドレス実行
+pnpm run e2e:headed             # ブラウザ表示付き
+pnpm run e2e:ui                 # Playwright UI モード
+pnpm run e2e:codegen            # コード生成ツール
+pnpm run e2e:report             # HTMLレポート表示
 ```
 
 ## Key Architecture Decisions
@@ -87,9 +103,28 @@ Browser → Next.js BFF (/api/v1/[...path]/route.ts) → Rails API (:3001)
 ```
 
 - **汎用プロキシ**: `app/api/v1/[...path]/route.ts` が全 `/api/v1/*` リクエストをRailsに転送
-- **認証フロー**: JWT token は httpOnly Cookie に保存（XSS対策）。BFF が Cookie から token を取り出し、Authorization ヘッダーとして Rails に送信
+- **認証フロー**: JWT token は httpOnly Cookie (`auth_token`) に保存。BFF が Cookie から token を取り出し、Authorization ヘッダーとして Rails に送信
 - **ファイルアップロード**: multipart/form-data をそのまま転送
 - **認証用BFFエンドポイント**: `app/api/auth/login|register|logout|me/route.ts`
+
+### SSR → Client データフロー
+
+Server Component が `lib/server/api-client.ts` 経由でバックエンドからデータ取得し、Client Component に `fallbackData` として渡す:
+
+```
+Server Component (app/page.tsx)
+  → serverGet() (cookies()からJWT取得、BACKEND_URL直接アクセス)
+  → React.cache() でリクエスト内重複排除
+  → Client Component (TodoListWithSearch) に initialTodos/initialCategories/initialTags として渡す
+  → useTodoListData() が SWR fallbackData として受け取り、クライアントで管理
+```
+
+### SWR パターンと注意点
+
+- **SWR設定**: `defaultSWRConfig`(dedupingInterval: 60s)、`shortCacheSWRConfig`(10s)、`longCacheSWRConfig`(300s)
+- **`fallbackData` はキャッシュに入らない**: SWR の `fallbackData` は表示用フォールバックのみ。`mutate(updaterFn)` の `current` が `undefined` になるため、`useRef` で最新値を保持する必要がある
+- **`refresh()` は SWR revalidation をバイパス**: `dedupingInterval` の影響を受けないよう、直接 API を呼んで `mutateSearch(data, { revalidate: false })` でキャッシュに書き込む
+- **Optimistic Update**: `mutateOptimistic()` で SWR キャッシュを直接操作 → API 呼び出し → `refresh()` で最新データ再取得
 
 ### Feature-based Frontend Architecture
 
@@ -106,7 +141,7 @@ frontend/src/
 ├── hooks/                # 横断的hooks（useDebounce, useFocusTrap）
 ├── lib/                  # 共通ライブラリ
 │   ├── api-client.ts     # Base HttpClient（全API clientの基底クラス）
-│   ├── server/api-client.ts  # サーバーサイドAPI client
+│   ├── server/api-client.ts  # サーバーサイドAPI client（Server Componentのみ）
 │   ├── auth/config.ts    # Cookie設定・バックエンドURL
 │   ├── swr-config.ts     # SWR設定（default/shortCache/longCache）
 │   ├── validation-utils.ts   # Zod検証ヘルパー
@@ -125,7 +160,11 @@ HttpClient (lib/api-client.ts) ← credentials: "include" で Cookie 自動送�
   ├── NotesApiClient (features/notes/lib/api-client.ts)
   ├── CategoryApiClient (features/category/lib/api-client.ts)
   └── TagApiClient (features/tag/lib/api-client.ts)
+
+ServerApiClient (lib/server/api-client.ts) ← Server Component用、cookies()からJWT取得
 ```
+
+`HttpClient` はレスポンスの `{ status, data }` ラッパーを自動展開する（`data` フィールドを返す）。
 
 ### Backend Models
 
@@ -145,6 +184,37 @@ HttpClient (lib/api-client.ts) ← credentials: "include" で Cookie 自動送�
 - `/api/v1/todos/:id/comments/*` - コメント（soft delete付き）
 - `/api/v1/todos/:id/histories` - 変更履歴
 
+## E2E Test Architecture
+
+```
+frontend/e2e/
+├── global-setup.ts       # demoユーザーでログイン、Cookie保存
+├── playwright.config.ts  # プロジェクト設定
+├── pages/                # Page Object Model
+├── helpers/api.ts        # API経由のセットアップ/クリーンアップ
+├── fixtures/test-data.ts # テストデータ生成
+└── tests/
+    ├── auth/             # 未認証テスト（unauthenticatedプロジェクト）
+    └── todo/             # 認証済みテスト（authenticatedプロジェクト）
+```
+
+- **プロジェクト分割**: `unauthenticated`（auth/配下）と `authenticated`（それ以外、`storageState` で認証Cookie使用）
+- **Global Setup**: テストスイート実行前にdemoユーザーでログインし `e2e/.auth/demo-user.json` に保存
+- **シリアル実行**: `workers: 1`, `fullyParallel: false`（データ競合回避）
+- **CI**: `retries: 2`、ローカル: `retries: 0`
+
+## Backend Test Patterns
+
+```bash
+# FactoryBot Profiler（パフォーマンス計測）
+docker compose exec backend env PROFILE_FACTORIES=true RAILS_ENV=test bundle exec rspec
+```
+
+- **認証ヘルパー**: `auth_headers_for(user)` でJWTトークン付きヘッダーを取得（トークンはキャッシュされる）
+- **FactoryBot最適化**: `transient { skip_user { false } }` でアソシエーション作成スキップ、`sequence` でFaker回避
+- **Shared Examples**: `'requires authentication'`（401検証）、`'api responses'`（レスポンスヘッダー検証）
+- **テスト設定**: トランザクショナルfixtures、ActiveJob inline adapter（Redis不要）
+
 ## Development Guidelines
 
 ### コーディング規約
@@ -160,15 +230,15 @@ HttpClient (lib/api-client.ts) ← credentials: "include" で Cookie 自動送�
 - ダブルクォート、セミコロン必須、2スペースインデント
 - アロー関数の括弧は常に使用、1TBS braceスタイル
 - 最大行長: 100文字
+- `e2e/` ディレクトリは ESLint 対象外（別 tsconfig 使用）
 
 ### Naming Conventions
 
 | 対象                | 規則                            | 例              |
 | ------------------- | ------------------------------- | --------------- |
-| Components          | PascalCase                      | `TodoItem.tsx`  |
-| Hooks               | camelCase + `use` prefix        | `useTodos.ts`   |
+| Components (file)   | PascalCase                      | `TodoItem.tsx`  |
+| Hooks (file)        | camelCase + `use` prefix        | `useTodos.ts`   |
 | Utilities/Types     | kebab-case                      | `api-client.ts` |
-| React components    | PascalCase                      | `TodoItem`      |
 | Functions/variables | camelCase                       | `fetchTodos`    |
 | Constants           | UPPER_SNAKE_CASE                | `API_ENDPOINTS` |
 | Interfaces          | PascalCase + descriptive suffix | `TodoItemProps` |
@@ -181,6 +251,7 @@ Types: feat, fix, docs, style, refactor, test, chore
 
 ## Docker Environment
 
+- Compose設定: `compose.yml`（Docker Compose V2形式）
 - Backend内部URL: `BACKEND_URL=http://backend:3000`（コンテナ間通信）
 - 外部ポートマッピング: backend `:3001` → container `:3000`
 - Test DB: `todo_app_test`、Dev DB: `todo_next`
@@ -197,3 +268,7 @@ docker compose down
 docker compose build --no-cache frontend
 docker compose up -d
 ```
+
+### SWR state not updating after code changes
+
+HMR は SWR のモジュールレベルグローバル状態（`FETCH`, `MUTATION` 等）をリセットしない。SWR 関連のコードを変更した場合は Docker コンテナの再起動（またはフルリビルド）が必要。
