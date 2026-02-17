@@ -123,6 +123,11 @@ jobs:
           cd frontend
           pnpm run typecheck:full
 
+      - name: Run unit tests
+        run: |
+          cd frontend
+          pnpm run test
+
       - name: Build frontend
         run: |
           cd frontend
