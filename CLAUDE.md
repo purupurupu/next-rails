@@ -47,6 +47,9 @@ docker compose build --no-cache frontend # If dependency issues persist
 docker compose exec frontend pnpm run lint        # ESLint
 docker compose exec frontend pnpm run lint:fix    # ESLint auto-fix
 docker compose exec frontend pnpm run typecheck   # TypeScript check
+docker compose exec frontend pnpm run test        # Vitest unit tests
+docker compose exec frontend pnpm run test:watch  # Vitest watch mode
+docker compose exec frontend pnpm run test:coverage # Vitest with coverage
 ```
 
 **開発中は `pnpm run build` を実行しない**（型チェックは `pnpm run typecheck` で行う）
@@ -71,6 +74,7 @@ docker compose exec backend bundle exec rubocop -A    # Auto-correct all
 ```bash
 docker compose exec frontend pnpm run lint
 docker compose exec frontend pnpm run typecheck
+docker compose exec frontend pnpm run test
 docker compose exec backend env RAILS_ENV=test bundle exec rspec
 docker compose exec backend bundle exec rubocop
 # E2E tests (optional locally, CI runs automatically)
@@ -184,6 +188,13 @@ ServerApiClient (lib/server/api-client.ts) ← Server Component用、cookies()�
 - `/api/v1/todos/:id/comments/*` - コメント（soft delete付き）
 - `/api/v1/todos/:id/histories` - 変更履歴
 
+### Frontend Unit Tests (Vitest)
+
+- **テスト配置**: 各ディレクトリの `__tests__/` フォルダ内（例: `src/lib/__tests__/utils.test.ts`）
+- **設定**: `vitest.config.ts`（jsdom環境、`@/*` パスエイリアス対応）
+- **セットアップ**: `src/test/setup.ts` で `next/navigation` をモック
+- **ライブラリ**: Testing Library（React, user-event）+ jest-dom matchers
+
 ## E2E Test Architecture
 
 ```
@@ -214,6 +225,15 @@ docker compose exec backend env PROFILE_FACTORIES=true RAILS_ENV=test bundle exe
 - **FactoryBot最適化**: `transient { skip_user { false } }` でアソシエーション作成スキップ、`sequence` でFaker回避
 - **Shared Examples**: `'requires authentication'`（401検証）、`'api responses'`（レスポンスヘッダー検証）
 - **テスト設定**: トランザクショナルfixtures、ActiveJob inline adapter（Redis不要）
+
+## CI Pipeline
+
+GitHub Actions (`test.yml`) で3ジョブ並列実行:
+
+- **backend-tests**: RSpec + RuboCop + カバレッジ（閾値: 90%）
+- **frontend-tests**: ESLint + TypeCheck + Vitest + Build
+- **e2e-tests**: Playwright（Chrome、`retries: 2`）
+- **concurrency**: 同一PRへの新pushで進行中のCIを自動キャンセル
 
 ## Development Guidelines
 
