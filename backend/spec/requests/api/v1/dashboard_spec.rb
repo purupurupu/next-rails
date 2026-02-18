@@ -42,15 +42,15 @@ RSpec.describe 'Api::V1::Dashboard', type: :request do
 
       before do
         create(:todo, user: user, completed: true, status: :completed,
-               priority: :high, category: category,
-               updated_at: Time.current)
+                      priority: :high, category: category,
+                      updated_at: Time.current)
         create(:todo, user: user, completed: true, status: :completed,
-               priority: :medium,
-               updated_at: Time.current)
+                      priority: :medium,
+                      updated_at: Time.current)
         create(:todo, user: user, completed: false, status: :pending,
-               priority: :low, category: category)
+                      priority: :low, category: category)
         create(:todo, user: user, completed: false, status: :in_progress,
-               priority: :high)
+                      priority: :high)
       end
 
       it 'returns completion stats' do

@@ -93,20 +93,20 @@ class DashboardStatsService
     start_date = today - 6.days
 
     completed_by_day = TodoHistory
-      .unscope(:order)
-      .joins(:todo)
-      .where(todos: { user_id: user.id })
-      .where(
-        field_name: 'completed',
-        new_value: 'true'
-      )
-      .where(
-        todo_histories: {
-          created_at: start_date.beginning_of_day..today.end_of_day
-        }
-      )
-      .group("DATE(todo_histories.created_at)")
-      .count
+                       .unscope(:order)
+                       .joins(:todo)
+                       .where(todos: { user_id: user.id })
+                       .where(
+                         field_name: 'completed',
+                         new_value: 'true'
+                       )
+                       .where(
+                         todo_histories: {
+                           created_at: start_date.beginning_of_day..today.end_of_day
+                         }
+                       )
+                       .group('DATE(todo_histories.created_at)')
+                       .count
 
     (start_date..today).map do |date|
       {
@@ -122,21 +122,21 @@ class DashboardStatsService
     result = {}
     string_keys.each_with_index do |key, idx|
       result[key.to_sym] = counts.fetch(key, nil) ||
-                            counts.fetch(idx, 0)
+                           counts.fetch(idx, 0)
     end
     result
   end
 
   def sanitize_completion_sql(today, bow, bom)
     conn = ActiveRecord::Base.connection
-    date_fn = conn.adapter_name.match?(/SQLite/i) ? "DATE(updated_at)" : "updated_at::date"
+    date_fn = conn.adapter_name.match?(/SQLite/i) ? 'DATE(updated_at)' : 'updated_at::date'
 
     ActiveRecord::Base.sanitize_sql_array([
-      "COUNT(CASE WHEN #{date_fn} = ? THEN 1 END), " \
-        "COUNT(CASE WHEN #{date_fn} >= ? THEN 1 END), " \
-        "COUNT(CASE WHEN #{date_fn} >= ? THEN 1 END), " \
-        "COUNT(*)",
-      today, bow, bom
-    ])
+                                            "COUNT(CASE WHEN #{date_fn} = ? THEN 1 END), " \
+                                            "COUNT(CASE WHEN #{date_fn} >= ? THEN 1 END), " \
+                                            "COUNT(CASE WHEN #{date_fn} >= ? THEN 1 END), " \
+                                            'COUNT(*)',
+                                            today, bow, bom
+                                          ])
   end
 end

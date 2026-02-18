@@ -3,9 +3,9 @@
 require 'rails_helper'
 
 RSpec.describe DashboardStatsService do
-  let(:user) { create(:user) }
-
   subject(:service) { described_class.new(user: user) }
+
+  let(:user) { create(:user) }
 
   describe '#call' do
     it 'returns all expected keys' do
@@ -23,9 +23,9 @@ RSpec.describe DashboardStatsService do
     context 'with completed todos at different times' do
       before do
         create(:todo, user: user, completed: true, status: :completed,
-               updated_at: Time.current)
+                      updated_at: Time.current)
         create(:todo, user: user, completed: true, status: :completed,
-               updated_at: 3.days.ago)
+                      updated_at: 3.days.ago)
         create(:todo, user: user, completed: false, status: :pending)
       end
 
@@ -129,7 +129,7 @@ RSpec.describe DashboardStatsService do
 
     it 'includes correct dates' do
       trend = service.call[:weekly_trend]
-      dates = trend.map { |d| d[:date] }
+      dates = trend.pluck(:date)
 
       expect(dates.first).to eq((Date.current - 6.days).iso8601)
       expect(dates.last).to eq(Date.current.iso8601)

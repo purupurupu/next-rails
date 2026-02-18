@@ -24,8 +24,8 @@ class Todo < ApplicationRecord
   before_create :set_position
   after_create :record_creation
   around_update :track_changes
-  after_save :invalidate_category_cache_if_changed
   after_destroy :invalidate_category_cache
+  after_save :invalidate_category_cache_if_changed
 
   private
 

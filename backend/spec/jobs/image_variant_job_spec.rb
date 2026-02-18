@@ -83,7 +83,7 @@ RSpec.describe ImageVariantJob, type: :job do
         service = TodoFileService.new(todo: todo)
         service.attach([image_file])
 
-        expect(ImageVariantJob).to have_been_enqueued.at_least(:once)
+        expect(described_class).to have_been_enqueued.at_least(:once)
       end
     end
 
@@ -92,7 +92,7 @@ RSpec.describe ImageVariantJob, type: :job do
         service = TodoFileService.new(todo: todo)
         service.attach([text_file])
 
-        expect(ImageVariantJob).not_to have_been_enqueued
+        expect(described_class).not_to have_been_enqueued
       end
     end
 
@@ -102,7 +102,7 @@ RSpec.describe ImageVariantJob, type: :job do
         service.attach([image_file, text_file])
 
         # 画像ファイル分だけenqueue される
-        expect(ImageVariantJob).to have_been_enqueued.once
+        expect(described_class).to have_been_enqueued.once
       end
     end
   end
