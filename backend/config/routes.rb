@@ -43,6 +43,9 @@ Rails.application.routes.draw do
       end
       resources :categories
       resources :tags
+      resource :dashboard, only: [], controller: 'dashboard' do
+        get :stats
+      end
       resources :notes do
         resources :revisions, only: [:index], controller: 'note_revisions' do
           post 'restore', on: :member
