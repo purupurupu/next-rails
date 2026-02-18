@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,12 @@ interface FilterBadgesProps {
   onClearAll: () => void;
 }
 
-export function FilterBadges({
+/**
+ * アクティブなフィルター条件をバッジ表示するコンポーネント
+ *
+ * memo化によりTodoリスト更新時の不要な再レンダリングを防止
+ */
+export const FilterBadges = memo(function FilterBadges({
   activeFilters,
   categories = [],
   tags = [],
@@ -144,4 +150,4 @@ export function FilterBadges({
       </Button>
     </div>
   );
-}
+});

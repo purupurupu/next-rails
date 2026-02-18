@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useKeyboardShortcutContext } from "@/components/KeyboardShortcutProvider";
 
 import { useSearchParams } from "../hooks/useSearchParams";
 import { useTodoListData } from "../hooks/useTodoListData";
@@ -51,6 +52,12 @@ export function TodoListWithSearch({
 }: TodoListWithSearchProps = {}) {
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+
+  // Cmd+N でタスク作成フォームを開けるようにショートカット登録
+  const { registerCreateTodo } = useKeyboardShortcutContext();
+  useEffect(() => {
+    registerCreateTodo(() => setIsCreateFormOpen(true));
+  }, [registerCreateTodo]);
 
   // Search params management
   const {

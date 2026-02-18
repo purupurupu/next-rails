@@ -8,7 +8,9 @@ module Api
 
       # GET /api/v1/categories
       def index
-        @categories = current_user.categories.order(:name)
+        @categories = Rails.cache.fetch(categories_cache_key, expires_in: 5.minutes) do
+          current_user.categories.order(:name).to_a
+        end
         render_json_response(
           data: @categories,
           each_serializer: CategorySerializer,
@@ -30,6 +32,7 @@ module Api
         @category = current_user.categories.build(category_params)
 
         if @category.save
+          invalidate_categories_cache
           render_json_response(
             data: @category,
             serializer: CategorySerializer,
@@ -47,6 +50,7 @@ module Api
       # PATCH/PUT /api/v1/categories/:id
       def update
         if @category.update(category_params)
+          invalidate_categories_cache
           render_json_response(
             data: @category,
             serializer: CategorySerializer,
@@ -63,6 +67,7 @@ module Api
       # DELETE /api/v1/categories/:id
       def destroy
         @category.destroy
+        invalidate_categories_cache
         render_json_response(
           message: 'Category deleted successfully',
           status: :ok
@@ -82,6 +87,14 @@ module Api
 
       def category_params
         params.require(:category).permit(:name, :color)
+      end
+
+      def categories_cache_key
+        "user_#{current_user.id}_categories"
+      end
+
+      def invalidate_categories_cache
+        Rails.cache.delete(categories_cache_key)
       end
     end
   end

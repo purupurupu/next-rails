@@ -9,6 +9,7 @@ class TodoFileService
     return ServiceResult.success(data: todo) if files.blank?
 
     todo.files.attach(files)
+    enqueue_variant_generation
     ServiceResult.success(data: todo)
   end
 
@@ -18,5 +19,15 @@ class TodoFileService
     ServiceResult.success(data: todo)
   rescue ActiveRecord::RecordNotFound
     ServiceResult.failure(error: 'File not found')
+  end
+
+  private
+
+  def enqueue_variant_generation
+    todo.files.each do |attachment|
+      next unless attachment.blob.image?
+
+      ImageVariantJob.perform_later(attachment.blob_id)
+    end
   end
 end

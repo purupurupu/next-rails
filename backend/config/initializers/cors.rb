@@ -20,7 +20,8 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
   # MCP エンドポイント用のCORS設定
   # Claude DesktopなどのMCPクライアントからのアクセスを許可
   allow do
-    origins '*'
+    mcp_origins = ENV.fetch('MCP_ALLOWED_ORIGINS', 'http://localhost:3000').split(',').map(&:strip)
+    origins(*mcp_origins)
 
     resource '/mcp',
       headers: :any,

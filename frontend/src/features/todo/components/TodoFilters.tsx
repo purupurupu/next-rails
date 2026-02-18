@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,16 @@ interface TodoFiltersProps {
   };
 }
 
-export function TodoFilters({ currentFilter, onFilterChange, counts }: TodoFiltersProps) {
+/**
+ * Todoフィルターボタンコンポーネント
+ *
+ * memo化によりリスト更新時の不要な再レンダリングを防止
+ */
+export const TodoFilters = memo(function TodoFilters({
+  currentFilter,
+  onFilterChange,
+  counts,
+}: TodoFiltersProps) {
   const filters = [
     {
       key: TODO_FILTERS.ALL,
@@ -58,4 +68,4 @@ export function TodoFilters({ currentFilter, onFilterChange, counts }: TodoFilte
       ))}
     </div>
   );
-}
+});

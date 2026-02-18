@@ -5,8 +5,7 @@ class McpController < ApplicationController
   skip_before_action :authenticate_user!
   before_action :verify_mcp_token
 
-  # TODO: 本番環境では環境変数から取得すること
-  MCP_TOKEN = 'your-secret-mcp-token-here'
+  MCP_TOKEN = ENV.fetch('MCP_TOKEN', 'your-secret-mcp-token-here')
 
   def handle
     # MCPサーバーインスタンスを作成

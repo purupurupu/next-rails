@@ -37,6 +37,9 @@ export function Navigation() {
               <Link href="/notes" className="text-sm text-gray-600 hover:text-gray-900">
                 ノート
               </Link>
+              <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">
+                ダッシュボード
+              </Link>
             </>
           )}
         </div>

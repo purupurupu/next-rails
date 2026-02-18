@@ -38,9 +38,14 @@ module Mcp
         # リミットの検証
         limit = limit.to_i.clamp(1, 50)
 
-        # 基本クエリ: タイトル検索（全ユーザーのTODO）
-        todos = Todo.where('title ILIKE ?', "%#{sanitize_query(query)}%")
-                    .includes(:category, :tags, :user)
+        # ILIKE検索（pg_trgm GINインデックスで高速化、言語非依存）
+        sanitized = sanitize_query(query)
+        todos = Todo.where(
+          'title ILIKE ? OR description ILIKE ?',
+          "%#{sanitized}%",
+          "%#{sanitized}%"
+        )
+        todos = todos.includes(:category, :tags, :user)
 
         # フィルター適用
         todos = todos.where(status:) if status.present?
