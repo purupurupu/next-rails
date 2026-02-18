@@ -23,12 +23,16 @@ class TodoSearchService
   def apply_search(scope)
     return scope if search_query.blank?
 
-    search_term = "%#{search_query.downcase}%"
-
+    # ILIKE検索（pg_trgm GINインデックスで高速化、言語非依存）
+    ilike_query = "%#{sanitize_like(search_query)}%"
     scope.where(
-      'LOWER(todos.title) LIKE :query OR LOWER(todos.description) LIKE :query',
-      query: search_term
+      'todos.title ILIKE :q OR todos.description ILIKE :q',
+      q: ilike_query
     )
+  end
+
+  def sanitize_like(value)
+    value.to_s.gsub(/[%_\\]/) { |char| "\\#{char}" }
   end
 
   def search_query

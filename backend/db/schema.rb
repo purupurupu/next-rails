@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_13_130633) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_18_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_trgm"
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -158,13 +159,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_13_130633) do
     t.bigint "category_id"
     t.integer "comments_count", default: 0, null: false
     t.integer "todo_histories_count", default: 0, null: false
+    t.tsvector "search_vector"
     t.index ["category_id"], name: "index_todos_on_category_id"
     t.index ["created_at"], name: "index_todos_on_created_at"
+    t.index ["description"], name: "idx_todos_description_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["description"], name: "index_todos_on_description"
     t.index ["due_date"], name: "index_todos_on_due_date"
     t.index ["position"], name: "index_todos_on_position"
     t.index ["priority"], name: "index_todos_on_priority"
+    t.index ["search_vector"], name: "idx_todos_search", using: :gin
     t.index ["status"], name: "index_todos_on_status"
+    t.index ["title"], name: "idx_todos_title_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["title"], name: "index_todos_on_title"
     t.index ["updated_at"], name: "index_todos_on_updated_at"
     t.index ["user_id", "category_id"], name: "index_todos_on_user_id_and_category_id"
