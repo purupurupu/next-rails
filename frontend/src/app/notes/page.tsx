@@ -1,4 +1,5 @@
 import { Navigation } from "@/components/navigation";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { NotesWorkspace } from "@/features/notes/components/NotesWorkspace";
 
 /**
@@ -11,7 +12,9 @@ export default function NotesPage() {
     <div className="min-h-screen bg-background">
       <Navigation />
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <NotesWorkspace />
+        <ErrorBoundary>
+          <NotesWorkspace />
+        </ErrorBoundary>
       </div>
     </div>
   );

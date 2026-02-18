@@ -67,3 +67,38 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 export function generateOptimisticId(): number {
   return Date.now() + Math.random();
 }
+
+/**
+ * macOS / iOS かどうかを判定する
+ *
+ * `navigator.userAgentData?.platform`（UA Client Hints）を優先し、
+ * 未サポートのブラウザでは `navigator.userAgent` にフォールバックする。
+ * SSR環境では `false` を返す。
+ */
+export function isMacOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+
+  // UA Client Hints API（Chrome/Edge等）
+  const uaPlatform = (
+    navigator as Navigator & {
+      userAgentData?: { platform?: string };
+    }
+  ).userAgentData?.platform;
+  if (uaPlatform) {
+    return /mac/i.test(uaPlatform);
+  }
+
+  // フォールバック: userAgent 文字列
+  return /Macintosh|Mac OS X|iPhone|iPad|iPod/i.test(
+    navigator.userAgent,
+  );
+}
+
+/**
+ * OS に応じた修飾キーラベルを返す
+ *
+ * macOS / iOS の場合は "Cmd"、その他は "Ctrl"。
+ */
+export function getModKeyLabel(): string {
+  return isMacOS() ? "Cmd" : "Ctrl";
+}
