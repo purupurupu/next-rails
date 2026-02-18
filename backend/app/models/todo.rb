@@ -24,6 +24,8 @@ class Todo < ApplicationRecord
   before_create :set_position
   after_create :record_creation
   around_update :track_changes
+  after_save :invalidate_category_cache_if_changed
+  after_destroy :invalidate_category_cache
 
   private
 
@@ -73,5 +75,15 @@ class Todo < ApplicationRecord
 
   def track_changes(&)
     TodoChangeTrackerService.new(todo: self).track_update(&)
+  end
+
+  def invalidate_category_cache_if_changed
+    return unless saved_change_to_category_id?
+
+    invalidate_category_cache
+  end
+
+  def invalidate_category_cache
+    Rails.cache.delete("user_#{user_id}_categories")
   end
 end

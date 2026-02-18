@@ -8,7 +8,9 @@ module Api
 
       # GET /api/v1/tags
       def index
-        @tags = current_user.tags.ordered
+        @tags = Rails.cache.fetch(tags_cache_key, expires_in: 5.minutes) do
+          current_user.tags.ordered.to_a
+        end
         render_json_response(
           data: @tags,
           each_serializer: TagSerializer,
@@ -30,6 +32,7 @@ module Api
         @tag = current_user.tags.build(tag_params)
 
         if @tag.save
+          invalidate_tags_cache
           render_json_response(
             data: @tag,
             serializer: TagSerializer,
@@ -47,6 +50,7 @@ module Api
       # PATCH/PUT /api/v1/tags/:id
       def update
         if @tag.update(tag_params)
+          invalidate_tags_cache
           render_json_response(
             data: @tag,
             serializer: TagSerializer,
@@ -63,6 +67,7 @@ module Api
       # DELETE /api/v1/tags/:id
       def destroy
         @tag.destroy
+        invalidate_tags_cache
         render_json_response(
           message: 'Tag deleted successfully',
           status: :ok
@@ -82,6 +87,14 @@ module Api
 
       def tag_params
         params.require(:tag).permit(:name, :color)
+      end
+
+      def tags_cache_key
+        "user_#{current_user.id}_tags"
+      end
+
+      def invalidate_tags_cache
+        Rails.cache.delete(tags_cache_key)
       end
     end
   end
