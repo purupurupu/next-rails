@@ -27,6 +27,8 @@ export const API_ENDPOINTS = {
   NOTE_REVISIONS: (noteId: number) => `/api/v1/notes/${noteId}/revisions`,
   NOTE_REVISION_RESTORE: (noteId: number, revisionId: number) =>
     `/api/v1/notes/${noteId}/revisions/${revisionId}/restore`,
+  // Dashboard endpoints
+  DASHBOARD_STATS: "/api/v1/dashboard/stats",
 } as const;
 
 export const TODO_FILTERS = {
