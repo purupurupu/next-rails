@@ -191,6 +191,16 @@ export function useTodoListData(
     },
   );
 
+  // AbortController で stale な検索リクエストをキャンセル
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // アンマウント時に進行中のリクエストをキャンセル
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
   // Todos (検索パラメータに依存したSWR)
   // SSRで初期データを取得済みなので、マウント時の再フェッチをスキップ
   const {
@@ -201,7 +211,17 @@ export function useTodoListData(
   } = useSWR<{ todos: Todo[]; searchResponse: TodoSearchResponse }>(
     searchKey,
     async () => {
-      const result = await todoApiClient.searchTodos(debouncedSearchParams);
+      // 前回のリクエストをキャンセル
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      const result = await todoApiClient.searchTodos(
+        debouncedSearchParams,
+        { signal: controller.signal },
+      );
       return parseSearchResult(result, debouncedSearchParams.q);
     },
     {
@@ -227,12 +247,25 @@ export function useTodoListData(
     debouncedSearchParamsRef.current = debouncedSearchParams;
   }, [debouncedSearchParams]);
 
-  // エラーメッセージを統合
+  // エラーメッセージを統合（AbortErrorは無視）
   const error = useMemo(() => {
-    if (searchError) return searchError instanceof Error ? searchError.message : "検索に失敗しました";
+    if (searchError) {
+      if (searchError instanceof DOMException
+        && searchError.name === "AbortError") {
+        return null;
+      }
+      return searchError instanceof Error
+        ? searchError.message
+        : "検索に失敗しました";
+    }
     if (categoriesError)
-      return categoriesError instanceof Error ? categoriesError.message : "カテゴリーの取得に失敗しました";
-    if (tagsError) return tagsError instanceof Error ? tagsError.message : "タグの取得に失敗しました";
+      return categoriesError instanceof Error
+        ? categoriesError.message
+        : "カテゴリーの取得に失敗しました";
+    if (tagsError)
+      return tagsError instanceof Error
+        ? tagsError.message
+        : "タグの取得に失敗しました";
     return null;
   }, [searchError, categoriesError, tagsError]);
 

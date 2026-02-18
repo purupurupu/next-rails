@@ -20,7 +20,16 @@ class TodoApiClient extends HttpClient {
     return this.get<Todo>(API_ENDPOINTS.TODO_BY_ID(id));
   }
 
-  async searchTodos(params: TodoSearchParams): Promise<TodoSearchResponse> {
+  /**
+   * Todo検索を実行する
+   *
+   * @param params - 検索パラメータ
+   * @param options - AbortSignal等のオプション
+   */
+  async searchTodos(
+    params: TodoSearchParams,
+    options?: { signal?: AbortSignal },
+  ): Promise<TodoSearchResponse> {
     // Build query string from params
     const queryParams = new URLSearchParams();
 
@@ -74,8 +83,13 @@ class TodoApiClient extends HttpClient {
     if (params.page) queryParams.append("page", String(params.page));
     if (params.per_page) queryParams.append("per_page", String(params.per_page));
 
-    const url = queryParams.toString() ? `${API_ENDPOINTS.TODOS_SEARCH}?${queryParams}` : API_ENDPOINTS.TODOS_SEARCH;
-    const response = await this.get<TodoSearchResponse>(url);
+    const url = queryParams.toString()
+      ? `${API_ENDPOINTS.TODOS_SEARCH}?${queryParams}`
+      : API_ENDPOINTS.TODOS_SEARCH;
+    const response = await this.get<TodoSearchResponse>(
+      url,
+      options,
+    );
     // dataプロパティが配列であることを保証
     if (response && typeof response === "object" && "data" in response) {
       return {

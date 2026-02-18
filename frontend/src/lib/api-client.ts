@@ -21,6 +21,12 @@ class HttpClient {
   // BFF経由で認証されるため、クライアント側での認証ヘッダー処理は不要
   // Cookieは自動的に送信される（credentials: "include"）
 
+  /**
+   * HTTP リクエストを実行する基底メソッド
+   *
+   * @param endpoint - APIエンドポイントパス
+   * @param options - fetch API のオプション（signal等を含む）
+   */
   private async request<T>(
     endpoint: string,
     options?: RequestInit,
@@ -85,16 +91,26 @@ class HttpClient {
       if (error instanceof ApiError) {
         throw error;
       }
+      // AbortController によるキャンセルはそのまま伝播
+      if (error instanceof DOMException && error.name === "AbortError") {
+        throw error;
+      }
       throw new ApiError("Network error occurred", 0);
     }
   }
 
-  async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint);
+  async get<T>(
+    endpoint: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<T> {
+    return this.request<T>(endpoint, options);
   }
 
-  async getList<T>(endpoint: string): Promise<T[]> {
-    const response = await this.request<T[]>(endpoint);
+  async getList<T>(
+    endpoint: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<T[]> {
+    const response = await this.request<T[]>(endpoint, options);
     return Array.isArray(response) ? response : [];
   }
 

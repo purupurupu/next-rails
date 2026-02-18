@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,12 @@ interface SearchBarProps {
   debounceDelay?: number;
 }
 
-export function SearchBar({
+/**
+ * デバウンス付き検索バーコンポーネント
+ *
+ * memo化によりフィルター変更時等の不要な再レンダリングを防止
+ */
+export const SearchBar = memo(function SearchBar({
   value,
   onChange,
   placeholder = "タスクを検索...",
@@ -64,4 +69,4 @@ export function SearchBar({
       )}
     </div>
   );
-}
+});
